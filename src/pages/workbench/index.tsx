@@ -1,37 +1,30 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Row, Col, Card, Statistic, Typography, Button, Divider, Avatar, Tag, Tooltip } from 'antd';
+import React, { useMemo } from 'react';
+import { Avatar, Badge, Button, Card, Col, Progress, Row, Space, Tag, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
-  RobotOutlined,
-  FolderOpenOutlined,
-  ToolOutlined,
-  ExperimentOutlined,
-  CodeOutlined,
-  FileTextOutlined,
   ApiOutlined,
-  DatabaseOutlined,
-  ThunderboltOutlined,
-  RightOutlined,
-  UpOutlined,
-  DownOutlined,
-  EyeOutlined,
   ClockCircleOutlined,
-  UserOutlined,
-  SwapOutlined,
+  CodeOutlined,
+  DatabaseOutlined,
+  DeploymentUnitOutlined,
+  ExperimentOutlined,
+  FileDoneOutlined,
+  FileTextOutlined,
+  FolderOpenOutlined,
+  HddOutlined,
+  MessageOutlined,
+  NodeIndexOutlined,
+  RightOutlined,
+  RobotOutlined,
+  SafetyCertificateOutlined,
+  SettingOutlined,
+  ThunderboltOutlined,
+  ToolOutlined,
 } from '@ant-design/icons';
-import {
-  LineChart,
-  Line,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-} from 'recharts';
+import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 
-const { Text, Title, Paragraph } = Typography;
+const { Text, Title } = Typography;
 
-// ---- Mock 数据 ----
-
-/** 近七天调用量趋势 */
 const weeklyTrend = [
   { day: '06/19', calls: 423 },
   { day: '06/20', calls: 561 },
@@ -42,736 +35,987 @@ const weeklyTrend = [
   { day: '06/25', calls: 747 },
 ];
 
-// ---- 新手引导卡片定义 ----
-interface GuideCard {
-  key: string;
-  title: string;
-  icon: React.ReactNode;
-  iconBg: string;
-  description: string;
-  actionLabel: string;
-  actionPath: string;
-}
-
-const guideCards: GuideCard[] = [
+const workflowSteps = [
   {
-    key: 'agent',
     title: '搭建智能体',
+    desc: '创建对话、流程或自主智能体',
+    status: '已开放',
     icon: <RobotOutlined />,
-    iconBg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    description: '通过可视化编排画布，拖拽组件即可构建智能体流程，支持对话、工作流和自主智能体三种模式。',
-    actionLabel: '开始搭建',
-    actionPath: '/dev/agent-build',
+    path: '/dev/agent-build',
+    color: '#1677ff',
   },
   {
-    key: 'knowledge',
     title: '接入知识与数据',
+    desc: '挂接知识库、数据源和资源',
+    status: '推荐',
     icon: <FolderOpenOutlined />,
-    iconBg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    description: '上传文档创建知识库、连接外部数据源，为智能体注入领域知识。',
-    actionLabel: '创建知识库',
-    actionPath: '/dev/knowledge',
+    path: '/dev/knowledge',
+    color: '#13c2c2',
   },
   {
-    key: 'components',
     title: '配置模型与工具',
+    desc: '选择模型、工具与连接器能力',
+    status: '常用',
     icon: <ToolOutlined />,
-    iconBg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    description: '接入大模型、注册 API 工具和 MCP 连接器，为智能体提供推理与执行能力。',
-    actionLabel: '查看组件',
-    actionPath: '/dev/models',
+    path: '/dev/models',
+    color: '#52c41a',
   },
   {
-    key: 'eval',
-    title: '测评与发布',
+    title: '测评验证',
+    desc: '使用评测集验证效果与稳定性',
+    status: '待完善',
     icon: <ExperimentOutlined />,
-    iconBg: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    description: '基于测评集对智能体进行效果评估，通过后一键发布至服务门户。',
-    actionLabel: '查看测评',
-    actionPath: '/dev/agent-eval',
+    path: '/dev/agent-eval',
+    color: '#fa8c16',
+  },
+  {
+    title: '发布上线',
+    desc: '完成审核后发布至服务门户',
+    status: '规范化',
+    icon: <DeploymentUnitOutlined />,
+    path: '/dev/agent-manage',
+    color: '#722ed1',
   },
 ];
 
-/** 快捷入口卡片 */
-interface QuickEntry {
-  key: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  color: string;
-  bg: string;
-  path: string;
-  badge?: string;
-}
-
-const quickEntries: QuickEntry[] = [
+const recentAgents = [
   {
-    key: 'agent-build',
-    title: '智能体构建',
-    description: '可视化编排智能体流程',
-    icon: <CodeOutlined />,
-    color: '#667eea',
-    bg: 'linear-gradient(135deg, rgba(102,126,234,0.08), rgba(118,75,162,0.06))',
-    path: '/dev/agent-build',
+    name: '110接警警情分析助手',
+    type: '标准智能体',
+    status: '已发布',
+    updated: '2026-06-20',
+    calls: '12,860',
+    next: '查看运行',
   },
   {
-    key: 'agent-manage',
+    name: '电诈资金穿透研判助手',
+    type: '流程智能体',
+    status: '已发布',
+    updated: '2026-06-22',
+    calls: '5,620',
+    next: '配置流程',
+  },
+  {
+    name: '交通事故责任认定助手',
+    type: '标准智能体',
+    status: '草稿',
+    updated: '2026-06-24',
+    calls: '2,340',
+    next: '继续编辑',
+  },
+];
+
+const todoItems = [
+  {
+    title: '评测任务待处理',
+    desc: '2 个智能体等待回归评测',
+    icon: <ExperimentOutlined />,
+    color: '#fa8c16',
+  },
+  {
+    title: '发布审核',
+    desc: '1 个智能体待确认上线范围',
+    icon: <FileDoneOutlined />,
+    color: '#1677ff',
+  },
+  {
+    title: '模型配置提醒',
+    desc: 'DeepSeek-Reasoner 有新配置项',
+    icon: <SettingOutlined />,
+    color: '#52c41a',
+  },
+  {
+    title: '资源申请进度',
+    desc: '人口基础信息查询接口审批中',
+    icon: <MessageOutlined />,
+    color: '#722ed1',
+  },
+];
+
+const quickEntries = [
+  {
+    title: '智能体构建',
+    desc: '可视化编排智能体流程',
+    icon: <CodeOutlined />,
+    path: '/dev/agent-build',
+    color: '#1677ff',
+  },
+  {
     title: '智能体管理',
-    description: '查看和管理已创建的智能体',
+    desc: '查看和管理已创建的智能体',
     icon: <RobotOutlined />,
-    color: '#f5576c',
-    bg: 'linear-gradient(135deg, rgba(245,87,108,0.08), rgba(240,147,251,0.06))',
     path: '/dev/agent-manage',
+    color: '#eb2f96',
     badge: '8',
   },
   {
-    key: 'models',
     title: '模型管理',
-    description: '接入和配置大模型',
+    desc: '接入和配置大模型',
     icon: <ThunderboltOutlined />,
-    color: '#4facfe',
-    bg: 'linear-gradient(135deg, rgba(79,172,254,0.08), rgba(0,242,254,0.06))',
     path: '/dev/models',
-  },
-  {
-    key: 'prompts',
-    title: '提示词管理',
-    description: '管理可复用的提示词模板',
-    icon: <FileTextOutlined />,
-    color: '#fa8c16',
-    bg: 'linear-gradient(135deg, rgba(250,140,22,0.08), rgba(250,173,20,0.06))',
-    path: '/dev/prompts',
-  },
-  {
-    key: 'tools',
-    title: '工具管理',
-    description: '注册和管理工具组件',
-    icon: <ToolOutlined />,
-    color: '#43e97b',
-    bg: 'linear-gradient(135deg, rgba(67,233,123,0.08), rgba(56,249,215,0.06))',
-    path: '/dev/tools',
-  },
-  {
-    key: 'connectors',
-    title: '连接器',
-    description: '配置 MCP 服务与外部连接器',
-    icon: <ApiOutlined />,
-    color: '#722ed1',
-    bg: 'linear-gradient(135deg, rgba(114,46,209,0.08), rgba(83,123,235,0.06))',
-    path: '/dev/connectors',
-  },
-  {
-    key: 'knowledge',
-    title: '知识库',
-    description: '创建知识库、上传文档',
-    icon: <DatabaseOutlined />,
     color: '#13c2c2',
-    bg: 'linear-gradient(135deg, rgba(19,194,194,0.08), rgba(19,194,194,0.04))',
-    path: '/dev/knowledge',
   },
   {
-    key: 'agent-eval',
+    title: '提示词管理',
+    desc: '管理可复用的提示词模板',
+    icon: <FileTextOutlined />,
+    path: '/dev/prompts',
+    color: '#fa8c16',
+  },
+  {
+    title: '工具管理',
+    desc: '注册和管理工具组件',
+    icon: <ToolOutlined />,
+    path: '/dev/tools',
+    color: '#52c41a',
+  },
+  {
+    title: '连接器',
+    desc: '配置 MCP 服务与外部连接器',
+    icon: <ApiOutlined />,
+    path: '/dev/connectors',
+    color: '#722ed1',
+  },
+  {
+    title: '知识库',
+    desc: '创建知识库、上传文档',
+    icon: <DatabaseOutlined />,
+    path: '/dev/knowledge',
+    color: '#13c2c2',
+  },
+  {
     title: '智能体测评',
-    description: '对智能体进行效果评估',
+    desc: '对智能体进行效果评估',
     icon: <ExperimentOutlined />,
-    color: '#eb2f96',
-    bg: 'linear-gradient(135deg, rgba(235,47,150,0.08), rgba(255,133,197,0.06))',
     path: '/dev/agent-eval',
+    color: '#eb2f96',
   },
 ];
 
-// ---- 组件 ----
+const statusColor = {
+  已发布: 'success',
+  草稿: 'warning',
+} as const;
 
 const WorkbenchPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // 新手引导折叠状态（localStorage）
-  const storageKey = 'workbench-guide-collapsed';
-  const [guideCollapsed, setGuideCollapsed] = useState(() => {
-    return localStorage.getItem(storageKey) === 'true';
-  });
-  const [guideAnimate, setGuideAnimate] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem(storageKey, String(guideCollapsed));
-  }, [guideCollapsed]);
-
-  // 挂载动画
-  useEffect(() => {
-    setGuideAnimate(true);
-  }, []);
-
-  const handleHideGuide = () => {
-    setGuideCollapsed(true);
-  };
-
-  const handleShowGuide = () => {
-    setGuideCollapsed(false);
-  };
-
-  const todayCalls = useMemo(() => 747, []);
-  const todayActiveUsers = useMemo(() => 32, []);
   const totalCallsThisWeek = useMemo(
-    () => weeklyTrend.reduce((s, d) => s + d.calls, 0),
+    () => weeklyTrend.reduce((sum, item) => sum + item.calls, 0),
     [],
   );
 
-  // 指标卡片数据
   const statCards = [
     {
       title: '我的智能体',
-      value: 5,
-      suffix: ' 个',
-      subText: '已发布 3 个',
-      color: '#1677ff',
+      value: '5',
+      suffix: '个',
+      desc: '已发布 3 个',
       icon: <RobotOutlined />,
-      onClick: () => navigate('/dev/agent-manage'),
+      color: '#1677ff',
+      path: '/dev/agent-manage',
     },
     {
       title: '空间智能体',
-      value: 12,
-      suffix: '',
-      subText: '已发布 8 / 总数 12',
+      value: '12',
+      suffix: '个',
+      desc: '已发布 8 / 总数 12',
+      icon: <NodeIndexOutlined />,
       color: '#52c41a',
-      icon: <RobotOutlined />,
-      onClick: () => navigate('/dev/agent-manage'),
+      path: '/dev/agent-manage',
     },
     {
       title: '近七天调用量',
       value: totalCallsThisWeek.toLocaleString(),
-      suffix: ' 次',
-      subText: null,
-      color: '#fa8c16',
+      suffix: '次',
+      desc: '今日 747 次',
       icon: <ThunderboltOutlined />,
+      color: '#fa8c16',
+      path: '/dev/stats',
       chart: true,
-      onClick: () => navigate('/dev/stats'),
     },
     {
       title: '知识库文档',
-      value: 128,
-      suffix: ' 篇',
-      subText: '新增 7 篇本周',
-      color: '#722ed1',
+      value: '128',
+      suffix: '篇',
+      desc: '本周新增 7 篇',
       icon: <DatabaseOutlined />,
-      onClick: () => navigate('/dev/knowledge'),
+      color: '#722ed1',
+      path: '/dev/knowledge',
     },
     {
       title: '我的待办',
-      value: 3,
-      suffix: ' 项',
-      subText: '测评任务',
-      color: '#eb2f96',
+      value: '3',
+      suffix: '项',
+      desc: '测评与发布任务',
       icon: <ClockCircleOutlined />,
-      onClick: () => navigate('/dev/agent-eval'),
+      color: '#eb2f96',
+      path: '/dev/agent-eval',
     },
   ];
 
   return (
-    <div style={{ flex: 1, overflow: 'auto', background: '#f5f7fa' }}>
-      {/* ===== 内容容器 ===== */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 40px' }}>
-        {/* ========== 一、欢迎区 ========== */}
-        <div
-          style={{
-            background: 'linear-gradient(135deg, #1d39c4 0%, #1677ff 40%, #4096ff 100%)',
-            borderRadius: 16,
-            padding: '28px 32px',
-            marginBottom: 24,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            boxShadow: '0 4px 20px rgba(22,119,255,0.15)',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          {/* 背景装饰 */}
-          <div
-            style={{
-              position: 'absolute',
-              top: -30,
-              right: -30,
-              width: 160,
-              height: 160,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.06)',
-              pointerEvents: 'none',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              bottom: -50,
-              left: '40%',
-              width: 200,
-              height: 200,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.04)',
-              pointerEvents: 'none',
-            }}
-          />
+    <div className="workbench-page">
+      <div className="workbench-container">
+        <section className="workbench-header">
+          <div className="workspace-meta">
+            <Avatar size={42} className="workspace-avatar">
+              W
+            </Avatar>
+            <div>
+              <Space size={8} align="center">
+                <Text className="workspace-name">我的空间</Text>
+                <Tag className="trust-tag" icon={<SafetyCertificateOutlined />}>
+                  可信空间
+                </Tag>
+              </Space>
+              <div className="workspace-sub">32 位成员 · 今日 09:20 更新</div>
+            </div>
+          </div>
 
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-              <Avatar
-                size={40}
-                style={{
-                  background: 'rgba(255,255,255,0.2)',
-                  fontSize: 20,
-                  fontWeight: 700,
-                }}
+          <div className="header-main">
+            <div>
+              <Title level={3} className="header-title">
+                欢迎回来，演示用户
+              </Title>
+              <Text className="header-desc">
+                按照搭建、接入、配置、测评、发布的链路推进智能体上线。
+              </Text>
+            </div>
+            <div className="header-metrics" aria-label="今日平台状态">
+              <div className="header-metric">
+                <strong>747</strong>
+                <span>今日智能体调用</span>
+              </div>
+              <div className="header-divider" />
+              <div className="header-metric">
+                <strong>32</strong>
+                <span>活跃用户</span>
+              </div>
+              <div className="header-divider" />
+              <div className="header-metric">
+                <strong>正常</strong>
+                <span>服务状态</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="workflow-section">
+          <div className="section-heading">
+            <div>
+              <Text className="eyebrow">开发流程</Text>
+              <Title level={4}>智能体上线链路</Title>
+            </div>
+            <Progress
+              percent={60}
+              size="small"
+              strokeColor="#1677ff"
+              trailColor="#edf2f7"
+              className="workflow-progress"
+            />
+          </div>
+
+          <div className="workflow-rail">
+            {workflowSteps.map((step, index) => (
+              <button
+                className="workflow-step"
+                key={step.title}
+                type="button"
+                onClick={() => navigate(step.path)}
+                style={{ '--step-color': step.color } as React.CSSProperties}
               >
-                W
-              </Avatar>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: 600 }}>
-                    我的空间
-                  </Text>
-                  <Tooltip title="切换工作空间">
-                    <SwapOutlined
-                      style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, cursor: 'pointer' }}
-                    />
-                  </Tooltip>
+                <div className="step-index">{index + 1}</div>
+                <div className="step-icon">{step.icon}</div>
+                <div className="step-copy">
+                  <div className="step-title-row">
+                    <Text strong>{step.title}</Text>
+                    <Tag>{step.status}</Tag>
+                  </div>
+                  <Text type="secondary">{step.desc}</Text>
                 </div>
-                <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12 }}>
-                  32 位成员
-                </Text>
-              </div>
-            </div>
-            <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 22, fontWeight: 300, letterSpacing: 0.5 }}>
-              欢迎回来，演示用户
-            </Text>
+                <RightOutlined className="step-arrow" />
+              </button>
+            ))}
           </div>
+        </section>
 
-          <div
-            style={{
-              display: 'flex',
-              gap: 40,
-              position: 'relative',
-              zIndex: 1,
-            }}
-          >
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ color: '#fff', fontSize: 28, fontWeight: 700, lineHeight: '32px' }}>
-                {todayCalls.toLocaleString()}
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 2 }}>
-                今日智能体调用
-              </div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ color: '#fff', fontSize: 28, fontWeight: 700, lineHeight: '32px' }}>
-                {todayActiveUsers}
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 2 }}>
-                活跃用户
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ========== 二、新手引导区 ========== */}
-        <div
-          style={{
-            background: '#fff',
-            borderRadius: 12,
-            padding: guideCollapsed ? '16px 24px' : '24px 24px 20px',
-            marginBottom: 24,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            transition: 'all 0.3s ease',
-            overflow: 'hidden',
-          }}
-        >
-          {/* 标题行 */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              cursor: 'pointer',
-            }}
-            onClick={() => setGuideCollapsed(!guideCollapsed)}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 8,
-                  background: 'linear-gradient(135deg, #ffd77a, #ffb347)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <ThunderboltOutlined style={{ color: '#fff', fontSize: 14 }} />
-              </div>
-              <Text strong style={{ fontSize: 15 }}>
-                新手引导
-              </Text>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                快速了解平台核心能力
-              </Text>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {!guideCollapsed && (
-                <Button
-                  type="text"
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleHideGuide();
-                  }}
-                  style={{ fontSize: 12, color: 'rgba(0,0,0,0.35)' }}
-                >
-                  不再显示
-                </Button>
-              )}
-              {guideCollapsed ? (
-                <DownOutlined style={{ color: 'rgba(0,0,0,0.35)', fontSize: 12 }} />
-              ) : (
-                <UpOutlined style={{ color: 'rgba(0,0,0,0.35)', fontSize: 12 }} />
-              )}
-            </div>
-          </div>
-
-          {/* 卡片区 */}
-          {!guideCollapsed && (
-            <Row gutter={16} style={{ marginTop: 20, animation: 'fadeIn 0.4s ease' }}>
-              {guideCards.map((card, idx) => (
-                <Col span={6} key={card.key}>
-                  <div
-                    style={{
-                      borderRadius: 10,
-                      border: '1px solid #f0f0f0',
-                      padding: '20px 16px',
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      transition: 'all 0.2s ease',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      opacity: guideAnimate ? 1 : 0,
-                      transform: guideAnimate ? 'translateY(0)' : 'translateY(8px)',
-                      transitionDelay: `${idx * 0.08}s`,
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLElement).style.borderColor = '#1677ff';
-                      (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(22,119,255,0.08)';
-                      (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLElement).style.borderColor = '#f0f0f0';
-                      (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-                      (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-                    }}
-                  >
-                    {/* 步骤编号 */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: -1,
-                        right: 12,
-                        fontSize: 48,
-                        fontWeight: 800,
-                        color: 'rgba(0,0,0,0.03)',
-                        lineHeight: 1,
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      {idx + 1}
-                    </div>
-
-                    {/* 图标 */}
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 10,
-                        background: card.iconBg,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#fff',
-                        fontSize: 18,
-                        marginBottom: 12,
-                        position: 'relative',
-                        zIndex: 1,
-                      }}
-                    >
-                      {card.icon}
-                    </div>
-
-                    {/* 标题 */}
-                    <Text strong style={{ fontSize: 14, marginBottom: 6, position: 'relative', zIndex: 1 }}>
-                      {card.title}
-                    </Text>
-
-                    {/* 描述 */}
-                    <Text
-                      type="secondary"
-                      style={{ fontSize: 12, lineHeight: '1.6', flex: 1, position: 'relative', zIndex: 1 }}
-                    >
-                      {card.description}
-                    </Text>
-
-                    {/* 操作链接 */}
-                    <Button
-                      type="link"
-                      size="small"
-                      onClick={() => navigate(card.actionPath)}
-                      style={{ padding: 0, marginTop: 8, fontWeight: 500, fontSize: 12, position: 'relative', zIndex: 1 }}
-                    >
-                      {card.actionLabel}
-                      <RightOutlined style={{ fontSize: 10, marginLeft: 2 }} />
-                    </Button>
-                  </div>
-                </Col>
-              ))}
-            </Row>
-          )}
-
-          {/* 折叠时显示恢复按钮 */}
-          {guideCollapsed && (
-            <div style={{ marginTop: 8 }}>
-              <Button
-                type="link"
-                size="small"
-                onClick={handleShowGuide}
-                style={{ fontSize: 12, padding: 0 }}
-              >
-                首次使用？查看完整使用指南
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* ========== 三、数据指标区 ========== */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 24 }}>
+        <div className="stats-grid">
           {statCards.map((stat) => (
-              <Card
-                key={stat.title}
-                size="small"
-                onClick={stat.onClick}
-                style={{
-                  borderRadius: 10,
-                  borderColor: '#f0f0f0',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  overflow: 'hidden',
-                }}
-                styles={{ body: { padding: stat.chart ? '14px 16px 8px' : '16px' } }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = '0 3px 12px rgba(0,0,0,0.05)';
-                  (e.currentTarget as HTMLElement).style.borderColor = '#d9d9d9';
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-                  (e.currentTarget as HTMLElement).style.borderColor = '#f0f0f0';
-                }}
-              >
-                {stat.chart ? (
-                  /* 特殊卡片：带迷你图 */
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                      <span style={{ color: stat.color, fontSize: 13, display: 'flex' }}>
-                        {stat.icon}
-                      </span>
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        {stat.title}
-                      </Text>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 0 }}>
-                      <span style={{ fontSize: 24, fontWeight: 700, color: stat.color, lineHeight: '28px' }}>
-                        {totalCallsThisWeek.toLocaleString()}
-                      </span>
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        次
-                      </Text>
-                    </div>
-                    <div style={{ marginTop: 4, height: 42 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={weeklyTrend}>
-                          <defs>
-                            <linearGradient id="statGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={stat.color} stopOpacity={0.25} />
-                              <stop offset="100%" stopColor={stat.color} stopOpacity={0.02} />
-                            </linearGradient>
-                          </defs>
-                          <Area
-                            type="monotone"
-                            dataKey="calls"
-                            stroke={stat.color}
-                            strokeWidth={2}
-                            fill="url(#statGradient)"
-                            dot={false}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                ) : (
-                  /* 普通统计卡片 */
-                  <>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        {stat.title}
-                      </Text>
-                      <span style={{ color: stat.color, fontSize: 16, display: 'flex', opacity: 0.5 }}>
-                        {stat.icon}
-                      </span>
-                    </div>
-                    <Statistic
-                      value={stat.value}
-                      suffix={
-                        <Text style={{ fontSize: 14, fontWeight: 400, color: 'rgba(0,0,0,0.55)' }}>
-                          {stat.suffix}
-                        </Text>
-                      }
-                      valueStyle={{
-                        color: stat.color,
-                        fontSize: 28,
-                        fontWeight: 700,
-                      }}
-                    />
-                    {stat.subText && (
-                      <Text type="secondary" style={{ fontSize: 11, marginTop: 2, display: 'block' }}>
-                        {stat.subText}
-                      </Text>
-                    )}
-                  </>
-                )}
-              </Card>
+            <Card
+              key={stat.title}
+              className="stat-card"
+              bordered
+              onClick={() => navigate(stat.path)}
+              styles={{ body: { padding: 16 } }}
+            >
+              <div className="stat-top">
+                <Text type="secondary">{stat.title}</Text>
+                <span className="stat-icon" style={{ color: stat.color }}>
+                  {stat.icon}
+                </span>
+              </div>
+              <div className="stat-value-row">
+                <span className="stat-value" style={{ color: stat.color }}>
+                  {stat.value}
+                </span>
+                <span className="stat-suffix">{stat.suffix}</span>
+              </div>
+              <Text className="stat-desc">{stat.desc}</Text>
+              {stat.chart && (
+                <div className="stat-chart">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={weeklyTrend}>
+                      <defs>
+                        <linearGradient id="callsGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#fa8c16" stopOpacity={0.24} />
+                          <stop offset="100%" stopColor="#fa8c16" stopOpacity={0.02} />
+                        </linearGradient>
+                      </defs>
+                      <Area
+                        dataKey="calls"
+                        type="monotone"
+                        stroke="#fa8c16"
+                        strokeWidth={2}
+                        fill="url(#callsGradient)"
+                        dot={false}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </Card>
           ))}
         </div>
 
-        {/* ========== 四、快捷入口区 ========== */}
-        <div
-          style={{
-            background: '#fff',
-            borderRadius: 12,
-            padding: '24px 24px 8px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                background: 'linear-gradient(135deg, #1677ff, #69c0ff)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <ThunderboltOutlined style={{ color: '#fff', fontSize: 14 }} />
-            </div>
-            <Text strong style={{ fontSize: 15 }}>
-              快捷入口
-            </Text>
-          </div>
-
-          <Row gutter={[16, 16]}>
-            {quickEntries.map((entry) => (
-              <Col span={6} key={entry.key}>
-                <div
-                  onClick={() => navigate(entry.path)}
-                  style={{
-                    borderRadius: 10,
-                    padding: '18px 16px',
-                    background: entry.bg,
-                    border: '1px solid transparent',
-                    cursor: 'pointer',
-                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                    position: 'relative',
-                    overflow: 'hidden',
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = entry.color;
-                    (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 16px ${entry.color}15`;
-                    (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'transparent';
-                    (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-                    (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-                  }}
-                >
-                  {/* 图标 */}
-                  <div
-                    style={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 10,
-                      background: `linear-gradient(135deg, ${entry.color}20, ${entry.color}08)`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: entry.color,
-                      fontSize: 20,
-                      marginBottom: 10,
-                    }}
-                  >
-                    {entry.icon}
-                  </div>
-
-                  {/* 标题 */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Text strong style={{ fontSize: 13 }}>
-                      {entry.title}
-                    </Text>
-                    {entry.badge && (
-                      <Tag
-                        color="red"
-                        style={{
-                          fontSize: 10,
-                          lineHeight: '16px',
-                          padding: '0 6px',
-                          margin: 0,
-                          borderRadius: 10,
-                        }}
-                      >
-                        {entry.badge}
-                      </Tag>
-                    )}
-                  </div>
-
-                  {/* 描述 */}
-                  <Text
-                    type="secondary"
-                    style={{ fontSize: 11, lineHeight: '1.5', marginTop: 4, display: 'block' }}
-                  >
-                    {entry.description}
-                  </Text>
+        <Row gutter={[16, 16]} className="main-grid">
+          <Col xs={24} xl={16}>
+            <Card
+              className="section-card recent-card"
+              title={
+                <div className="card-title">
+                  <HddOutlined />
+                  <span>最近智能体 / 我的项目</span>
                 </div>
-              </Col>
-            ))}
-          </Row>
-
-          {/* 管理员入口 */}
-          <div style={{ padding: '16px 0 20px', marginTop: 8 }}>
-            <Divider style={{ margin: '0 0 12px', fontSize: 12, color: '#d9d9d9' }} />
-            <Button
-              type="link"
-              size="small"
-              onClick={() => navigate('/dev/space-manage')}
-              style={{ fontSize: 12, padding: 0, color: 'rgba(0,0,0,0.45)' }}
+              }
+              extra={
+                <Button type="link" size="small" onClick={() => navigate('/dev/agent-manage')}>
+                  查看全部
+                </Button>
+              }
+              styles={{ body: { padding: 0 } }}
             >
+              {recentAgents.map((agent) => (
+                <div className="agent-row" key={agent.name}>
+                  <div className="agent-icon">
+                    <RobotOutlined />
+                  </div>
+                  <div className="agent-main">
+                    <Space size={8} align="center">
+                      <Text strong>{agent.name}</Text>
+                      <Tag color={statusColor[agent.status as keyof typeof statusColor]}>
+                        {agent.status}
+                      </Tag>
+                      <Tag>{agent.type}</Tag>
+                    </Space>
+                    <div className="agent-meta">
+                      <span>更新时间 {agent.updated}</span>
+                      <span>调用次数 {agent.calls}</span>
+                    </div>
+                  </div>
+                  <Button size="small" onClick={() => navigate('/dev/agent-manage')}>
+                    {agent.next}
+                  </Button>
+                </div>
+              ))}
+            </Card>
+          </Col>
+
+          <Col xs={24} xl={8}>
+            <Card
+              className="section-card todo-card"
+              title={
+                <div className="card-title">
+                  <ClockCircleOutlined />
+                  <span>待办与消息</span>
+                </div>
+              }
+              extra={<Badge count={3} size="small" />}
+              styles={{ body: { padding: 0 } }}
+            >
+              {todoItems.map((item) => (
+                <button
+                  className="todo-row"
+                  key={item.title}
+                  type="button"
+                  onClick={() => navigate('/dev/agent-eval')}
+                >
+                  <span className="todo-icon" style={{ color: item.color, background: `${item.color}12` }}>
+                    {item.icon}
+                  </span>
+                  <span className="todo-copy">
+                    <Text strong>{item.title}</Text>
+                    <Text type="secondary">{item.desc}</Text>
+                  </span>
+                  <RightOutlined />
+                </button>
+              ))}
+            </Card>
+          </Col>
+        </Row>
+
+        <section className="quick-section">
+          <div className="section-heading compact">
+            <div>
+              <Text className="eyebrow">常用能力</Text>
+              <Title level={4}>快捷入口</Title>
+            </div>
+            <Button type="link" size="small" onClick={() => navigate('/dev/space-manage')}>
               空间管理
-              <RightOutlined style={{ fontSize: 10, marginLeft: 4 }} />
+              <RightOutlined />
             </Button>
           </div>
-        </div>
+
+          <div className="quick-grid">
+            {quickEntries.map((entry) => (
+              <button
+                className="quick-tile"
+                key={entry.title}
+                type="button"
+                onClick={() => navigate(entry.path)}
+                style={{ '--entry-color': entry.color } as React.CSSProperties}
+              >
+                <span className="quick-icon">{entry.icon}</span>
+                <span className="quick-copy">
+                  <span className="quick-title">
+                    {entry.title}
+                    {entry.badge && <Badge count={entry.badge} size="small" />}
+                  </span>
+                  <span>{entry.desc}</span>
+                </span>
+                <RightOutlined className="quick-arrow" />
+              </button>
+            ))}
+          </div>
+        </section>
       </div>
 
-      {/* 动画注入 */}
       <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
+        .workbench-page {
+          flex: 1;
+          min-height: 100%;
+          overflow: auto;
+          background: #f4f7fb;
+        }
+
+        .workbench-container {
+          width: min(1220px, calc(100% - 48px));
+          margin: 0 auto;
+          padding: 22px 0 40px;
+        }
+
+        .workbench-header,
+        .workflow-section,
+        .quick-section,
+        .section-card {
+          border: 1px solid #e5eaf3;
+          border-radius: 8px;
+          background: #fff;
+          box-shadow: 0 4px 14px rgba(28, 45, 74, 0.04);
+        }
+
+        .workbench-header {
+          padding: 22px 24px;
+          margin-bottom: 16px;
+          background:
+            linear-gradient(135deg, rgba(22, 119, 255, 0.08), rgba(19, 194, 194, 0.04) 44%, rgba(255, 255, 255, 0.96) 100%),
+            #fff;
+        }
+
+        .workspace-meta,
+        .header-main,
+        .header-metrics,
+        .stat-top,
+        .section-heading,
+        .card-title,
+        .agent-row,
+        .step-title-row {
+          display: flex;
+          align-items: center;
+        }
+
+        .workspace-meta {
+          gap: 12px;
+          margin-bottom: 18px;
+        }
+
+        .workspace-avatar {
+          background: linear-gradient(135deg, #1677ff, #4096ff);
+          font-weight: 700;
+        }
+
+        .workspace-name {
+          color: #17233d;
+          font-size: 15px;
+          font-weight: 700;
+        }
+
+        .workspace-sub {
+          margin-top: 3px;
+          color: #697586;
+          font-size: 12px;
+        }
+
+        .trust-tag {
+          margin-inline-end: 0;
+          border-color: #b7ebc6;
+          color: #237804;
+          background: #f6ffed;
+        }
+
+        .header-main {
+          justify-content: space-between;
+          gap: 24px;
+        }
+
+        .header-title {
+          margin: 0 0 6px !important;
+          color: #0f1f3a !important;
+          font-size: 22px !important;
+          font-weight: 700 !important;
+        }
+
+        .header-desc {
+          color: #5f6b7a;
+          font-size: 14px;
+        }
+
+        .header-metrics {
+          min-width: 420px;
+          justify-content: flex-end;
+          padding: 12px 16px;
+          border: 1px solid rgba(22, 119, 255, 0.12);
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.72);
+        }
+
+        .header-metric {
+          min-width: 94px;
+          text-align: center;
+        }
+
+        .header-metric strong {
+          display: block;
+          color: #1677ff;
+          font-size: 23px;
+          line-height: 28px;
+        }
+
+        .header-metric span {
+          color: #697586;
+          font-size: 12px;
+        }
+
+        .header-divider {
+          width: 1px;
+          height: 36px;
+          margin: 0 14px;
+          background: #e5eaf3;
+        }
+
+        .workflow-section,
+        .quick-section {
+          padding: 20px 22px 22px;
+          margin-bottom: 16px;
+        }
+
+        .section-heading {
+          justify-content: space-between;
+          gap: 20px;
+          margin-bottom: 16px;
+        }
+
+        .section-heading.compact {
+          margin-bottom: 14px;
+        }
+
+        .section-heading h4 {
+          margin: 2px 0 0 !important;
+          color: #17233d;
+          font-size: 16px !important;
+        }
+
+        .eyebrow {
+          color: #7a8699;
+          font-size: 12px;
+        }
+
+        .workflow-progress {
+          width: 220px;
+        }
+
+        .workflow-rail {
+          display: grid;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        .workflow-step {
+          position: relative;
+          min-height: 146px;
+          padding: 16px;
+          border: 1px solid #e5eaf3;
+          border-radius: 8px;
+          background: linear-gradient(180deg, #fff 0%, #fbfdff 100%);
+          text-align: left;
+          cursor: pointer;
+          transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+        }
+
+        .workflow-step:hover,
+        .quick-tile:hover,
+        .todo-row:hover,
+        .agent-row:hover,
+        .stat-card:hover {
+          border-color: #91caff;
+          box-shadow: 0 8px 20px rgba(28, 45, 74, 0.08);
+          transform: translateY(-1px);
+        }
+
+        .step-index {
+          position: absolute;
+          top: 12px;
+          right: 14px;
+          color: #edf2f7;
+          font-size: 34px;
+          font-weight: 800;
+          line-height: 1;
+        }
+
+        .step-icon {
+          width: 38px;
+          height: 38px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 14px;
+          border-radius: 8px;
+          color: var(--step-color);
+          background: color-mix(in srgb, var(--step-color) 12%, white);
+          font-size: 18px;
+        }
+
+        .step-copy {
+          position: relative;
+          z-index: 1;
+        }
+
+        .step-title-row {
+          justify-content: space-between;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+
+        .step-title-row .ant-tag {
+          margin-inline-end: 0;
+          color: var(--step-color);
+          border-color: color-mix(in srgb, var(--step-color) 26%, white);
+          background: color-mix(in srgb, var(--step-color) 8%, white);
+        }
+
+        .step-copy .ant-typography-secondary {
+          display: block;
+          min-height: 38px;
+          font-size: 12px;
+          line-height: 19px;
+        }
+
+        .step-arrow {
+          position: absolute;
+          right: 14px;
+          bottom: 14px;
+          color: #b8c2d2;
+          font-size: 12px;
+        }
+
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          gap: 12px;
+          margin-bottom: 16px;
+        }
+
+        .stat-card {
+          height: 118px;
+          border-color: #e5eaf3;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+        }
+
+        .stat-top {
+          justify-content: space-between;
+          margin-bottom: 4px;
+        }
+
+        .stat-top .ant-typography {
+          font-size: 12px;
+        }
+
+        .stat-icon {
+          font-size: 17px;
+          opacity: 0.72;
+        }
+
+        .stat-value-row {
+          display: flex;
+          align-items: baseline;
+          gap: 4px;
+        }
+
+        .stat-value {
+          font-size: 25px;
+          font-weight: 750;
+          line-height: 32px;
+        }
+
+        .stat-suffix,
+        .stat-desc {
+          color: #7a8699;
+          font-size: 12px;
+        }
+
+        .stat-chart {
+          height: 34px;
+          margin-top: -2px;
+        }
+
+        .main-grid {
+          margin-bottom: 16px;
+        }
+
+        .section-card {
+          height: 100%;
+          overflow: hidden;
+        }
+
+        .section-card .ant-card-head {
+          min-height: 50px;
+          border-bottom-color: #edf2f7;
+        }
+
+        .card-title {
+          gap: 8px;
+          color: #17233d;
+          font-weight: 700;
+        }
+
+        .card-title .anticon {
+          color: #1677ff;
+        }
+
+        .agent-row {
+          min-height: 78px;
+          padding: 14px 18px;
+          gap: 12px;
+          border-bottom: 1px solid #edf2f7;
+          transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+        }
+
+        .agent-row:last-child {
+          border-bottom: 0;
+        }
+
+        .agent-row:hover {
+          background: #fbfdff;
+        }
+
+        .agent-icon {
+          width: 38px;
+          height: 38px;
+          flex: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 8px;
+          color: #1677ff;
+          background: #e6f4ff;
+          font-size: 18px;
+        }
+
+        .agent-main {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .agent-meta {
+          display: flex;
+          gap: 18px;
+          margin-top: 8px;
+          color: #7a8699;
+          font-size: 12px;
+        }
+
+        .todo-row {
+          width: 100%;
+          min-height: 64px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 13px 16px;
+          border: 0;
+          border-bottom: 1px solid #edf2f7;
+          background: #fff;
+          text-align: left;
+          cursor: pointer;
+          transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+        }
+
+        .todo-row:last-child {
+          border-bottom: 0;
+        }
+
+        .todo-row:hover {
+          background: #fbfdff;
+        }
+
+        .todo-icon {
+          width: 34px;
+          height: 34px;
+          flex: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 8px;
+          font-size: 16px;
+        }
+
+        .todo-copy {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .todo-copy .ant-typography {
+          display: block;
+          font-size: 13px;
+        }
+
+        .todo-copy .ant-typography-secondary {
+          margin-top: 3px;
+          font-size: 12px;
+        }
+
+        .todo-row > .anticon {
+          color: #b8c2d2;
+          font-size: 12px;
+        }
+
+        .quick-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        .quick-tile {
+          min-height: 78px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 14px;
+          border: 1px solid #e5eaf3;
+          border-radius: 8px;
+          background: #fff;
+          text-align: left;
+          cursor: pointer;
+          transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+        }
+
+        .quick-icon {
+          width: 38px;
+          height: 38px;
+          flex: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 8px;
+          color: var(--entry-color);
+          background: color-mix(in srgb, var(--entry-color) 10%, white);
+          font-size: 18px;
+        }
+
+        .quick-copy {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .quick-title {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #17233d;
+          font-size: 14px;
+          font-weight: 700;
+        }
+
+        .quick-copy > span:last-child {
+          display: block;
+          margin-top: 4px;
+          color: #7a8699;
+          font-size: 12px;
+        }
+
+        .quick-arrow {
+          color: #b8c2d2;
+          font-size: 12px;
+        }
+
+        @media (max-width: 1180px) {
+          .workbench-container {
+            width: calc(100% - 32px);
+          }
+
+          .header-main {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+
+          .header-metrics {
+            width: 100%;
+            min-width: 0;
+            justify-content: space-between;
+          }
+
+          .workflow-rail,
+          .stats-grid,
+          .quick-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 720px) {
+          .workbench-container {
+            width: calc(100% - 24px);
+          }
+
+          .header-metrics,
+          .workflow-rail,
+          .stats-grid,
+          .quick-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .header-metrics {
+            display: grid;
+            gap: 10px;
+          }
+
+          .header-divider {
+            display: none;
+          }
+
+          .workflow-progress {
+            display: none;
+          }
         }
       `}</style>
     </div>

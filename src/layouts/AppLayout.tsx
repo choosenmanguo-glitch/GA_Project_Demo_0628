@@ -4,6 +4,7 @@ import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import HeaderNav from './HeaderNav';
 import TabBar from '@/components/TabBar';
+import AppErrorBoundary from '@/components/AppErrorBoundary';
 import { topNavModules, moduleSideMenus, moduleLabelMap, resolvePageLabel } from '@/config';
 import { useTabs } from '@/contexts/TabsContext';
 import type { MenuProps } from 'antd';
@@ -24,8 +25,9 @@ const MasterLayout: React.FC<MasterLayoutProps> = ({ children }) => {
     // 排除根路径和仅含模块前缀的路径
     if (path === '/') return;
     const label = resolvePageLabel(path);
+    setActivePath(path);
     addTab(path, label);
-  }, [location.pathname]);
+  }, [location.pathname, addTab, setActivePath]);
 
   // 判断当前激活的一级模块
   const activeModule = useMemo(() => {
@@ -192,7 +194,9 @@ const MasterLayout: React.FC<MasterLayoutProps> = ({ children }) => {
               flex: 1,
             }}
           >
-            {children}
+            <AppErrorBoundary key={location.pathname}>
+              {children}
+            </AppErrorBoundary>
           </div>
         </div>
       </div>

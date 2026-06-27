@@ -17,14 +17,25 @@ interface TabsContextValue {
 
 const TabsContext = createContext<TabsContextValue | null>(null);
 
-const STORAGE_KEY = 'platform-tabs';
+const STORAGE_KEY = 'platform-tabs-v2';
 
 /** 从 sessionStorage 恢复标签栈 */
 function loadTabs(): TabInfo[] {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((tab): tab is TabInfo => (
+      tab
+      && typeof tab.path === 'string'
+      && tab.path.startsWith('/')
+      && typeof tab.label === 'string'
+      && tab.label.length > 0
+    ));
+  } catch {
+    sessionStorage.removeItem(STORAGE_KEY);
+  }
   return [];
 }
 

@@ -6,7 +6,7 @@ import {
   CodeOutlined, FolderOpenOutlined, CheckCircleFilled, ClockCircleOutlined,
   QuestionCircleOutlined,
   FileTextOutlined, ToolOutlined, DatabaseOutlined,
-  CloudServerOutlined, ThunderboltOutlined, PlusOutlined, SendOutlined,
+  CloudServerOutlined, ThunderboltOutlined, PlusOutlined,
 } from '@ant-design/icons';
 import { mockResources, type ResourceItem, type ResourceType } from '@/mock/data';
 
@@ -73,7 +73,8 @@ export default function ResourceSquarePage() {
 
   const filteredResources = useMemo(() => {
     return publishedResources.filter(r => {
-      if (activeTab !== 'all' && r.type !== activeTab) return false;
+      if (activeTab === 'featured' && !r.isTop) return false;
+      if (activeTab !== 'all' && activeTab !== 'featured' && r.type !== activeTab) return false;
       if (searchText) {
         const kw = searchText.toLowerCase();
         if (!r.name.toLowerCase().includes(kw) && !r.description.toLowerCase().includes(kw) && !r.owner.toLowerCase().includes(kw)) return false;
@@ -95,6 +96,7 @@ export default function ResourceSquarePage() {
     const byType = (t: ResourceType) => publishedResources.filter(r => r.type === t).length;
     return [
       { label: '资源总数', value: publishedResources.length, color: '#1677ff', key: 'all', primary: true },
+      { label: '精选推荐', value: publishedResources.filter(r => r.isTop).length, color: '#1677ff', key: 'featured' },
       { label: '模型', value: byType('模型'), color: '#1677ff', key: '模型' },
       { label: 'API', value: byType('API'), color: '#52c41a', key: 'API' },
       { label: '连接器', value: byType('连接器'), color: '#722ed1', key: '连接器' },
@@ -133,18 +135,6 @@ export default function ResourceSquarePage() {
           </div>
           <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
             <Button
-              icon={<SendOutlined />}
-              style={{
-                borderRadius: 6,
-                borderColor: '#d9d9d9',
-                color: '#333',
-                fontWeight: 500,
-                fontSize: 13,
-              }}
-            >
-              申请资源
-            </Button>
-            <Button
               type="primary"
               icon={<PlusOutlined />}
               style={{
@@ -155,109 +145,6 @@ export default function ResourceSquarePage() {
             >
               发布资源
             </Button>
-          </div>
-        </div>
-
-        {/* ═══ 1.5 精选资源 ═══ */}
-        <div style={{ marginBottom: 18 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <div style={{ width: 4, height: 16, borderRadius: 2, background: '#1677ff' }} />
-            <Text strong style={{ fontSize: 13, color: '#1D2129' }}>精选推荐</Text>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-            {publishedResources
-              .filter(r => r.isTop && ['r1', 'r9', 'r19'].includes(r.id))
-              .sort((a, b) => b.installCount - a.installCount)
-              .map(resource => {
-                const tc = typeConfig[resource.type];
-                const calls = mockCallCount(resource.installCount);
-                return (
-                  <div
-                    key={resource.id}
-                    onClick={() => setDetailResource(resource)}
-                    style={{
-                      background: '#fff',
-                      borderRadius: 8,
-                      border: '1px solid #E5EAF3',
-                      padding: '16px 20px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 14,
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.borderColor = '#BCC7DB';
-                      e.currentTarget.style.boxShadow = '0 3px 12px rgba(0,0,0,0.05)';
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.borderColor = '#E5EAF3';
-                      e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)';
-                    }}
-                  >
-                    {/* 图标 */}
-                    <div style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 10,
-                      background: tc.bg,
-                      color: tc.color,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 20,
-                      flexShrink: 0,
-                    }}>
-                      {tc.icon}
-                    </div>
-                    {/* 信息 */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontSize: 14,
-                        fontWeight: 600,
-                        color: '#1D2129',
-                        lineHeight: '22px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}>
-                        {resource.name}
-                      </div>
-                      <Text style={{
-                        fontSize: 12,
-                        color: '#7A8599',
-                        lineHeight: '18px',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 1,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        marginTop: 2,
-                      }}>
-                        {resource.description}
-                      </Text>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                        <Tag style={{
-                          borderRadius: 4, margin: 0, fontSize: 11, lineHeight: '18px',
-                          background: tc.bg, color: tc.color, border: 'none',
-                        }}>
-                          {resource.type}
-                        </Tag>
-                        <Text style={{ fontSize: 11, color: '#7A8599' }}>
-                          {resource.installCount.toLocaleString()} 次安装
-                        </Text>
-                      </div>
-                    </div>
-                    {/* 调用次数 */}
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontSize: 11, color: '#7A8599', marginBottom: 2 }}>调用次数</div>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#1D2129' }}>
-                        {calls.toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
           </div>
         </div>
 
@@ -329,8 +216,8 @@ export default function ResourceSquarePage() {
         {sortedResources.length > 0 ? (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(298px, 1fr))',
-            gap: 14,
+            gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+            gap: 16,
           }}>
             {sortedResources.map(resource => {
               const tc = typeConfig[resource.type];
@@ -343,7 +230,6 @@ export default function ResourceSquarePage() {
                     background: '#fff',
                     borderRadius: 8,
                     border: '1px solid #E5EAF3',
-                    borderTop: `3px solid ${tc.color}`,
                     overflow: 'hidden',
                     transition: 'all 0.2s ease',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
@@ -353,36 +239,30 @@ export default function ResourceSquarePage() {
                   }}
                   onMouseEnter={e => {
                     e.currentTarget.style.borderColor = '#BCC7DB';
-                    e.currentTarget.style.borderTopColor = tc.color;
                     e.currentTarget.style.boxShadow = '0 3px 12px rgba(0,0,0,0.05), 0 1px 4px rgba(0,0,0,0.03)';
                     e.currentTarget.style.transform = 'translateY(-1px)';
                   }}
                   onMouseLeave={e => {
                     e.currentTarget.style.borderColor = '#E5EAF3';
-                    e.currentTarget.style.borderTopColor = tc.color;
                     e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)';
                     e.currentTarget.style.transform = 'translateY(0)';
                   }}
                 >
                   {/* ── Header: icon + name + pin ── */}
-                  <div style={{ padding: '16px 18px 0', position: 'relative' }}>
-                    {resource.isTop && (
+                  <div style={{ padding: '18px 18px 0', position: 'relative' }}>
+                    {resource.isTop && activeTab !== 'featured' && (
                       <div style={{
                         position: 'absolute',
-                        top: 6,
-                        right: 14,
+                        top: 16,
+                        right: 18,
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 3,
+                        gap: 4,
                         fontSize: 11,
-                        color: '#D48806',
-                        background: '#FFFBE6',
-                        border: '1px solid #FFE58F',
-                        borderRadius: 4,
-                        padding: '1px 7px',
+                        color: '#8A94A6',
                         fontWeight: 500,
                       }}>
-                        <PushpinFilled style={{ fontSize: 9 }} />置顶
+                        <PushpinFilled style={{ fontSize: 9, color: '#B0B8C8' }} />精选
                       </div>
                     )}
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
@@ -408,6 +288,7 @@ export default function ResourceSquarePage() {
                           color: '#1D2129',
                           lineHeight: '22px',
                           marginBottom: 6,
+                          paddingRight: resource.isTop && activeTab !== 'featured' ? 44 : 0,
                           display: '-webkit-box',
                           WebkitLineClamp: 1,
                           WebkitBoxOrient: 'vertical',
@@ -458,32 +339,31 @@ export default function ResourceSquarePage() {
 
                   {/* ── Metrics ── */}
                   <div style={{
-                    margin: '12px 18px 0',
-                    padding: '10px 14px',
-                    background: '#F7F9FC',
-                    borderRadius: 6,
+                    margin: '14px 18px 0',
+                    paddingTop: 11,
+                    borderTop: '1px solid #F0F2F5',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 0,
+                    gap: 10,
                   }}>
-                    <div style={{ flex: 1, textAlign: 'center' }}>
-                      <div style={{ fontSize: 11, color: '#7A8599', marginBottom: 2 }}>安装次数</div>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#1D2129', lineHeight: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                      <span style={{ fontSize: 12, color: '#7A8599' }}>安装</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#3A4556' }}>
                         {resource.installCount.toLocaleString()}
-                      </div>
+                      </span>
                     </div>
-                    <div style={{ width: 1, height: 28, background: '#E5EAF3' }} />
-                    <div style={{ flex: 1, textAlign: 'center' }}>
-                      <div style={{ fontSize: 11, color: '#7A8599', marginBottom: 2 }}>调用次数</div>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#1D2129', lineHeight: 1 }}>
+                    <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#CBD3DF' }} />
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                      <span style={{ fontSize: 12, color: '#7A8599' }}>调用</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#1D2129' }}>
                         {calls.toLocaleString()}
-                      </div>
+                      </span>
                     </div>
                   </div>
 
                   {/* ── Footer: owner + action ── */}
                   <div style={{
-                    padding: '12px 18px 14px',
+                    padding: '12px 18px 16px',
                     marginTop: 'auto',
                     display: 'flex',
                     alignItems: 'center',
