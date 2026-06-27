@@ -145,12 +145,11 @@ const FilterBar: React.FC<FilterBarProps> = ({
           <Radio.Group
             value={viewMode}
             onChange={(e) => onViewModeChange(e.target.value)}
-            size="small"
             optionType="button"
             style={{ marginLeft: 8 }}
           >
-            <Radio.Button value="table" style={{ padding: '0 8px', height: 28, lineHeight: '26px' }}><UnorderedListOutlined style={{ fontSize: 13 }} /></Radio.Button>
-            <Radio.Button value="card" style={{ padding: '0 8px', height: 28, lineHeight: '26px' }}><AppstoreOutlined style={{ fontSize: 13 }} /></Radio.Button>
+            <Radio.Button value="table"><UnorderedListOutlined /></Radio.Button>
+            <Radio.Button value="card"><AppstoreOutlined /></Radio.Button>
           </Radio.Group>
         )}
       </div>

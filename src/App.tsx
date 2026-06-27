@@ -17,7 +17,12 @@ import OpsMonitorPage from './pages/ops-monitor';
 import OpsInsightPage from './pages/ops-insight';
 import OpsAlertPage from './pages/ops-alert';
 import OpsSessionsPage from './pages/ops-sessions';
+import AgentEvalPage from './pages/agent-eval';
+import AgentTemplateMarket from './pages/agent-template';
+import AgentConfigPage from './pages/agent-config';
 import PlaceholderPage from './pages/Placeholder';
+import ResourceSquarePage from './pages/resource-square';
+import MyResourcesPage from './pages/my-resources';
 
 /** 通过 MasterLayout 包装的路由 */
 function AppRoutes() {
@@ -37,10 +42,12 @@ function AppRoutes() {
         <Route path="/dev" element={<Navigate to="/dev/workbench" replace />} />
         <Route path="/dev/workbench" element={<WorkbenchPage />} />
         <Route path="/dev/agent-build" element={<AgentBuildPage />} />
+        <Route path="/dev/agent-build/template" element={<AgentTemplateMarket />} />
+        <Route path="/dev/agent-config" element={<AgentConfigPage />} />
         <Route path="/dev/agent-manage" element={<AgentManagePage />} />
-        <Route path="/dev/agent-eval" element={<PlaceholderPage title="智能体测评" description="测评任务 / 测评集 / 评估器" />} />
-        <Route path="/dev/resource-square" element={<PlaceholderPage title="资源广场" description="浏览和应用平台共享资源" />} />
-        <Route path="/dev/my-resources" element={<PlaceholderPage title="我的资源" description="管理个人上传或收藏的资源" />} />
+        <Route path="/dev/agent-eval" element={<AgentEvalPage />} />
+        <Route path="/dev/resource-square" element={<ResourceSquarePage />} />
+        <Route path="/dev/my-resources" element={<MyResourcesPage />} />
         <Route path="/dev/models" element={<ModelsPage />} />
         <Route path="/dev/prompts" element={<PromptsPage />} />
         <Route path="/dev/tools" element={<ToolsPage />} />

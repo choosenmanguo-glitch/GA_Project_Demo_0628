@@ -1,14 +1,15 @@
-﻿import React, { useState, useMemo } from 'react';
-import { Table, Tag, Space, Typography, Button, Row, Col } from 'antd';
-import { ExpandAltOutlined, CompressOutlined, ReloadOutlined, BarChartOutlined } from '@ant-design/icons';
+import React, { useState, useMemo } from 'react';
+import { Table, Tag, Space, Typography, Button } from 'antd';
+import { ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import PageHeader from '@/components/PageHeader';
 import FilterBar from '@/components/FilterBar';
 import StatCards from '@/components/StatCards';
+import { SessionDetailDrawer } from '@/components/SessionDetailDrawer';
 import type { FilterField } from '@/components/FilterBar';
-import { mockSessions, type SessionLog, type SessionMessage } from '@/mock/data';
+import { mockSessions, type SessionLog } from '@/mock/data';
 
-const { Text, Paragraph } = Typography;
+const { Text } = Typography;
 
 const channelColorMap: Record<string, string> = { 'Web端': 'blue', 'API': 'purple', '企业微信': 'green', '第三方': 'orange' };
 
@@ -27,7 +28,7 @@ const filterFields: FilterField[] = [
 
 export default function OpsSessionsPage() {
   const [filters, setFilters] = useState<Record<string, any>>({ keyword: '', status: undefined });
-  const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
+  const [drawerSession, setDrawerSession] = useState<SessionLog | null>(null);
 
   const filteredSessions = useMemo(() => {
     return mockSessions.filter((s) => {
@@ -60,51 +61,9 @@ export default function OpsSessionsPage() {
       return <Tag style={{ color: style.color, background: style.bg, borderColor: style.color }}>{s}</Tag>;
     }},
     { title: '操作', width: 80, render: (_, r) => (
-      <Button type="link" size="small" icon={expandedRowKeys.includes(r.id) ? <CompressOutlined /> : <ExpandAltOutlined />}
-        onClick={() => setExpandedRowKeys(expandedRowKeys.includes(r.id) ? expandedRowKeys.filter(k => k !== r.id) : [...expandedRowKeys, r.id])}>
-        {expandedRowKeys.includes(r.id) ? '收起' : '详情'}
-      </Button>
+      <Button type="link" size="small" onClick={() => setDrawerSession(r)}>查看详情</Button>
     )},
-  ], [expandedRowKeys]);
-
-  const expandedRender = (record: SessionLog) => (
-    <div style={{ padding: '8px 16px 16px', background: '#fafafa', borderLeft: '3px solid #1677ff' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Text strong style={{ fontSize: 15 }}>对话详情</Text>
-        <Space><Text type="secondary" style={{ fontSize: 13 }}>共 {record.messageCount} 条消息 · Token: {record.tokenConsumption.toLocaleString()}</Text><Button size="small" icon={<ReloadOutlined />}>加载全部</Button></Space>
-      </div>
-      <div style={{ marginBottom: 16, padding: '12px 16px', background: '#fff', borderRadius: 8, border: '1px solid #f0f0f0' }}>
-        <Text type="secondary" style={{ fontSize: 12 }}>会话渠道: {record.channel} | 用户: {record.userName} | 空间: {record.spaceName}</Text>
-      </div>
-      {record.messages ? (
-        <div style={{ maxHeight: 500, overflow: 'auto' }}>
-          {record.messages.map((msg: SessionMessage) => (
-            <div key={msg.id} style={{ marginBottom: 16, display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-              <div style={{ maxWidth: '75%' }}>
-                <div style={{ marginBottom: 4, display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start', gap: 8, alignItems: 'center' }}>
-                  <Tag color={msg.role === 'user' ? 'blue' : 'green'} style={{ borderRadius: 4, margin: 0 }}>{msg.role === 'user' ? '用户' : '智能体'}</Tag>
-                  <Text type="secondary" style={{ fontSize: 11 }}>{msg.time}</Text>
-                  {msg.role === 'assistant' && msg.latency !== undefined && <Text type="secondary" style={{ fontSize: 11 }}>延迟 {msg.latency}ms</Text>}
-                  {msg.hasError && <Tag color="red" style={{ borderRadius: 4, margin: 0 }}>出错</Tag>}
-                </div>
-                <div style={{ padding: '12px 16px', borderRadius: 12, background: msg.role === 'user' ? '#1677ff' : '#f5f5f5', color: msg.role === 'user' ? '#fff' : '#333', borderBottomRightRadius: msg.role === 'user' ? 4 : 12, borderBottomLeftRadius: msg.role === 'user' ? 12 : 4 }}>
-                  <Paragraph style={{ margin: 0, fontSize: 13, whiteSpace: 'pre-line' }}>{msg.content}</Paragraph>
-                </div>
-                {msg.role === 'assistant' && msg.tokens && msg.model && (
-                  <div style={{ marginTop: 4, display: 'flex', gap: 12 }}>
-                    <Text type="secondary" style={{ fontSize: 11 }}>模型: {msg.model}</Text>
-                    <Text type="secondary" style={{ fontSize: 11 }}>Token: {msg.tokens.input}(in) + {msg.tokens.output}(out)</Text>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div style={{ textAlign: 'center', padding: '32px 0' }}><Text type="secondary">暂无该会话的完整对话记录</Text></div>
-      )}
-    </div>
-  );
+  ], []);
 
   return (
     <div style={{ flex: 1, padding: '16px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -124,18 +83,15 @@ export default function OpsSessionsPage() {
             rowKey="id" columns={sessionColumns} dataSource={filteredSessions} size="middle"
             pagination={{ defaultPageSize: 10, showSizeChanger: true, showTotal: (t) => `共 ${t} 条` }}
             style={{ marginTop: 12 }}
-            expandable={{
-              expandedRowRender: expandedRender,
-              expandedRowKeys,
-              onExpand: (expanded, record) => {
-                if (expanded) setExpandedRowKeys([...expandedRowKeys, record.id]);
-                else setExpandedRowKeys(expandedRowKeys.filter(k => k !== record.id));
-              },
-              expandIcon: () => null,
-            }}
           />
         </div>
       </div>
+
+      <SessionDetailDrawer
+        open={drawerSession !== null}
+        session={drawerSession}
+        onClose={() => setDrawerSession(null)}
+      />
     </div>
   );
 }

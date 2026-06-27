@@ -43,11 +43,7 @@ export const topNavModules = [
 /** 开发中心 - 完整菜单 */
 export const devSideMenuItems: MenuProps['items'] = [
   {
-    type: 'group',
-    label: '',
-    children: [
-      { key: '/dev/workbench', icon: React.createElement(DesktopOutlined), label: '工作台' },
-    ],
+    key: '/dev/workbench', icon: React.createElement(DesktopOutlined), label: '工作台',
   },
   {
     type: 'group',

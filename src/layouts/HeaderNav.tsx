@@ -7,7 +7,6 @@ import {
   SettingOutlined,
   HomeOutlined,
   SafetyCertificateOutlined,
-  RobotOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { topNavModules, moduleLabelMap } from '@/config';
@@ -34,19 +33,6 @@ const ShieldIcon = () => (
 );
 
 /** AI 火花 SVG - 全局助手专属图标 */
-const SparklesIcon = ({ color = '#7c3aed', size = 20 }: { color?: string; size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <defs>
-      <linearGradient id="sparkle-grad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#7c3aed" />
-        <stop offset="50%" stopColor="#a855f7" />
-        <stop offset="100%" stopColor="#6366f1" />
-      </linearGradient>
-    </defs>
-    <path d="M12 2L14.5 9.5H22L15.5 14L17 21L12 17L7 21L8.5 14L2 9.5H9.5L12 2Z" fill="url(#sparkle-grad)" />
-  </svg>
-);
-
 const HeaderNav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -226,13 +212,13 @@ const HeaderNav: React.FC = () => {
                 borderRadius: 10,
                 cursor: 'pointer',
                 background: assistantOpen
-                  ? 'linear-gradient(135deg, rgba(124,58,237,0.12), rgba(99,102,241,0.08))'
+                  ? 'linear-gradient(135deg, rgba(22,119,255,0.12), rgba(124,58,237,0.08))'
                   : 'transparent',
                 transition: 'all 0.2s',
                 position: 'relative',
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(124,58,237,0.12), rgba(99,102,241,0.08))';
+                (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(22,119,255,0.12), rgba(124,58,237,0.08))';
               }}
               onMouseLeave={(e) => {
                 if (!assistantOpen) {
@@ -240,7 +226,11 @@ const HeaderNav: React.FC = () => {
                 }
               }}
             >
-              <SparklesIcon size={22} />
+              <img
+                src={new URL('../png/assistant-chat-bubble-24.png', import.meta.url).href}
+                alt="AI 智能助手"
+                style={{ width: 24, height: 24, display: 'block', objectFit: 'contain' }}
+              />
               {/* 在线脉冲点 */}
               <div
                 style={{

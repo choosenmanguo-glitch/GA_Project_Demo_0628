@@ -548,10 +548,10 @@ const WorkbenchPage: React.FC = () => {
         </div>
 
         {/* ========== 三、数据指标区 ========== */}
-        <Row gutter={16} style={{ marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 24 }}>
           {statCards.map((stat) => (
-            <Col span={stat.chart ? 6 : stat.chart ? 6 : 24 / statCards.length} key={stat.title}>
               <Card
+                key={stat.title}
                 size="small"
                 onClick={stat.onClick}
                 style={{
@@ -643,9 +643,8 @@ const WorkbenchPage: React.FC = () => {
                   </>
                 )}
               </Card>
-            </Col>
           ))}
-        </Row>
+        </div>
 
         {/* ========== 四、快捷入口区 ========== */}
         <div

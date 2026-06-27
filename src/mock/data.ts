@@ -1,4 +1,4 @@
-/** Mock 数据 - 所有模块的模拟数据集中管理 */
+﻿/** Mock 数据 - 所有模块的模拟数据集中管理 */
 
 // ==================== 模型管理 ====================
 export interface ModelItem {
@@ -57,7 +57,7 @@ export const mockPrompts: PromptTemplate[] = [
 export interface ToolItem {
   id: string;
   name: string;
-  type: '内置' | 'API' | '工作流';
+  type: '插件' | 'API' | '工作流';
   provider: string;
   description: string;
   status: '启用' | '停用';
@@ -71,12 +71,12 @@ export interface ToolItem {
 export const mockTools: ToolItem[] = [
   { id: '1', name: '人口信息查询', type: 'API', provider: '全国人口基础信息库', description: '根据身份证号、姓名等要素检索人员基本信息、户籍信息、居住证信息', status: '启用', callCount: 12580, successRate: 99.2, createTime: '2026-01-10', author: '官方插件', params: [{ name: 'idCard', type: 'string', required: true, description: '身份证号' }, { name: 'name', type: 'string', required: false, description: '姓名' }] },
   { id: '2', name: '车辆轨迹查询', type: 'API', provider: '交警缉查布控系统', description: '基于车牌号查询辖区卡口过车记录和通行轨迹聚合分析', status: '启用', callCount: 8960, successRate: 98.5, createTime: '2026-01-15', author: '官方插件', params: [{ name: 'plateNumber', type: 'string', required: true, description: '车牌号' }, { name: 'startTime', type: 'string', required: true, description: '开始时间' }, { name: 'endTime', type: 'string', required: true, description: '结束时间' }] },
-  { id: '3', name: '人像比对', type: '内置', provider: '人像多维比对引擎', description: '集成多种人脸识别算法，提供照片比对、视频流人脸检索及身份确认服务', status: '启用', callCount: 4520, successRate: 95.8, createTime: '2026-02-01', author: '第三方接入', params: [{ name: 'imageBase64', type: 'string', required: true, description: '人脸照片Base64编码' }, { name: 'threshold', type: 'number', required: false, description: '相似度阈值(0-1)' }] },
+  { id: '3', name: '人像比对', type: '插件', provider: '人像多维比对引擎', description: '集成多种人脸识别算法，提供照片比对、视频流人脸检索及身份确认服务', status: '启用', callCount: 4520, successRate: 95.8, createTime: '2026-02-01', author: '第三方接入', params: [{ name: 'imageBase64', type: 'string', required: true, description: '人脸照片Base64编码' }, { name: 'threshold', type: 'number', required: false, description: '相似度阈值(0-1)' }] },
   { id: '4', name: '涉诈基站分析', type: '工作流', provider: '反诈中心', description: '解析电信诈骗嫌疑号码的基站漫游数据，推断作案窝点和移动轨迹', status: '启用', callCount: 2340, successRate: 94.1, createTime: '2026-03-10', author: '反诈中心', params: [{ name: 'phoneNumber', type: 'string', required: true, description: '嫌疑手机号' }, { name: 'timeRange', type: 'string', required: true, description: '查询时间范围' }] },
-  { id: '5', name: '文书智能解析', type: '内置', provider: '文书解析引擎', description: '自动解析PDF/Word格式的法律文书、报案材料，提取结构化信息', status: '启用', callCount: 7890, successRate: 97.3, createTime: '2026-01-20', author: '官方插件', params: [{ name: 'fileUrl', type: 'string', required: true, description: '文件URL或本地路径' }, { name: 'docType', type: 'string', required: false, description: '文书类型' }] },
-  { id: '6', name: '关系图谱生成', type: '内置', provider: '图谱分析引擎', description: '基于人员、通话、资金流水数据自动生成多维关系拓扑图', status: '启用', callCount: 3150, successRate: 96.7, createTime: '2026-02-15', author: '官方插件' },
+  { id: '5', name: '文书智能解析', type: '插件', provider: '文书解析引擎', description: '自动解析PDF/Word格式的法律文书、报案材料，提取结构化信息', status: '启用', callCount: 7890, successRate: 97.3, createTime: '2026-01-20', author: '官方插件', params: [{ name: 'fileUrl', type: 'string', required: true, description: '文件URL或本地路径' }, { name: 'docType', type: 'string', required: false, description: '文书类型' }] },
+  { id: '6', name: '关系图谱生成', type: '插件', provider: '图谱分析引擎', description: '基于人员、通话、资金流水数据自动生成多维关系拓扑图', status: '启用', callCount: 3150, successRate: 96.7, createTime: '2026-02-15', author: '官方插件' },
   { id: '7', name: '警情统计分析', type: '工作流', provider: '指挥中心', description: '按辖区、时段、警情类别统计发案趋势并生成可视化图表', status: '启用', callCount: 5670, successRate: 99.0, createTime: '2026-04-01', author: '指挥中心' },
-  { id: '8', name: '图像识别', type: '内置', provider: '图侦中心', description: '对监控截图和现场照片进行目标检测、行为识别和场景分类', status: '停用', callCount: 890, successRate: 88.5, createTime: '2026-03-20', author: '图侦中心' },
+  { id: '8', name: '图像识别', type: '插件', provider: '图侦中心', description: '对监控截图和现场照片进行目标检测、行为识别和场景分类', status: '停用', callCount: 890, successRate: 88.5, createTime: '2026-03-20', author: '图侦中心' },
 ];
 
 // ==================== 连接器（MCP）管理 ====================
@@ -386,6 +386,49 @@ export interface AgentTemplate {
   tags: string[];
 }
 
+// ==================== 智能体专属对话日志 ====================
+/** 按智能体ID索引的对话日志，用于智能体配置页的日志面板 */
+export const mockAgentSessions: Record<string, SessionLog[]> = {
+  'agent-001': [
+    { id: 'SES-110-0626-001', channel: 'Web端', agentName: '110接警警情分析助手', spaceName: '指挥中心', userName: '李警官', title: '核实今日上午城东区打架斗殴警情详情', messageCount: 12, tokenConsumption: 2560, startTime: '2026-06-26 09:15', lastActive: '2026-06-26 09:32', status: '正常运行', messages: [
+      { id: 'm1', role: 'user', content: '请帮我分析今天上午城东区汽车站报的打架斗殴警情，提取关键要素录入系统。报案人姓吴，男性，约40岁。他说在汽车站广场被两个年轻人打了，鼻梁被打出血，对方骑电动车沿青年大街往东跑了。时间是上午9点半左右。', time: '09:15:12' },
+      { id: 'm2', role: 'assistant', content: '已提取以下警情要素：\n\n- **案发时间**：2026年6月26日上午9:30左右\n- **案发地点**：城东区汽车站广场\n- **报案人**：吴某，男，约40岁\n- **嫌疑人**：2人，年轻男性，骑电动车沿青年大街往东逃窜\n- **案情分类**：故意伤害/斗殴\n- **紧急程度**：P2（30分钟内）\n- **伤情**：鼻梁出血，需进一步核实是否骨折\n\n建议：已自动生成接处警记录草稿，请核实后确认录入。', time: '09:15:18', latency: 3250, tokens: { input: 180, output: 145 }, model: 'DeepSeek-Chat' },
+      { id: 'm3', role: 'user', content: '请补充一下：报案人手机号是138xxxx5678，身份证号需要我查一下。另外嫌疑人特征之一是其中一个穿黑色卫衣，戴红色头盔。', time: '09:18:05' },
+      { id: 'm4', role: 'assistant', content: '收到，已补充以下信息：\n\n- **报案人联系方式**：138xxxx5678\n- **嫌疑人特征**：\n  - 嫌疑人A：黑色卫衣，戴红色头盔\n  - 嫌疑人B：特征待补充\n\n请提供报案人身份证号后我将进一步关联人口信息库完成录入。', time: '09:18:08', latency: 2780, tokens: { input: 230, output: 98 }, model: 'DeepSeek-Chat' },
+    ]},
+    { id: 'SES-110-0626-002', channel: 'API', agentName: '110接警警情分析助手', spaceName: '指挥中心', userName: '系统调度', title: '批量处理夜间警情记录（22:00-06:00）', messageCount: 4, tokenConsumption: 1820, startTime: '2026-06-26 06:30', lastActive: '2026-06-26 06:35', status: '正常运行' },
+    { id: 'SES-110-0625-001', channel: 'Web端', agentName: '110接警警情分析助手', spaceName: '指挥中心', userName: '张警官', title: '南湖区幸福小区入室盗窃警情分析', messageCount: 8, tokenConsumption: 3120, startTime: '2026-06-25 14:00', lastActive: '2026-06-25 14:22', status: '正常运行', messages: [
+      { id: 'm1', role: 'user', content: '南湖区幸福小区3栋402发生入室盗窃，报案人刘女士说下午回家发现门锁被撬，客厅和主卧被翻动，丢失现金约5000元、金项链一条、笔记本电脑一台。', time: '14:00:22' },
+      { id: 'm2', role: 'assistant', content: '已提取警情要素：\n\n- **案发时间**：2026年6月25日下午\n- **案发地点**：南湖区幸福小区3栋402室\n- **报案人**：刘女士\n- **案件类型**：入室盗窃\n- **损失财物**：现金约5000元、金项链一条、笔记本电脑一台\n- **作案手段**：撬锁入室\n- **紧急程度**：P3\n\n建议：已关联刑侦大队，建议进行现场勘查和周边监控调取。', time: '14:00:28', latency: 4100, tokens: { input: 195, output: 165 }, model: 'DeepSeek-Chat' },
+    ]},
+    { id: 'SES-110-0625-002', channel: '企业微信', agentName: '110接警警情分析助手', spaceName: '指挥中心', userName: '王民警', title: '核实110指挥中心转来的交通纠纷警情', messageCount: 6, tokenConsumption: 1480, startTime: '2026-06-25 10:15', lastActive: '2026-06-25 10:26', status: '部分报错', messages: [
+      { id: 'm1', role: 'user', content: '刚才接到110转来警情：环城北路与解放路交叉口发生两车刮擦，双方司机争执，围观群众较多影响交通。请帮我快速录入系统。', time: '10:15:30' },
+      { id: 'm2', role: 'assistant', content: '警情录入：\n- **案发地点**：环城北路与解放路交叉口\n- **案件类型**：交通事故/两车刮擦\n- **现场情况**：双方争执，围观群众多，影响交通\n- **紧急程度**：P2\n\n建议优先调派附近巡逻民警维持秩序，疏导交通。', time: '10:15:35', latency: 5200, tokens: { input: 168, output: 112 }, model: 'DeepSeek-Chat' },
+      { id: 'm3', role: 'user', content: '好的，请查询一下该路口附近的巡逻警力分布情况。', time: '10:18:00' },
+      { id: 'm4', role: 'assistant', content: '查询工具调用异常，请稍后重试。当前可能的原因：警力调度系统接口暂时不可用，建议通过电话直接联系该辖区派出所。', time: '10:18:05', latency: 8200, tokens: { input: 145, output: 68 }, model: 'DeepSeek-Chat', hasError: true },
+    ]},
+    { id: 'SES-110-0624-001', channel: 'Web端', agentName: '110接警警情分析助手', spaceName: '指挥中心', userName: '李警官', title: '梳理当日接警数据并生成日报汇总', messageCount: 10, tokenConsumption: 4520, startTime: '2026-06-24 23:00', lastActive: '2026-06-24 23:18', status: '正常运行', messages: [
+      { id: 'm1', role: 'user', content: '请帮我生成今日（6月24日）110接警日报汇总，按警情类别、辖区和时间段统计。', time: '23:00:05' },
+      { id: 'm2', role: 'assistant', content: '正在整理今日接警数据...\n\n## 2026年6月24日接警日报\n\n### 总量统计\n- 今日接警总数：47起\n- 有效警情：42起（89.4%）\n- 无效报警：5起\n\n### 按警情类别\n| 类别 | 数量 | 占比 |\n|------|------|------|\n| 治安案件 | 18 | 38.3% |\n| 交通事故 | 12 | 25.5% |\n| 刑事警情 | 7 | 14.9% |\n| 纠纷调解 | 5 | 10.6% |\n| 其他 | 5 | 10.6% |\n\n### 高峰时段：14:00-18:00（18起，占38.3%）', time: '23:00:12', latency: 6400, tokens: { input: 280, output: 420 }, model: 'DeepSeek-Chat' },
+    ]},
+    { id: 'SES-110-0624-002', channel: '第三方', agentName: '110接警警情分析助手', spaceName: '指挥中心', userName: '第三方平台', title: '市民热线转接警情：噪音扰民投诉', messageCount: 3, tokenConsumption: 680, startTime: '2026-06-24 21:00', lastActive: '2026-06-24 21:04', status: '正常运行' },
+    { id: 'SES-110-0623-001', channel: 'Web端', agentName: '110接警警情分析助手', spaceName: '指挥中心', userName: '张警官', title: '工业园区化学品泄漏报警处置记录', messageCount: 14, tokenConsumption: 3850, startTime: '2026-06-23 17:30', lastActive: '2026-06-23 18:05', status: '正常运行', messages: [
+      { id: 'm1', role: 'user', content: '高新区工业园区B区化工厂报警称有不明气体泄漏，多名工人感到头晕恶心。报警人是工厂安全员周先生，电话139xxxx1234。请立即生成应急预案并通知相关部门。', time: '17:30:18' },
+      { id: 'm2', role: 'assistant', content: '⚠️ **紧急警情 - P0级别**\n\n已提取关键信息：\n- **案发地点**：高新区工业园区B区化工厂\n- **事件类型**：危险化学品泄漏\n- **影响范围**：多名工人出现头晕恶心症状\n- **报警人**：周先生 139xxxx1234\n- **紧急程度**：P0（最高级别，立即响应）\n\n已自动执行：\n1. 通知高新区消防支队\n2. 通知市环保局应急科\n3. 通知120急救中心\n4. 通知辖区派出所疏散周边', time: '17:30:25', latency: 2180, tokens: { input: 210, output: 198 }, model: 'DeepSeek-Chat' },
+    ]},
+    { id: 'SES-110-0623-002', channel: '企业微信', agentName: '110接警警情分析助手', spaceName: '指挥中心', userName: '赵民警', title: '查询近期城东区盗窃案趋势', messageCount: 5, tokenConsumption: 1120, startTime: '2026-06-23 10:00', lastActive: '2026-06-23 10:08', status: '正常运行' },
+    { id: 'SES-110-0622-001', channel: 'Web端', agentName: '110接警警情分析助手', spaceName: '指挥中心', userName: '李警官', title: '协助处理老年人走失警情', messageCount: 16, tokenConsumption: 2960, startTime: '2026-06-22 15:30', lastActive: '2026-06-22 16:15', status: '正常运行' },
+    { id: 'SES-110-0621-001', channel: 'API', agentName: '110接警警情分析助手', spaceName: '指挥中心', userName: '系统调度', title: '凌晨自动巡检未处理警情', messageCount: 2, tokenConsumption: 450, startTime: '2026-06-21 03:00', lastActive: '2026-06-21 03:01', status: '全部报错', messages: [
+      { id: 'm1', role: 'user', content: '系统定时任务：扫描过去6小时未处理警情并生成提醒。', time: '03:00:00' },
+      { id: 'm2', role: 'assistant', content: '错误：知识库服务连接超时，无法检索历史警情记录。请检查知识库配置及网络连通性。', time: '03:00:05', latency: 46000, tokens: { input: 56, output: 42 }, model: 'DeepSeek-Chat', hasError: true },
+    ]},
+  ],
+};
+
+// ════════════════════════════════════════════════
+// 模板库
+// ════════════════════════════════════════════════
+
 export const mockTemplates: AgentTemplate[] = [
   { id: 't1', name: '接处警警情分析', description: '从接警通话中快速提取结构化警情要素并自动分类录入，适用于各级110接警中心', scene: '智慧警务', type: '系统预置', modelName: 'DeepSeek-Chat', knowledgeBases: ['警情分类知识库', '接处警规程库'], tools: ['文书智能解析', '人口信息查询'], useCount: 1280, createTime: '2026-01-10', tags: ['接警', '警情分析', '信息提取'] },
   { id: 't2', name: '交通事故认定', description: '基于现场勘查记录和监控描述自动分析事故原因并判定责任，辅助事故处理民警', scene: '交通管理', type: '系统预置', modelName: 'GPT-4o', knowledgeBases: ['道路交通安全法规库'], tools: ['车辆轨迹查询', '图像识别'], useCount: 856, createTime: '2026-02-15', tags: ['交通', '事故认定', '责任判定'] },
@@ -393,4 +436,244 @@ export const mockTemplates: AgentTemplate[] = [
   { id: 't4', name: '笔录智能校对', description: '对笔录文书进行语法纠错、格式规范和法律条款引用校验', scene: '执法规范', type: '系统预置', modelName: 'GPT-4o', knowledgeBases: ['法律法规库', '文书规范库'], tools: ['文书智能解析'], useCount: 1120, createTime: '2026-01-20', tags: ['笔录', '校对', '法条引用'] },
   { id: 't5', name: '社区警务助手', description: '社区民警的日常助手：人口管理、走访记录、矛盾调解一站式工作台', scene: '治安管理', type: '自定义', modelName: 'Qwen-72B-Chat', knowledgeBases: ['户籍信息库', '社区管理规范'], tools: ['人口信息查询'], useCount: 340, createTime: '2026-04-10', tags: ['社区', '走访', '户籍'] },
   { id: 't6', name: '案件摘要生成', description: '智能化案件材料解析与案情摘要自动生成，提升办案效率', scene: '刑事侦查', type: '自定义', modelName: 'Qwen-72B-Chat', knowledgeBases: ['案件卷宗库', '法律法规库'], tools: ['文书智能解析'], useCount: 210, createTime: '2026-05-20', tags: ['案件', '摘要', '自动化'] },
+];
+
+// ════════════════════════════════════════════════
+// 资源广场 / 我的资源
+// ════════════════════════════════════════════════
+
+export type ResourceType = '模型' | 'API' | '连接器' | '知识库' | '提示词' | '插件工具' | '数据连接';
+export type ResourcePublishStatus = '待上架' | '已上架' | '已下架';
+export type ResourcePublicStrategy = '完全公开' | '公开可见授权可用' | '授权可见';
+export type InstallStatus = '未安装' | '已安装' | '安装失败' | '安装中';
+export type AuthSource = '我申请的' | '共享给我的' | '管理员授权';
+
+export interface ResourceItem {
+  id: string;
+  name: string;
+  key: string;
+  type: ResourceType;
+  subType: string;
+  deployType: string;
+  description: string;
+  detail: string; // Markdown 详细介绍
+  publicStrategy: ResourcePublicStrategy;
+  owner: string;
+  publishStatus: ResourcePublishStatus;
+  isTop: boolean;
+  installCount: number;
+  publishDate: string;
+  tags: string[];
+}
+
+export interface UserResourceItem {
+  id: string;
+  resourceId: string;
+  userId: string;
+  resource: ResourceItem;
+  authSource: AuthSource;
+  authExpireDate?: string;
+  installStatus: InstallStatus;
+}
+
+export const mockResources: ResourceItem[] = [
+  {
+    id: 'r1', name: 'DeepSeek-Chat 通用大模型', key: 'deepseek-chat-v1', type: '模型', subType: '大模型',
+    deployType: '公网', description: 'DeepSeek 对话模型，支持长上下文理解与多轮对话，适用于警情分析、案情研判等场景',
+    detail: '## DeepSeek-Chat\n\n**模型能力**：通用对话、长文本理解、多轮对话\n\n**适用场景**：\n- 警情分析提取\n- 案件摘要生成\n- 讯问笔录辅助\n- 日常办公问答\n\n**技术规格**：\n- 最大 Token：32,768\n- 温度范围：0.0-1.5\n- API 端点：`https://api.deepseek.com/v1`\n\n**对接方式**：通过智能网关统一代理，调用方无需直接连接模型供应商。',
+    publicStrategy: '完全公开', owner: '平台管理员', publishStatus: '已上架', isTop: true, installCount: 1420,
+    publishDate: '2026-01-15', tags: ['对话', '大模型', 'DeepSeek'],
+  },
+  {
+    id: 'r2', name: 'DeepSeek-Reasoner 推理模型', key: 'deepseek-reasoner-v1', type: '模型', subType: '大模型',
+    deployType: '公网', description: 'DeepSeek 推理模型，擅长复杂逻辑推理与数学问题，适用于反诈资金链路研判、案件关系分析',
+    detail: '## DeepSeek-Reasoner\n\n**模型能力**：逻辑推理、数学计算、多步推理\n\n**适用场景**：\n- 资金链路穿透研判\n- 案件关系图谱推理\n- 法律条文逻辑分析\n- 复杂案情推理\n\n**技术规格**：\n- 最大 Token：32,768\n- 温度推荐：0.1-0.3\n- API 端点：`https://api.deepseek.com/v1`',
+    publicStrategy: '完全公开', owner: '平台管理员', publishStatus: '已上架', isTop: false, installCount: 890,
+    publishDate: '2026-02-10', tags: ['推理', '数学', 'DeepSeek'],
+  },
+  {
+    id: 'r3', name: 'Qwen-72B-Chat 千问模型', key: 'qwen-72b-chat-int4', type: '模型', subType: '大模型',
+    deployType: '内网', description: '通义千问 72B 量化版，本地私有化部署，保障公安数据安全',
+    detail: '## Qwen-72B-Chat\n\n**部署方式**：本地私有化部署\n\n**模型能力**：通用对话、文本生成、指令遵循\n\n**适用场景**：\n- 涉密案件材料处理\n- 内部公文撰写\n- 刑侦案情分析\n\n**技术规格**：\n- 最大 Token：8,192\n- 部署地址：内网服务器集群\n- 适用等级：非密/秘密',
+    publicStrategy: '授权可见', owner: '科信支队', publishStatus: '已上架', isTop: true, installCount: 320,
+    publishDate: '2026-01-20', tags: ['内网', '千问', '私有化'],
+  },
+  {
+    id: 'r4', name: 'BGE-M3 向量化模型', key: 'bge-m3-embedding', type: '模型', subType: '向量化模型',
+    deployType: '内网', description: 'BGE-M3 多语言向量化模型，用于知识库文档嵌入与语义检索',
+    detail: '## BGE-M3\n\n**模型能力**：文本向量化、语义检索\n\n**适用场景**：\n- 法律法规语义检索\n- 案件卷宗相似度匹配\n- 警情知识库构建\n\n**技术规格**：\n- 向量维度：1024\n- 支持密度和稀疏检索\n- 多语言支持',
+    publicStrategy: '公开可见授权可用', owner: '科信支队', publishStatus: '已上架', isTop: false, installCount: 560,
+    publishDate: '2026-02-28', tags: ['向量化', 'Embedding', 'BAAI'],
+  },
+  {
+    id: 'r5', name: 'GPT-4o 多模态模型', key: 'gpt-4o-multimodal', type: '模型', subType: '多模态模型',
+    deployType: '公网', description: 'OpenAI 多模态旗舰模型，支持文本、图像分析，适用于图侦、事故分析',
+    detail: '## GPT-4o\n\n**模型能力**：多模态理解、图像分析、文本生成\n\n**适用场景**：\n- 监控图像分析描述\n- 事故现场图片辅助认定\n- 人脸特征文字描述生成\n\n**技术规格**：\n- 最大 Token：128,000\n- 支持图像输入\n- API 端点：通过平台代理',
+    publicStrategy: '公开可见授权可用', owner: '平台管理员', publishStatus: '已上架', isTop: false, installCount: 210,
+    publishDate: '2026-03-01', tags: ['多模态', 'GPT', '图像'],
+  },
+  {
+    id: 'r6', name: '全国人口基础信息查询接口', key: 'population-query-api', type: 'API', subType: '数据查询',
+    deployType: '内网', description: '根据身份证号、姓名等要素检索人员基本信息、户籍信息、居住证信息',
+    detail: '## 人口信息查询接口\n\n**接口说明**：对接全国人口基础信息库，提供人员基本信息查询服务。\n\n**请求方式**：POST\n\n**鉴权**：API Key（Header）\n\n**请求参数**：\n| 参数 | 类型 | 必填 | 说明 |\n|------|------|------|------|\n| idCard | string | 是 | 身份证号 |\n| name | string | 否 | 姓名 |\n\n**返回示例**：JSON 格式，含姓名、性别、出生日期、户籍地址等。',
+    publicStrategy: '授权可见', owner: '治安支队', publishStatus: '已上架', isTop: true, installCount: 890,
+    publishDate: '2026-01-10', tags: ['人口', '查询', '身份证'],
+  },
+  {
+    id: 'r7', name: '车辆轨迹查询接口', key: 'vehicle-track-api', type: 'API', subType: '数据查询',
+    deployType: '内网', description: '基于车牌号查询辖区卡口过车记录和通行轨迹聚合分析',
+    detail: '## 车辆轨迹查询\n\n**接口说明**：对接交警缉查布控系统，查询车辆通行轨迹。\n\n**请求方式**：POST\n\n**鉴权**：API Key\n\n**请求参数**：\n| 参数 | 类型 | 必填 | 说明 |\n|------|------|------|------|\n| plateNumber | string | 是 | 车牌号 |\n| startTime | string | 是 | 开始时间 |\n| endTime | string | 是 | 结束时间 |',
+    publicStrategy: '授权可见', owner: '交警支队', publishStatus: '已上架', isTop: false, installCount: 670,
+    publishDate: '2026-01-15', tags: ['车辆', '卡口', '轨迹'],
+  },
+  {
+    id: 'r8', name: '文书智能解析 API', key: 'document-parse-api', type: 'API', subType: '文档处理',
+    deployType: '内网', description: '自动解析PDF/Word格式的法律文书、报案材料，提取结构化信息',
+    detail: '## 文书智能解析\n\n**接口说明**：智能解析公安文书，提取结构化字段。\n\n**请求方式**：POST\n\n**鉴权**：API Key + 文件上传\n\n**支持格式**：PDF、DOCX、图片\n\n**返回字段**：案件编号、当事人信息、案情描述、涉案金额等结构化JSON。',
+    publicStrategy: '公开可见授权可用', owner: '法制大队', publishStatus: '已上架', isTop: false, installCount: 540,
+    publishDate: '2026-01-20', tags: ['文书', '解析', '结构化'],
+  },
+  {
+    id: 'r9', name: '市局数据研判连接器', key: 'police-data-connector', type: '连接器', subType: '数据服务',
+    deployType: '内网', description: '接入公安大数据平台，提供人口、车辆、案件等多维度数据检索与分析工具集',
+    detail: '## 市局数据研判连接器\n\n**服务说明**：基于 MCP 协议提供公安数据检索与分析工具集。\n\n**协议**：SSE\n\n**端点**：`https://connector.police.data.server/sse`\n\n**可用工具**：\n- 人口信息查询\n- 车辆信息查询\n- 案件信息检索\n- 警情统计分析\n\n**适用场景**：数据研判、案件串并、情报分析。',
+    publicStrategy: '授权可见', owner: '指挥中心', publishStatus: '已上架', isTop: true, installCount: 1100,
+    publishDate: '2026-01-10', tags: ['MCP', '数据', '研判'],
+  },
+  {
+    id: 'r10', name: '天网视频分析连接器', key: 'tianwang-video-connector', type: '连接器', subType: '视频分析',
+    deployType: '内网', description: '对接天网视频监控系统，提供实时视频流分析、目标追踪与行为识别能力',
+    detail: '## 天网视频分析 MCP\n\n**服务说明**：基于 MCP 协议提供视频分析能力。\n\n**协议**：SSE\n\n**可用工具**：\n- 实时视频流分析\n- 目标检测与追踪\n- 人像比对\n- 行为异常检测\n\n**适用场景**：治安巡逻、刑侦追逃、交通管理。',
+    publicStrategy: '授权可见', owner: '图侦中心', publishStatus: '已上架', isTop: false, installCount: 450,
+    publishDate: '2026-02-20', tags: ['MCP', '视频', '天网'],
+  },
+  {
+    id: 'r11', name: '短信通知网关连接器', key: 'sms-gateway-connector', type: '连接器', subType: '通知服务',
+    deployType: '内网', description: '统一短信发送网关，用于告警通知、验证码发送和群发通知',
+    detail: '## 短信通知网关\n\n**服务说明**：统一短信发送MCP服务。\n\n**协议**：SSE\n\n**可用工具**：\n- 单条短信发送\n- 批量短信群发\n- 通知模板管理\n\n**适用场景**：警情通知、告警提醒、任务派发通知。',
+    publicStrategy: '公开可见授权可用', owner: '指挥中心', publishStatus: '已上架', isTop: false, installCount: 780,
+    publishDate: '2026-04-10', tags: ['MCP', '短信', '通知'],
+  },
+  {
+    id: 'r12', name: '警情分类知识库', key: 'alert-class-kb', type: '知识库', subType: '业务知识库',
+    deployType: '内网', description: '110接处警标准化分类体系知识库，含警情类别定义、要素模板与处置规程',
+    detail: '## 警情分类知识库\n\n**知识库说明**：110接处警标准化分类体系。\n\n**内容覆盖**：\n- 警情类别定义（治安/刑事/交通/纠纷等）\n- 警情要素模板\n- 分级处置规程\n- 法律法规引用\n\n**检索方式**：语义检索 + 分类标签过滤\n\n**文档数量**：1,280 篇',
+    publicStrategy: '完全公开', owner: '指挥中心', publishStatus: '已上架', isTop: false, installCount: 980,
+    publishDate: '2026-05-01', tags: ['知识库', '警情分类', '规程'],
+  },
+  {
+    id: 'r13', name: '道路交通安全法规库', key: 'traffic-law-kb', type: '知识库', subType: '法规知识库',
+    deployType: '内网', description: '道路交通安全法及其实施条例、地方交管规定等法规全文检索库',
+    detail: '## 道路交通安全法规库\n\n**知识库说明**：完整的道路交通安全法规体系。\n\n**内容覆盖**：\n- 《道路交通安全法》全文\n- 实施条例\n- 地方交管规定\n- 事故责任认定标准\n- 典型案例判例\n\n**文档数量**：860 篇',
+    publicStrategy: '公开可见授权可用', owner: '交警支队', publishStatus: '已上架', isTop: false, installCount: 420,
+    publishDate: '2026-05-15', tags: ['知识库', '交通', '法规'],
+  },
+  {
+    id: 'r14', name: '反诈案例知识库', key: 'antifraud-case-kb', type: '知识库', subType: '业务知识库',
+    deployType: '内网', description: '电诈典型案例分析、诈骗手法特征库与资金链路模式知识库',
+    detail: '## 反诈案例知识库\n\n**知识库说明**：电信诈骗案例与研判知识库。\n\n**内容覆盖**：\n- 典型诈骗案例\n- 诈骗手法特征\n- 洗钱链路模式\n- 预警模型特征\n\n**文档数量**：1,560 篇\n\n**更新频率**：每周自动同步最新案例。',
+    publicStrategy: '授权可见', owner: '反诈中心', publishStatus: '已上架', isTop: true, installCount: 360,
+    publishDate: '2026-05-20', tags: ['知识库', '反诈', '案例'],
+  },
+  {
+    id: 'r15', name: '刑侦案件卷宗知识库', key: 'criminal-archive-kb', type: '知识库', subType: '业务知识库',
+    deployType: '内网', description: '历史刑事案件卷宗语义索引库，支持案情相似度检索与办案经验复用',
+    detail: '## 刑侦案件卷宗知识库\n\n**知识库说明**：历史刑事案件卷宗结构化知识库。\n\n**内容覆盖**：\n- 刑事案件卷宗\n- 侦查手段经验\n- 审讯策略参考\n- 证据链分析方法\n\n**权限要求**：需刑侦部门授权\n\n**文档数量**：3,200 篇',
+    publicStrategy: '授权可见', owner: '刑警大队', publishStatus: '已上架', isTop: false, installCount: 280,
+    publishDate: '2026-06-01', tags: ['知识库', '刑侦', '卷宗'],
+  },
+  // ── 提示词 ──
+  {
+    id: 'r16', name: '警情分析提取提示词模板', key: 'alert-extract-prompt', type: '提示词', subType: 'ICIO',
+    deployType: '内网', description: '采用ICIO提示词工程方法，从口语化报案转录文本中标准化提取警情要素，含输入约束→情境→指令→输出规范',
+    detail: '## 警情分析提取提示词\n\n**方法**：ICIO（Input-Context-Instruction-Output）\n\n**适用场景**：110接处警平台警情录入\n\n**模板变量**：\n- `dialect_type`：方言类型\n- `platform_name`：接处警平台名称\n\n**核心约束**：\n- 强制标准化输出字段（时间/地点/人员/类别/紧急程度）\n- 应对口语化、方言、口音等情况\n- 长度控制≤300字\n\n**使用方式**：在智能体配置中引入此模板，绑定实际变量后即可生效。',
+    publicStrategy: '完全公开', owner: '指挥中心', publishStatus: '已上架', isTop: true, installCount: 620,
+    publishDate: '2026-03-10', tags: ['提示词', 'ICIO', '警情分析'],
+  },
+  {
+    id: 'r17', name: '反诈资金研判提示词模板', key: 'antifraud-prompt', type: '提示词', subType: 'CRISPE',
+    deployType: '内网', description: 'CRISPE方法论构建的反诈精英调查员角色提示词，用于涉诈团伙多级资金链路穿透研判与可疑卡号识别',
+    detail: '## 反诈资金研判提示词\n\n**方法**：CRISPE（Capacity-Role-Insight-Statement-Personality-Experiment）\n\n**角色定位**：精通网络金融犯罪与洗钱链条追踪的反诈精英调查员\n\n**核心能力**：\n- 多级水房资金穿透分析\n- 聚合支付与地下钱庄识别\n- 可疑卡号集群按可疑程度降序排列\n\n**变量**：`source_account`、`time_range`',
+    publicStrategy: '授权可见', owner: '反诈中心', publishStatus: '已上架', isTop: false, installCount: 310,
+    publishDate: '2026-04-05', tags: ['提示词', 'CRISPE', '反诈'],
+  },
+  {
+    id: 'r18', name: '案情摘要生成提示词模板', key: 'case-summary-prompt', type: '提示词', subType: 'RASCEF',
+    deployType: '内网', description: 'RASCEF结构化提示词，自动解析案件材料生成标准格式案情摘要报告，含案件概述、关键事实、证据清单、法律适用建议',
+    detail: '## 案情摘要生成提示词\n\n**方法**：RASCEF（Role-Action-Step-Context-Example-Format）\n\n**输入变量**：\n- `case_id`：案件编号\n- `incident_time`：案发时间\n- `location`：案发地点\n- `suspects`：涉案人员\n- `case_type`：案件类型\n\n**输出规范**：\n1. 案件概述（100字内）\n2. 关键事实列表\n3. 证据清单\n4. 法律适用建议',
+    publicStrategy: '公开可见授权可用', owner: '法制大队', publishStatus: '已上架', isTop: false, installCount: 250,
+    publishDate: '2026-05-01', tags: ['提示词', 'RASCEF', '案件'],
+  },
+  // ── 插件工具 ──
+  {
+    id: 'r19', name: '人像比对插件', key: 'face-compare-plugin', type: '插件工具', subType: '图像分析',
+    deployType: '内网', description: '集成多种人脸识别算法，提供照片比对、视频流人脸检索及身份确认服务，适用于逃犯识别与身份核验',
+    detail: '## 人像比对插件\n\n**插件类型**：图像分析\n\n**功能**：\n- 照片1:1比对\n- 1:N人脸检索\n- 视频流实时检测\n- 跨年龄人像识别\n\n**参数**：\n- `imageBase64`：人脸照片编码\n- `threshold`：相似度阈值(0-1)，默认0.85\n\n**对接方式**：通过插件SDK集成，安装后自动注册到工具面板。',
+    publicStrategy: '授权可见', owner: '图侦中心', publishStatus: '已上架', isTop: true, installCount: 480,
+    publishDate: '2026-02-01', tags: ['插件', '人像', '比对'],
+  },
+  {
+    id: 'r20', name: '关系图谱生成插件', key: 'graph-build-plugin', type: '插件工具', subType: '数据分析',
+    deployType: '内网', description: '基于人员、通话、资金流水数据自动生成多维关系拓扑图，辅助案件串并与团伙分析',
+    detail: '## 关系图谱生成插件\n\n**插件类型**：数据分析\n\n**功能**：\n- 人员关系拓扑图\n- 通话记录关联图谱\n- 资金流向关系图\n- 多维度联合分析\n\n**输入**：人员ID列表、时间段\n\n**输出**：可交互D3.js关系图（JSON格式）\n\n**使用场景**：团伙案件分析、资金链路可视化。',
+    publicStrategy: '授权可见', owner: '刑警大队', publishStatus: '已上架', isTop: false, installCount: 390,
+    publishDate: '2026-02-15', tags: ['插件', '图谱', '关系'],
+  },
+  {
+    id: 'r21', name: '文书格式检测插件', key: 'doc-check-plugin', type: '插件工具', subType: '文档处理',
+    deployType: '内网', description: '自动检测公安文书格式规范，校验语法错误、格式偏差及法律条款引用准确性，即插即用型工具',
+    detail: '## 文书格式检测插件\n\n**插件类型**：文档处理\n\n**检测维度**：\n- 格式规范（字号、行距、段落结构）\n- 语法与错别字\n- 法条引用格式及有效性\n- 必填字段完整性\n\n**支持格式**：DOCX、PDF\n\n**输出**：批注式修改建议 + 合规评分（0-100）',
+    publicStrategy: '公开可见授权可用', owner: '法制大队', publishStatus: '已上架', isTop: false, installCount: 560,
+    publishDate: '2026-03-20', tags: ['插件', '文书', '检测'],
+  },
+  // ── 数据连接 ──
+  {
+    id: 'r22', name: '核心业务主库连接', key: 'core-biz-db-conn', type: '数据连接', subType: 'MySQL',
+    deployType: '内网', description: '连接公安核心业务数据库（MySQL），提供案件信息、人员档案、执法记录等结构化数据检索能力',
+    detail: '## 核心业务主库\n\n**数据库类型**：MySQL 8.0\n\n**部署地址**：192.168.1.100:3306\n\n**数据范围**：\n- 案件信息表\n- 人员档案表\n- 执法记录表\n- 警情登记表\n\n**使用方式**：安装后通过智能网关代理访问，支持SQL查询与视图封装。',
+    publicStrategy: '授权可见', owner: '科信支队', publishStatus: '已上架', isTop: true, installCount: 340,
+    publishDate: '2026-01-10', tags: ['数据连接', 'MySQL', '核心业务'],
+  },
+  {
+    id: 'r23', name: '历史案件存档库连接', key: 'archive-db-conn', type: '数据连接', subType: 'Oracle',
+    deployType: '内网', description: '连接Oracle历史案件归档数据库，存储5年以上结案案件信息，支持历史案件检索与分析复盘',
+    detail: '## 历史案件存档库\n\n**数据库类型**：Oracle 19c\n\n**部署地址**：192.168.1.101:1521\n\n**数据范围**：\n- 结案案件完整卷宗\n- 判决文书\n- 执行记录\n\n**查询方式**：支持按案号、时间范围、案件类别复合检索。',
+    publicStrategy: '公开可见授权可用', owner: '科信支队', publishStatus: '已上架', isTop: false, installCount: 180,
+    publishDate: '2026-02-20', tags: ['数据连接', 'Oracle', '归档'],
+  },
+  {
+    id: 'r24', name: '操作日志采集库连接', key: 'log-es-conn', type: '数据连接', subType: 'Elasticsearch',
+    deployType: '内网', description: '连接Elasticsearch日志采集库，存储平台操作日志、API调用日志和系统运行日志，用于审计追溯与运维监控',
+    detail: '## 操作日志采集库\n\n**数据库类型**：Elasticsearch 8.x\n\n**部署地址**：192.168.3.10:9200\n\n**索引范围**：\n- 平台操作日志（operation-logs-*）\n- API调用日志（api-calls-*）\n- 系统运行日志（system-metrics-*）\n\n**查询能力**：全文检索 + 时间范围过滤 + 聚合分析。',
+    publicStrategy: '授权可见', owner: '运维中心', publishStatus: '已上架', isTop: false, installCount: 120,
+    publishDate: '2026-04-01', tags: ['数据连接', 'ES', '日志'],
+  },
+];
+
+// ════════════════════════════════════════════════
+// 用户已授权资源（模拟当前登录用户 "张警官"）
+// ════════════════════════════════════════════════
+
+const mockResourceMap = Object.fromEntries(mockResources.map(r => [r.id, r]));
+
+export const mockUserResources: UserResourceItem[] = [
+  { id: 'ur1', resourceId: 'r1', userId: 'zhang', resource: mockResourceMap['r1'], authSource: '共享给我的', installStatus: '已安装' },
+  { id: 'ur2', resourceId: 'r2', userId: 'zhang', resource: mockResourceMap['r2'], authSource: '我申请的', installStatus: '已安装' },
+  { id: 'ur3', resourceId: 'r5', userId: 'zhang', resource: mockResourceMap['r5'], authSource: '我申请的', installStatus: '未安装' },
+  { id: 'ur4', resourceId: 'r6', userId: 'zhang', resource: mockResourceMap['r6'], authSource: '管理员授权', installStatus: '已安装' },
+  { id: 'ur5', resourceId: 'r7', userId: 'zhang', resource: mockResourceMap['r7'], authSource: '我申请的', installStatus: '未安装' },
+  { id: 'ur6', resourceId: 'r8', userId: 'zhang', resource: mockResourceMap['r8'], authSource: '共享给我的', installStatus: '已安装' },
+  { id: 'ur7', resourceId: 'r9', userId: 'zhang', resource: mockResourceMap['r9'], authSource: '管理员授权', installStatus: '已安装' },
+  { id: 'ur8', resourceId: 'r10', userId: 'zhang', resource: mockResourceMap['r10'], authSource: '我申请的', installStatus: '安装失败' },
+  { id: 'ur9', resourceId: 'r11', userId: 'zhang', resource: mockResourceMap['r11'], authSource: '共享给我的', installStatus: '未安装' },
+  { id: 'ur10', resourceId: 'r12', userId: 'zhang', resource: mockResourceMap['r12'], authSource: '共享给我的', installStatus: '已安装' },
+  { id: 'ur11', resourceId: 'r13', userId: 'zhang', resource: mockResourceMap['r13'], authSource: '我申请的', installStatus: '未安装' },
+  { id: 'ur12', resourceId: 'r14', userId: 'zhang', resource: mockResourceMap['r14'], authSource: '我申请的', authExpireDate: '2026-07-05', installStatus: '已安装' },
+  { id: 'ur13', resourceId: 'r15', userId: 'zhang', resource: mockResourceMap['r15'], authSource: '管理员授权', authExpireDate: '2026-07-01', installStatus: '未安装' },
+  { id: 'ur14', resourceId: 'r16', userId: 'zhang', resource: mockResourceMap['r16'], authSource: '共享给我的', installStatus: '已安装' },
+  { id: 'ur15', resourceId: 'r18', userId: 'zhang', resource: mockResourceMap['r18'], authSource: '我申请的', installStatus: '未安装' },
+  { id: 'ur16', resourceId: 'r19', userId: 'zhang', resource: mockResourceMap['r19'], authSource: '管理员授权', installStatus: '已安装' },
+  { id: 'ur17', resourceId: 'r21', userId: 'zhang', resource: mockResourceMap['r21'], authSource: '共享给我的', installStatus: '未安装' },
+  { id: 'ur18', resourceId: 'r22', userId: 'zhang', resource: mockResourceMap['r22'], authSource: '我申请的', installStatus: '已安装' },
+  { id: 'ur19', resourceId: 'r24', userId: 'zhang', resource: mockResourceMap['r24'], authSource: '管理员授权', authExpireDate: '2026-07-03', installStatus: '未安装' },
 ];
