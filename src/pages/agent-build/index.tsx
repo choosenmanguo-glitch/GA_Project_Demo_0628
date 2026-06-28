@@ -22,6 +22,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import PageHeader from '@/components/PageHeader';
+import ConversationalCreateDrawer from '@/components/ConversationalCreateDrawer';
 
 const { Text, Title } = Typography;
 
@@ -155,7 +156,7 @@ const styles = {
   } as React.CSSProperties,
   body: {
     flex: 1,
-    overflow: 'auto',
+    overflow: 'hidden',
     padding: '14px 0 0',
     display: 'flex',
   } as React.CSSProperties,
@@ -337,6 +338,7 @@ const styles = {
 export default function AgentBuildPage() {
   const nav = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [convDrawerOpen, setConvDrawerOpen] = useState(false);
   const [agentType, setAgentType] = useState<AgentType>('standard');
   const [subType, setSubType] = useState('');
   const [agentName, setAgentName] = useState('');
@@ -357,8 +359,10 @@ export default function AgentBuildPage() {
       nav('/dev/agent-build/template');
       return;
     }
-
-    message.info('对话式创建能力建设中');
+    if (key === 'conversation') {
+      setConvDrawerOpen(true);
+      return;
+    }
   };
 
   const selectedAvatar = avatarPresets.find(a => a.key === avatarKey)!;
@@ -383,7 +387,7 @@ export default function AgentBuildPage() {
 
   return (
     <div style={styles.page}>
-      <PageHeader title="创建智能体" hint="选择一种创建方式开始搭建你的 AI 智能体" />
+      <PageHeader title="智能体构建" hint="选择一种创建方式开始搭建你的 AI 智能体" />
       <div style={styles.body}>
         <section style={styles.panel}>
           <div style={styles.intro}>
@@ -475,7 +479,7 @@ export default function AgentBuildPage() {
 
       {/* ──── 表单构建 Drawer ──── */}
       <Drawer
-        title={<span style={{ fontSize: 16, fontWeight: 650 }}>创建智能体</span>}
+        title={<span style={{ fontSize: 16, fontWeight: 650 }}>智能体构建</span>}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         size="large"
@@ -661,6 +665,12 @@ export default function AgentBuildPage() {
           </div>
         </div>
       </Drawer>
+
+      {/* ──── 对话式创建 Drawer ──── */}
+      <ConversationalCreateDrawer
+        open={convDrawerOpen}
+        onClose={() => setConvDrawerOpen(false)}
+      />
     </div>
   );
 }

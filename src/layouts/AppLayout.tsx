@@ -4,8 +4,9 @@ import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import HeaderNav from './HeaderNav';
 import TabBar from '@/components/TabBar';
+import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
 import AppErrorBoundary from '@/components/AppErrorBoundary';
-import { topNavModules, moduleSideMenus, moduleLabelMap, resolvePageLabel } from '@/config';
+import { topNavModules, moduleSideMenus, resolvePageLabel } from '@/config';
 import { useTabs } from '@/contexts/TabsContext';
 import type { MenuProps } from 'antd';
 
@@ -102,46 +103,9 @@ const MasterLayout: React.FC<MasterLayoutProps> = ({ children }) => {
             flexShrink: 0,
           }}
         >
-          {/* 开发中心特殊组件：工作空间切换器 */}
+          {/* 工作空间切换器 — 仅开发中心显示 */}
           {activeModule === 'dev' && (
-            <div
-              style={{
-                padding: collapsed ? '12px 0' : '12px 20px',
-                borderBottom: '1px solid #f0f0f0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: collapsed ? 'center' : 'space-between',
-                cursor: 'pointer',
-                flexShrink: 0,
-              }}
-              title="我的空间 - 点击切换"
-            >
-              {collapsed ? (
-                <div style={{
-                  width: 28, height: 28, borderRadius: 6,
-                  background: '#1677ff', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center',
-                  color: '#fff', fontSize: 13, fontWeight: 700,
-                }}>W</div>
-              ) : (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div
-                      style={{
-                        width: 24, height: 24, borderRadius: 4,
-                        background: '#1677ff', display: 'flex',
-                        alignItems: 'center', justifyContent: 'center',
-                        color: '#fff', fontSize: 12,
-                      }}
-                    >W</div>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,0.88)' }}>
-                      我的空间
-                    </span>
-                  </div>
-                  <span style={{ fontSize: 11, color: 'rgba(0,0,0,0.25)' }}>切换 ▾</span>
-                </>
-              )}
-            </div>
+            <WorkspaceSwitcher collapsed={collapsed} />
           )}
 
           <div className={collapsed ? 'sidebar-collapsed' : undefined} style={{ flex: 1, overflow: 'auto', overflowX: 'hidden' }}>

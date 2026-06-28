@@ -1,7 +1,6 @@
 import {
   HomeOutlined,
   AppstoreOutlined,
-  FolderOpenOutlined,
   CodeOutlined,
   DashboardOutlined,
   SettingOutlined,
@@ -34,7 +33,6 @@ import React from 'react';
 export const topNavModules = [
   { key: 'home', label: '首页', icon: React.createElement(HomeOutlined), path: '/home' },
   { key: 'app-center', label: '应用中心', icon: React.createElement(AppstoreOutlined), path: '/app-center' },
-  { key: 'resource-center', label: '资源中心', icon: React.createElement(FolderOpenOutlined), path: '/resource-center' },
   { key: 'dev', label: '开发中心', icon: React.createElement(CodeOutlined), path: '/dev' },
   { key: 'ops', label: '运维中心', icon: React.createElement(DashboardOutlined), path: '/ops' },
   { key: 'manage', label: '管理中心', icon: React.createElement(SettingOutlined), path: '/manage' },
@@ -132,9 +130,6 @@ export const moduleSideMenus: Record<string, MenuProps['items']> = {
   'app-center': [
     { type: 'group', label: '应用中心', children: [{ key: '/app-center', icon: React.createElement(AppstoreOutlined), label: '应用市场' }] },
   ],
-  'resource-center': [
-    { type: 'group', label: '资源中心', children: [{ key: '/resource-center', icon: React.createElement(FolderOpenOutlined), label: '资源总览' }] },
-  ],
   dev: devSideMenuItems,
   ops: opsSideMenuItems,
   manage: [
@@ -150,7 +145,6 @@ export const moduleSideMenus: Record<string, MenuProps['items']> = {
 export const moduleLabelMap: Record<string, string> = {
   home: '首页',
   'app-center': '应用中心',
-  'resource-center': '资源中心',
   dev: '开发中心',
   ops: '运维中心',
   manage: '管理中心',

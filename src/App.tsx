@@ -3,6 +3,7 @@ import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import MasterLayout from './layouts/AppLayout';
 import { TabsProvider } from './contexts/TabsContext';
+import { WorkspaceProvider } from './contexts/WorkspaceContext';
 import ModelsPage from './pages/models';
 import PromptsPage from './pages/prompts';
 import ToolsPage from './pages/tools';
@@ -28,15 +29,15 @@ import MyResourcesPage from './pages/my-resources';
 function AppRoutes() {
   return (
     <TabsProvider>
+    <WorkspaceProvider>
       <MasterLayout>
       <Routes>
         {/* 默认重定向到开发中心工作台 */}
         <Route path="/" element={<Navigate to="/dev/workbench" replace />} />
         <Route path="/home" element={<Navigate to="/dev/workbench" replace />} />
 
-        {/* 首页 / 应用中心 / 资源中心 - 占位 */}
+        {/* 首页 / 应用中心 - 占位 */}
         <Route path="/app-center" element={<PlaceholderPage title="应用中心" description="应用市场与已安装应用管理" />} />
-        <Route path="/resource-center" element={<PlaceholderPage title="资源中心" description="平台公共资源浏览与管理" />} />
 
         {/* ===== 开发中心 ===== */}
         <Route path="/dev" element={<Navigate to="/dev/workbench" replace />} />
@@ -79,6 +80,7 @@ function AppRoutes() {
         <Route path="/manage/roles" element={<PlaceholderPage title="角色管理" description="角色定义与岗位权限配置" />} />
       </Routes>
     </MasterLayout>
+    </WorkspaceProvider>
     </TabsProvider>
   );
 }
@@ -91,6 +93,7 @@ export default function App() {
         token: {
           colorPrimary: '#1677ff',
           borderRadius: 8,
+          fontFamily: "'PingFang SC', '苹方', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
         },
       }}
     >

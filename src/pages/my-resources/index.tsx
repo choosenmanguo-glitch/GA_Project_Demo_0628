@@ -5,13 +5,14 @@ import {
   CheckCircleFilled, CloseCircleFilled, MinusCircleOutlined, LoadingOutlined,
   CopyOutlined, EyeOutlined, EyeInvisibleOutlined,
   ApiOutlined, CodeOutlined, CloudServerOutlined, FolderOpenOutlined,
-  ClockCircleOutlined, PushpinFilled,
+  ClockCircleOutlined,
   FileTextOutlined, ToolOutlined, DatabaseOutlined,
 } from '@ant-design/icons';
 import PageHeader from '@/components/PageHeader';
-import { mockUserResources, type ResourceType, type UserResourceItem, type InstallStatus } from '@/mock/data';
+import { ResourceDetailDrawer } from '@/components/ResourceDetailDrawer';
+import { mockUserResources, type ResourceType, type UserResourceItem, type InstallStatus, type ResourceItem } from '@/mock/data';
 
-const { Text, Paragraph } = Typography;
+const { Text } = Typography;
 
 // ════════════════════════════════════════════════
 // Config
@@ -68,9 +69,16 @@ export default function MyResourcesPage() {
   const [batchMode, setBatchMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [installingIds, setInstallingIds] = useState<Set<string>>(new Set());
+  const [resourceStatuses, setResourceStatuses] = useState<Record<string, InstallStatus>>({});
 
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const [apiKeyModal, setApiKeyModal] = useState(false);
+
+  const [detailResource, setDetailResource] = useState<ResourceItem | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  const getStatus = (ur: UserResourceItem): InstallStatus =>
+    resourceStatuses[ur.id] ?? ur.installStatus;
 
   // ── Filter ──
   const filteredResources = useMemo(() => {
@@ -80,26 +88,28 @@ export default function MyResourcesPage() {
         const kw = searchText.toLowerCase();
         if (!ur.resource.name.toLowerCase().includes(kw) && !ur.resource.description.toLowerCase().includes(kw)) return false;
       }
-      if (installFilter && ur.installStatus !== installFilter) return false;
+      const st = getStatus(ur);
+      if (installFilter && st !== installFilter) return false;
       if (sourceFilter && ur.authSource !== sourceFilter) return false;
       return true;
     });
-  }, [activeTab, searchText, installFilter, sourceFilter]);
+  }, [activeTab, searchText, installFilter, sourceFilter, resourceStatuses]);
 
   // ── Stats ──
   const stats = useMemo(() => {
     const total = mockUserResources.length;
-    const installed = mockUserResources.filter(u => u.installStatus === '已安装').length;
-    const uninstalled = mockUserResources.filter(u => u.installStatus === '未安装').length;
+    const installed = mockUserResources.filter(u => getStatus(u) === '已安装').length;
+    const uninstalled = mockUserResources.filter(u => getStatus(u) === '未安装').length;
     const expiringSoon = mockUserResources.filter(u => u.authExpireDate && daysUntil(u.authExpireDate) <= 7 && daysUntil(u.authExpireDate) >= 0).length;
     return { total, installed, uninstalled, expiringSoon };
-  }, []);
+  }, [resourceStatuses]);
 
   // ── Install ──
   const handleInstall = (ur: UserResourceItem) => {
     setInstallingIds(prev => new Set(prev).add(ur.id));
     setTimeout(() => {
       setInstallingIds(prev => { const next = new Set(prev); next.delete(ur.id); return next; });
+      setResourceStatuses(prev => ({ ...prev, [ur.id]: '已安装' }));
       antMsg.success(`「${ur.resource.name}」安装成功`);
     }, 1500 + Math.random() * 1500);
   };
@@ -107,7 +117,7 @@ export default function MyResourcesPage() {
   const handleBatchInstall = () => {
     const toInstall = Array.from(selectedIds)
       .map(id => mockUserResources.find(ur => ur.id === id))
-      .filter((ur): ur is UserResourceItem => !!ur && (ur.installStatus === '未安装' || ur.installStatus === '安装失败'));
+      .filter((ur): ur is UserResourceItem => !!ur && (getStatus(ur) !== '已安装'));
 
     if (toInstall.length === 0) { antMsg.warning('未选中可安装的资源'); return; }
     Modal.confirm({
@@ -122,6 +132,11 @@ export default function MyResourcesPage() {
         });
         setTimeout(() => {
           setInstallingIds(new Set());
+          setResourceStatuses(prev => {
+            const next = { ...prev };
+            toInstall.forEach(u => next[u.id] = '已安装');
+            return next;
+          });
           antMsg.success(`批量安装完成：${toInstall.length} 个资源安装成功`);
           setBatchMode(false);
           setSelectedIds(new Set());
@@ -131,7 +146,7 @@ export default function MyResourcesPage() {
   };
 
   const toggleSelectAll = () => {
-    const installable = filteredResources.filter(u => u.installStatus === '未安装' || u.installStatus === '安装失败');
+    const installable = filteredResources.filter(u => getStatus(u) !== '已安装');
     if (selectedIds.size === installable.length) {
       setSelectedIds(new Set());
     } else {
@@ -147,30 +162,15 @@ export default function MyResourcesPage() {
   };
 
   return (
-    <div style={{ flex: 1, overflow: 'auto', padding: '16px 24px 24px' }}>
+    <div style={{ flex: 1, padding: '16px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <PageHeader title="我的资源" hint="管理已获授权的资源，执行安装与查看个人调用凭证" />
 
-      {/* ═══ Stat Cards ═══ */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
-        {[
-          { label: '已获授权', value: stats.total, color: '#1677ff' },
-          { label: '已安装', value: stats.installed, color: '#52c41a' },
-          { label: '未安装', value: stats.uninstalled, color: 'rgba(0,0,0,0.45)' },
-          { label: '即将到期', value: stats.expiringSoon, color: '#fa8c16' },
-        ].map(st => (
-          <div key={st.label} style={{
-            background: '#fff', borderRadius: 10, border: '1px solid #e8ebf0',
-            padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 4,
-            boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-          }}>
-            <span style={{ fontSize: 11, color: 'rgba(0,0,0,0.4)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{st.label}</span>
-            <span style={{ fontSize: 28, fontWeight: 700, color: st.color, letterSpacing: '-0.02em', lineHeight: 1 }}>{st.value}</span>
-          </div>
-        ))}
-      </div>
-
       {/* ═══ Filter + Action Bar ═══ */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+      <div style={{
+        background: '#fff', borderRadius: 8, border: '1px solid #E5EAF3',
+        padding: '14px 20px', marginTop: 12, marginBottom: 16,
+        display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+      }}>
         <Segmented
           value={activeTab}
           onChange={val => setActiveTab(val as string)}
@@ -178,21 +178,20 @@ export default function MyResourcesPage() {
           style={{ borderRadius: 8 }}
         />
         <Input
-          prefix={<SearchOutlined style={{ color: 'rgba(0,0,0,0.25)' }} />}
+          prefix={<SearchOutlined style={{ color: '#B0B8C8' }} />}
           placeholder="搜索资源名称或描述..."
           value={searchText}
           onChange={e => setSearchText(e.target.value)}
           allowClear
-          style={{ width: 260, borderRadius: 8 }}
+          style={{ width: 260, borderRadius: 6 }}
         />
         <Select
           placeholder="安装状态"
           value={installFilter}
           onChange={setInstallFilter}
           allowClear
-          style={{ width: 120 }}
+          style={{ width: 120, borderRadius: 6 }}
           options={[
-            { label: '全部', value: undefined },
             { label: '已安装', value: '已安装' },
             { label: '未安装', value: '未安装' },
             { label: '安装失败', value: '安装失败' },
@@ -203,14 +202,14 @@ export default function MyResourcesPage() {
           value={sourceFilter}
           onChange={setSourceFilter}
           allowClear
-          style={{ width: 120 }}
+          style={{ width: 120, borderRadius: 6 }}
           options={[
-            { label: '全部', value: undefined },
             { label: '我申请的', value: '我申请的' },
             { label: '共享给我的', value: '共享给我的' },
             { label: '管理员授权', value: '管理员授权' },
           ]}
         />
+        <Text style={{ fontSize: 12, color: '#7A8599', whiteSpace: 'nowrap' }}>共 {filteredResources.length} 项</Text>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
           {batchMode ? (
@@ -223,138 +222,180 @@ export default function MyResourcesPage() {
             </>
           ) : (
             <>
-              <Button size="small" icon={<CloudDownloadOutlined />} onClick={() => setBatchMode(true)} style={{ borderRadius: 8 }}>一键安装</Button>
-              <Button size="small" icon={<KeyOutlined />} onClick={() => setApiKeyModal(true)} style={{ borderRadius: 8 }}>API Key</Button>
+              <Button size="small" icon={<CloudDownloadOutlined />} onClick={() => setBatchMode(true)} style={{ borderRadius: 6 }}>一键安装</Button>
+              <Button size="small" icon={<KeyOutlined />} onClick={() => setApiKeyModal(true)} style={{ borderRadius: 6 }}>API Key</Button>
             </>
           )}
         </div>
       </div>
 
-      {/* ═══ Card Grid ═══ */}
-      {filteredResources.length > 0 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
-          {filteredResources.map(ur => {
-            const tc = typeConfig[ur.resource.type];
-            const ic = installConfig[ur.installStatus];
-            const isInstalling = installingIds.has(ur.id);
-            const isSelected = selectedIds.has(ur.id);
-            const isExpiring = ur.authExpireDate && daysUntil(ur.authExpireDate) <= 7 && daysUntil(ur.authExpireDate) >= 0;
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        {/* ═══ Card Grid — 四列 ═══ */}
+        {filteredResources.length > 0 ? (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: 16,
+          }}>
+            {filteredResources.map(ur => {
+              const tc = typeConfig[ur.resource.type];
+              const statusNow = getStatus(ur);
+              const ic = installConfig[statusNow];
+              const isInstalling = installingIds.has(ur.id);
+              const isSelected = selectedIds.has(ur.id);
+              const isExpiring = ur.authExpireDate && daysUntil(ur.authExpireDate) <= 7 && daysUntil(ur.authExpireDate) >= 0;
+              const as = authSourceConfig[ur.authSource];
+              const installable = statusNow !== '已安装';
 
-            return (
-              <div
-                key={ur.id}
-                onClick={() => {
-                  if (batchMode && (ur.installStatus === '未安装' || ur.installStatus === '安装失败')) {
-                    setSelectedIds(prev => {
-                      const next = new Set(prev);
-                      if (next.has(ur.id)) next.delete(ur.id); else next.add(ur.id);
-                      return next;
-                    });
-                  }
-                }}
-                style={{
-                  background: '#fff', borderRadius: 12, border: batchMode && isSelected ? '2px solid #1677ff' : '1px solid #e8ebf0',
-                  padding: 0, overflow: 'hidden', transition: 'all 0.2s',
-                  boxShadow: batchMode && isSelected ? '0 0 0 3px rgba(22,119,255,0.12)' : '0 1px 2px rgba(0,0,0,0.03)',
-                  cursor: batchMode ? 'pointer' : 'default',
-                  position: 'relative',
-                }}
-                onMouseEnter={e => { if (!batchMode) { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
-                onMouseLeave={e => { e.currentTarget.style.boxShadow = batchMode && isSelected ? '0 0 0 3px rgba(22,119,255,0.12)' : '0 1px 2px rgba(0,0,0,0.03)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-              >
-                {/* Batch checkbox */}
-                {batchMode && (
-                  <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 1 }}>
-                    <Checkbox checked={isSelected}
-                      disabled={ur.installStatus !== '未安装' && ur.installStatus !== '安装失败'} />
-                  </div>
-                )}
+              return (
+                <div
+                  key={ur.id}
+                  onClick={() => {
+                    if (batchMode && installable) {
+                      setSelectedIds(prev => {
+                        const next = new Set(prev);
+                        if (next.has(ur.id)) next.delete(ur.id); else next.add(ur.id);
+                        return next;
+                      });
+                    } else if (!batchMode) {
+                      setDetailResource(ur.resource);
+                      setDetailOpen(true);
+                    }
+                  }}
+                  style={{
+                    background: '#fff',
+                    borderRadius: 8,
+                    border: batchMode && isSelected ? '2px solid #1677ff' : '1px solid #E5EAF3',
+                    overflow: 'hidden',
+                    transition: 'all 0.2s ease',
+                    boxShadow: batchMode && isSelected ? '0 0 0 3px rgba(22,119,255,0.12)' : '0 1px 3px rgba(0,0,0,0.02)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                  onMouseEnter={e => {
+                    if (!batchMode) {
+                      e.currentTarget.style.borderColor = '#BCC7DB';
+                      e.currentTarget.style.boxShadow = '0 3px 12px rgba(0,0,0,0.05), 0 1px 4px rgba(0,0,0,0.03)';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = batchMode && isSelected ? '#1677ff' : '#E5EAF3';
+                    e.currentTarget.style.boxShadow = batchMode && isSelected ? '0 0 0 3px rgba(22,119,255,0.12)' : '0 1px 3px rgba(0,0,0,0.02)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  {/* Batch checkbox */}
+                  {batchMode && (
+                    <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 1 }}>
+                      <Checkbox checked={isSelected} disabled={!installable} />
+                    </div>
+                  )}
 
-                {/* Card Header */}
-                <div style={{ padding: '20px 20px 12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 10, background: tc.bg, color: tc.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
+                  {/* ── Header: icon + name + tags ── */}
+                  <div style={{ padding: '18px 18px 0', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <div style={{
+                      width: 38, height: 38, borderRadius: 8, background: tc.bg, color: tc.color,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0,
+                    }}>
                       {tc.icon}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: 'rgba(0,0,0,0.88)', lineHeight: '20px', marginBottom: 6 }}>
+                      <div style={{
+                        fontSize: 14, fontWeight: 600, color: '#1D2129', lineHeight: '22px', marginBottom: 6,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
                         {ur.resource.name}
                       </div>
-                      <Space size={6} wrap>
-                        <Tag style={{ borderRadius: 4, margin: 0, fontSize: 10, padding: '1px 8px', lineHeight: '18px', color: ic.color, background: ic.bg, border: 'none' }}>
-                          {ic.icon}{ic.label}
-                        </Tag>
-                        <Tag style={{ borderRadius: 4, margin: 0, fontSize: 10, padding: '1px 8px', lineHeight: '18px', background: tc.bg, color: tc.color, border: 'none' }}>
+                      <Space size={5} wrap>
+                        <Tag style={{
+                          borderRadius: 4, margin: 0, fontSize: 11, lineHeight: '18px',
+                          background: tc.bg, color: tc.color, border: 'none',
+                        }}>
                           {ur.resource.type}
                         </Tag>
-                        <Tag style={{ borderRadius: 4, margin: 0, fontSize: 10, padding: '1px 8px', lineHeight: '18px', color: authSourceConfig[ur.authSource].color, background: authSourceConfig[ur.authSource].color + '14', border: 'none' }}>
-                          {ur.authSource}
-                        </Tag>
                         {isExpiring && (
-                          <Tag style={{ borderRadius: 4, margin: 0, fontSize: 10, padding: '1px 8px', lineHeight: '18px', color: '#fa8c16', background: '#fff7e6', border: 'none' }}>
+                          <Tag style={{
+                            borderRadius: 4, margin: 0, fontSize: 11, lineHeight: '18px',
+                            color: '#fa8c16', background: '#fff7e6', border: 'none',
+                          }}>
                             <ClockCircleOutlined style={{ fontSize: 10, marginRight: 2 }} />即将到期
                           </Tag>
                         )}
                       </Space>
                     </div>
                   </div>
-                </div>
 
-                {/* Description */}
-                <div style={{ padding: '0 20px 16px' }}>
-                  <Text type="secondary" style={{ fontSize: 12, lineHeight: '20px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {ur.resource.description}
-                  </Text>
-                  {ur.authExpireDate && (
-                    <div style={{ marginTop: 8 }}>
-                      <Text type="secondary" style={{ fontSize: 11 }}>
-                        授权至 {ur.authExpireDate}
-                        {isExpiring && <span style={{ color: '#fa8c16', marginLeft: 4 }}>（{daysUntil(ur.authExpireDate)}天后到期）</span>}
-                      </Text>
-                    </div>
-                  )}
-                </div>
+                  {/* ── Description ── */}
+                  <div style={{ padding: '10px 18px 0' }}>
+                    <Text style={{
+                      fontSize: 13, color: '#5F6B7A', lineHeight: '21px',
+                      display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                    }}>
+                      {ur.resource.description}
+                    </Text>
+                  </div>
 
-                {/* Card Footer */}
-                <div style={{ padding: '12px 20px', borderTop: '1px solid #f5f5f5', display: 'flex', justifyContent: 'flex-end' }}>
-                  {isInstalling ? (
-                    <Button size="small" loading style={{ borderRadius: 8 }}>安装中</Button>
-                  ) : ur.installStatus === '已安装' ? (
-                    <Button size="small" style={{ borderRadius: 8 }} icon={<SyncOutlined />} onClick={(e) => { e.stopPropagation(); handleInstall(ur); }}>重新安装</Button>
-                  ) : ur.installStatus === '安装失败' ? (
-                    <Button size="small" danger style={{ borderRadius: 8 }} icon={<SyncOutlined />} onClick={(e) => { e.stopPropagation(); handleInstall(ur); }}>重新安装</Button>
-                  ) : (
-                    <Button type="primary" size="small" style={{ borderRadius: 8 }} icon={<CloudDownloadOutlined />}
-                      onClick={(e) => { e.stopPropagation(); handleInstall(ur); }} disabled={batchMode}>
-                      安装资源
-                    </Button>
-                  )}
+                  {/* ── Footer: install status + action ── */}
+                  <div style={{
+                    padding: '12px 18px 16px', marginTop: 'auto',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  }}>
+                    <Tag style={{
+                      borderRadius: 4, margin: 0, fontSize: 11, lineHeight: '18px',
+                      color: ic.color, background: 'transparent', border: 'none', padding: 0,
+                    }}>
+                      {ic.icon}<span style={{ marginLeft: 3 }}>{ic.label}</span>
+                    </Tag>
+                    {isInstalling ? (
+                      <Button size="small" loading style={{ borderRadius: 6 }}>安装中</Button>
+                    ) : statusNow === '已安装' ? (
+                      <Button size="small" style={{ borderRadius: 6 }} icon={<SyncOutlined />}
+                        onClick={(e) => { e.stopPropagation(); handleInstall(ur); }}>重新安装</Button>
+                    ) : (
+                      <Button type="primary" size="small" style={{ borderRadius: 6 }} icon={<CloudDownloadOutlined />}
+                        onClick={(e) => { e.stopPropagation(); handleInstall(ur); }} disabled={batchMode}>
+                        {statusNow === '安装失败' ? '重新安装' : '安装资源'}
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div style={{ textAlign: 'center', padding: '80px 0' }}>
-          <Empty description="暂无匹配的资源" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-        </div>
-      )}
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{
+            background: '#fff', borderRadius: 8, border: '1px solid #E5EAF3',
+            textAlign: 'center', padding: '80px 0',
+          }}>
+            <Empty description="暂无匹配的资源" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          </div>
+        )}
+      </div>
+
+      {/* ═══ Resource Detail Drawer ═══ */}
+      <ResourceDetailDrawer
+        open={detailOpen}
+        resource={detailResource}
+        onClose={() => { setDetailOpen(false); setDetailResource(null); }}
+      />
 
       {/* ═══ API Key Modal ═══ */}
       <Modal
-        title={<Space><KeyOutlined style={{ color: '#1677ff' }} />个人 API Key</Space>}
+        title={<Space><KeyOutlined style={{ color: '#1677ff' }} />空间 API Key</Space>}
         open={apiKeyModal}
         onCancel={() => { setApiKeyModal(false); setApiKeyVisible(false); }}
         footer={null}
         width={480}
-        destroyOnClose
+        destroyOnHidden
       >
         <div style={{ padding: '12px 0' }}>
           <Text type="secondary" style={{ fontSize: 12, marginBottom: 16, display: 'block' }}>
             此 Key 用于对接平台服务时进行身份认证，请妥善保管。
           </Text>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fafafa', borderRadius: 10, padding: '14px 16px', border: '1px solid #f0f0f0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#F7F9FC', borderRadius: 8, padding: '14px 16px', border: '1px solid #E5EAF3' }}>
             <Text code style={{ flex: 1, fontSize: 13, userSelect: 'text', wordBreak: 'break-all' }}>
               {apiKeyVisible ? mockApiKey : mockApiKey.substring(0, 8) + '****' + mockApiKey.substring(mockApiKey.length - 4)}
             </Text>

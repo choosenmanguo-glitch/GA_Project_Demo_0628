@@ -6,6 +6,7 @@ import type { ColumnsType } from 'antd/es/table';
 import PageHeader from '@/components/PageHeader';
 import FilterBar from '@/components/FilterBar';
 import StatCards from '@/components/StatCards';
+import type { StatCardItem } from '@/components/StatCards';
 import type { FilterField } from '@/components/FilterBar';
 import { mockAgents, type AgentItem, type AgentType } from '@/mock/data';
 
@@ -42,6 +43,7 @@ export default function AgentManagePage() {
   const navigate = useNavigate();
   const [data, setData] = useState<AgentItem[]>(mockAgents);
   const [filters, setFilters] = useState<Record<string, any>>({ keyword: '', type: undefined, status: undefined });
+  const [activeStat, setActiveStat] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<AgentItem | null>(null);
@@ -50,6 +52,8 @@ export default function AgentManagePage() {
   const [configTab, setConfigTab] = useState('info');
   const [createMethod, setCreateMethod] = useState<'blank' | 'template' | 'import' | null>(null);
   const [form] = Form.useForm();
+
+  const activeStatIndex = activeStat === 'all' ? 0 : activeStat === '已发布' ? 1 : activeStat === '草稿' ? 2 : activeStat === '已下架' ? 3 : -1;
 
   const filteredData = useMemo(() => {
     return data.filter((item) => {
@@ -60,11 +64,15 @@ export default function AgentManagePage() {
     });
   }, [data, filters]);
 
-  const statItems = [
-    { title: '智能体总数', value: data.length, color: '#1677ff' },
-    { title: '已发布', value: data.filter(d => d.status === '已发布').length, color: '#52c41a' },
-    { title: '草稿', value: data.filter(d => d.status === '草稿').length, color: '#faad14' },
-    { title: '已下架', value: data.filter(d => d.status === '已下架').length, color: '#bfbfbf' },
+  const statItems: StatCardItem[] = [
+    { title: '智能体总数', value: data.length, color: '#1677ff',
+      onClick: () => { setFilters(prev => ({ ...prev, status: undefined })); setActiveStat('all'); } },
+    { title: '已发布', value: data.filter(d => d.status === '已发布').length, color: '#52c41a',
+      onClick: () => { setFilters(prev => ({ ...prev, status: '已发布' })); setActiveStat('已发布'); } },
+    { title: '草稿', value: data.filter(d => d.status === '草稿').length, color: '#faad14',
+      onClick: () => { setFilters(prev => ({ ...prev, status: '草稿' })); setActiveStat('草稿'); } },
+    { title: '已下架', value: data.filter(d => d.status === '已下架').length, color: '#bfbfbf',
+      onClick: () => { setFilters(prev => ({ ...prev, status: '已下架' })); setActiveStat('已下架'); } },
   ];
 
   const tableColumns: ColumnsType<AgentItem> = useMemo(() => [
@@ -211,14 +219,14 @@ export default function AgentManagePage() {
   return (
     <div style={{ flex: 1, padding: '16px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <PageHeader title="智能体管理" hint="管理已创建的智能体，查看运行状态、调用数据并进行版本管理" />
-        <StatCards items={statItems} />
+        <StatCards items={statItems} activeIndex={activeStatIndex} />
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 8, overflow: 'hidden' }}>
           <FilterBar
             filters={filterFields}
             filterValues={filters}
-            onFilterChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
+            onFilterChange={(key, value) => { setFilters((prev) => ({ ...prev, [key]: value })); if (key === 'status') setActiveStat(null); }}
             onSearch={() => {}}
-            onReset={() => setFilters({ keyword: '', type: undefined, status: undefined })}
+            onReset={() => { setFilters({ keyword: '', type: undefined, status: undefined }); setActiveStat(null); }}
             viewMode={viewMode}
             onViewModeChange={(mode) => setViewMode(mode)}
             onCreate={() => navigate('/dev/agent-build')}

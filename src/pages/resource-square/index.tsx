@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Input, Tag, Typography, Button, Drawer, Segmented, Modal, DatePicker, Empty, Space, message as antMsg } from 'antd';
+import { Input, Tag, Typography, Button, Drawer, Segmented, Modal, DatePicker, Empty, Space, message as antMsg, Select } from 'antd';
 import {
   SearchOutlined, PushpinFilled,
   CalendarOutlined, ApiOutlined,
@@ -9,6 +9,7 @@ import {
   CloudServerOutlined, ThunderboltOutlined, PlusOutlined,
 } from '@ant-design/icons';
 import { mockResources, type ResourceItem, type ResourceType } from '@/mock/data';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 const { Text, Paragraph, Title } = Typography;
 
@@ -56,13 +57,15 @@ const tabs: { label: string; value: string }[] = [
 // ════════════════════════════════════════════════
 
 export default function ResourceSquarePage() {
-  const [activeTab, setActiveTab] = useState<string>('all');
+  const { currentSpace, spaces } = useWorkspace();
+  const [activeTab, setActiveTab] = useState<string>('featured');
   const [searchText, setSearchText] = useState('');
   const [detailResource, setDetailResource] = useState<ResourceItem | null>(null);
   const [applyModal, setApplyModal] = useState<ResourceItem | null>(null);
   const [applyDuration, setApplyDuration] = useState<'long' | 'date'>('long');
   const [applyDate, setApplyDate] = useState<any>(null);
   const [applyReason, setApplyReason] = useState('');
+  const [applySpace, setApplySpace] = useState<string>('');
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
 
   // ── Data ──
@@ -95,8 +98,8 @@ export default function ResourceSquarePage() {
   const stats = useMemo(() => {
     const byType = (t: ResourceType) => publishedResources.filter(r => r.type === t).length;
     return [
-      { label: '资源总数', value: publishedResources.length, color: '#1677ff', key: 'all', primary: true },
-      { label: '精选推荐', value: publishedResources.filter(r => r.isTop).length, color: '#1677ff', key: 'featured' },
+      { label: '精选推荐', value: publishedResources.filter(r => r.isTop).length, color: '#1677ff', key: 'featured', primary: true, featured: true },
+      { label: '全部', value: publishedResources.length, color: '#1677ff', key: 'all' },
       { label: '模型', value: byType('模型'), color: '#1677ff', key: '模型' },
       { label: 'API', value: byType('API'), color: '#52c41a', key: 'API' },
       { label: '连接器', value: byType('连接器'), color: '#722ed1', key: '连接器' },
@@ -110,13 +113,15 @@ export default function ResourceSquarePage() {
   // ── Apply ──
   const handleApply = () => {
     if (!applyModal) return;
-    if (!applyReason.trim() && applyDuration === 'date' && !applyDate) return;
+    if (!applySpace) { antMsg.warning('请选择申请空间'); return; }
+    const targetSpace = spaces.find(s => s.id === applySpace);
     setAppliedIds(prev => new Set(prev).add(applyModal.id));
-    antMsg.success(`已提交对「${applyModal.name}」的使用申请`);
+    antMsg.success(`已向「${targetSpace?.name ?? applySpace}」提交对「${applyModal.name}」的使用申请`);
     setApplyModal(null);
     setApplyReason('');
     setApplyDate(null);
     setApplyDuration('long');
+    setApplySpace('');
   };
 
   // ── Render ──
@@ -154,15 +159,22 @@ export default function ResourceSquarePage() {
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {stats.map(st => {
               const active = activeTab === st.key;
+              const isFeatured = (st as any).featured;
               return (
                 <div
                   key={st.key}
                   onClick={() => setActiveTab(st.key === 'all' ? 'all' : st.key)}
                   style={{
-                    background: active ? st.color + '10' : '#fff',
-                    borderRadius: 6,
-                    border: `1px solid ${active ? st.color + '30' : '#E5EAF3'}`,
-                    padding: '6px 14px',
+                    background: isFeatured
+                      ? (active
+                        ? 'linear-gradient(135deg, #1677ff 0%, #2f54eb 100%)'
+                        : '#fff')
+                      : active ? st.color + '10' : '#fff',
+                    borderRadius: isFeatured ? 20 : 6,
+                    border: isFeatured
+                      ? (active ? '1px solid transparent' : '1px solid #E5EAF3')
+                      : `1px solid ${active ? st.color + '30' : '#E5EAF3'}`,
+                    padding: isFeatured ? '6px 18px' : '6px 14px',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
                     display: 'flex',
@@ -173,7 +185,7 @@ export default function ResourceSquarePage() {
                 >
                   <span style={{
                     fontSize: 13,
-                    color: active ? st.color : '#5F6B7A',
+                    color: isFeatured && active ? '#fff' : (active ? st.color : '#5F6B7A'),
                     fontWeight: active ? 600 : 400,
                   }}>
                     {st.label}
@@ -181,8 +193,8 @@ export default function ResourceSquarePage() {
                   <span style={{
                     fontSize: 12,
                     fontWeight: 700,
-                    color: active ? st.color : '#B0B8C8',
-                    background: active ? st.color + '15' : '#F2F3F8',
+                    color: isFeatured && active ? 'rgba(255,255,255,0.85)' : (active ? st.color : '#B0B8C8'),
+                    background: isFeatured && active ? 'rgba(255,255,255,0.2)' : (active ? st.color + '15' : '#F2F3F8'),
                     borderRadius: 10,
                     padding: '0 7px',
                     lineHeight: '18px',
@@ -308,14 +320,6 @@ export default function ResourceSquarePage() {
                             color: '#5F6B7A', background: '#F2F3F8', border: 'none',
                           }}>
                             {resource.subType}
-                          </Tag>
-                          <Tag style={{
-                            borderRadius: 4, margin: 0, fontSize: 11, lineHeight: '18px',
-                            color: resource.deployType === '内网' ? '#52c41a' : '#1677ff',
-                            background: resource.deployType === '内网' ? '#F0FBE9' : '#EBF2FF',
-                            border: 'none',
-                          }}>
-                            {resource.deployType}
                           </Tag>
                         </Space>
                       </div>
@@ -447,7 +451,6 @@ export default function ResourceSquarePage() {
                       <Space size={6} style={{ marginTop: 6 }}>
                         <Tag style={{ borderRadius: 4, margin: 0, fontSize: 11, background: tc.bg, color: tc.color, border: 'none' }}>{detailResource.type}</Tag>
                         <Tag style={{ borderRadius: 4, margin: 0, fontSize: 11, background: '#F2F3F8', border: 'none', color: '#5F6B7A' }}>{detailResource.subType}</Tag>
-                        <Tag style={{ borderRadius: 4, margin: 0, fontSize: 11, color: detailResource.deployType === '内网' ? '#52c41a' : '#1677ff', background: detailResource.deployType === '内网' ? '#F0FBE9' : '#EBF2FF', border: 'none' }}>{detailResource.deployType}</Tag>
                       </Space>
                     </div>
                   </div>
@@ -529,7 +532,7 @@ export default function ResourceSquarePage() {
                     </Button>
                   ) : (
                     <Button type="primary" block size="large" style={{ borderRadius: 6, height: 44, fontWeight: 600, fontSize: 14 }}
-                      onClick={() => { setApplyModal(detailResource); setDetailResource(null); }}>
+                      onClick={() => { setApplyModal(detailResource); setDetailResource(null); setApplySpace(currentSpace.id); }}>
                       申请使用
                     </Button>
                   )}
@@ -544,7 +547,7 @@ export default function ResourceSquarePage() {
           title="申请使用"
           open={applyModal !== null}
           onOk={handleApply}
-          onCancel={() => { setApplyModal(null); setApplyReason(''); setApplyDate(null); setApplyDuration('long'); }}
+          onCancel={() => { setApplyModal(null); setApplyReason(''); setApplyDate(null); setApplyDuration('long'); setApplySpace(''); }}
           okText="提交申请"
           cancelText="取消"
           width={480}
@@ -559,6 +562,19 @@ export default function ResourceSquarePage() {
               <div>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#5F6B7A', marginBottom: 6 }}>所有权人</div>
                 <Input value={applyModal.owner} disabled style={{ borderRadius: 6 }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#5F6B7A', marginBottom: 6 }}>申请空间 <Text type="danger" style={{ fontWeight: 400, fontSize: 11 }}>*</Text></div>
+                <Select
+                  value={applySpace}
+                  onChange={setApplySpace}
+                  placeholder="选择要申请到哪个空间"
+                  style={{ width: '100%', borderRadius: 6 }}
+                  options={spaces.map(s => ({
+                    label: s.name,
+                    value: s.id,
+                  }))}
+                />
               </div>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#5F6B7A', marginBottom: 8 }}>授权时效</div>

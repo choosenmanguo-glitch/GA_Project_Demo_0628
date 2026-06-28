@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Avatar, Badge, Button, Card, Col, Progress, Row, Space, Tag, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 import {
   ApiOutlined,
   ClockCircleOutlined,
@@ -199,6 +200,7 @@ const statusColor = {
 
 const WorkbenchPage: React.FC = () => {
   const navigate = useNavigate();
+  const { currentSpace } = useWorkspace();
 
   const totalCallsThisWeek = useMemo(
     () => weeklyTrend.reduce((sum, item) => sum + item.calls, 0),
@@ -217,9 +219,9 @@ const WorkbenchPage: React.FC = () => {
     },
     {
       title: '空间智能体',
-      value: '12',
+      value: String(currentSpace.agentCount),
       suffix: '个',
-      desc: '已发布 8 / 总数 12',
+      desc: `已发布 ${Math.floor(currentSpace.agentCount * 0.6)} / 总数 ${currentSpace.agentCount}`,
       icon: <NodeIndexOutlined />,
       color: '#52c41a',
       path: '/dev/agent-manage',
@@ -264,12 +266,12 @@ const WorkbenchPage: React.FC = () => {
             </Avatar>
             <div>
               <Space size={8} align="center">
-                <Text className="workspace-name">我的空间</Text>
+                <Text className="workspace-name">{currentSpace.name}</Text>
                 <Tag className="trust-tag" icon={<SafetyCertificateOutlined />}>
                   可信空间
                 </Tag>
               </Space>
-              <div className="workspace-sub">32 位成员 · 今日 09:20 更新</div>
+              <div className="workspace-sub">{currentSpace.memberCount} 位成员 · {currentSpace.dept} · 今日 09:20 更新</div>
             </div>
           </div>
 

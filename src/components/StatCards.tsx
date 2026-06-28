@@ -29,9 +29,11 @@ interface StatCardsProps {
   gutter?: number;
   colSpan?: number;
   style?: React.CSSProperties;
+  /** 高亮选中卡片的索引 */
+  activeIndex?: number;
 }
 
-const StatCards: React.FC<StatCardsProps> = ({ items, stats, gutter = 16, colSpan = 6, style }) => {
+const StatCards: React.FC<StatCardsProps> = ({ items, stats, gutter = 16, colSpan = 6, style, activeIndex }) => {
   // 便捷模式
   if (stats && !items) {
     return (
@@ -79,7 +81,10 @@ const StatCards: React.FC<StatCardsProps> = ({ items, stats, gutter = 16, colSpa
             onClick={item.onClick}
             style={{
               borderRadius: 8,
-              borderColor: '#f0f0f0',
+              borderColor: activeIndex === idx ? (item.color || '#1677ff') : '#f0f0f0',
+              borderWidth: activeIndex === idx ? 2 : 1,
+              cursor: item.onClick ? 'pointer' : 'default',
+              boxShadow: activeIndex === idx ? `0 0 0 2px ${item.color || '#1677ff'}20` : 'none',
             }}
           >
             <Statistic
