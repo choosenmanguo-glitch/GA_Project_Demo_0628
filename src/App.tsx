@@ -12,7 +12,8 @@ import DataSourcesPage from './pages/datasources';
 import WorkbenchPage from './pages/workbench';
 import AgentBuildPage from './pages/agent-build';
 import AgentManagePage from './pages/agent-manage';
-import SpaceOpsPage from './pages/space-ops';
+import SpaceManagePage from './pages/space-ops';
+import SpaceStatsPage from './pages/space-stats';
 import OpsSpacesPage from './pages/ops-spaces';
 import OpsMonitorPage from './pages/ops-monitor';
 import OpsInsightPage from './pages/ops-insight';
@@ -56,8 +57,8 @@ function AppRoutes() {
         <Route path="/dev/skills" element={<PlaceholderPage title="技能管理" description="可复用技能单元管理" />} />
         <Route path="/dev/datasources" element={<DataSourcesPage />} />
         <Route path="/dev/knowledge" element={<PlaceholderPage title="知识库" description="知识库创建、文档管理与检索配置" />} />
-        <Route path="/dev/stats" element={<SpaceOpsPage />} />
-        <Route path="/dev/space-manage" element={<PlaceholderPage title="空间管理" description="当前空间的基本信息、成员、日志与高级操作" />} />
+        <Route path="/dev/stats" element={<SpaceStatsPage />} />
+        <Route path="/dev/space-manage" element={<SpaceManagePage />} />
 
         {/* ===== 运维中心 ===== */}
         <Route path="/ops" element={<Navigate to="/ops/space-manage" replace />} />
