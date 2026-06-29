@@ -176,7 +176,7 @@ export interface SpaceItem {
   name: string;
   icon?: string;
   dept: string;
-  type: '个人空间' | '工作空间';
+  type: '个人空间' | '工作空间' | '案情专项';
   status: SpaceStatus;
   memberCount: number;
   agentCount: number;
@@ -205,6 +205,8 @@ export const mockSpaces: SpaceItem[] = [
   { id: '6', name: '法制大队空间', dept: '法制大队', type: '工作空间', status: '启用', memberCount: 16, agentCount: 3, knowledgeCount: 12, promptCount: 20, toolCount: 3, creator: '周科长', createTime: '2026-03-01', updateTime: '2026-06-20', modelQuotaUsed: 38000, modelQuotaLimit: 50000, storageUsed: 5200, storageLimit: 8000, agentQuotaUsed: 3, agentQuotaLimit: 6 },
   { id: '7', name: '社区警务空间', dept: '派出所', type: '工作空间', status: '启用', memberCount: 45, agentCount: 4, knowledgeCount: 5, promptCount: 8, toolCount: 3, creator: '管理员', createTime: '2026-01-10', updateTime: '2026-06-21', modelQuotaUsed: 92000, modelQuotaLimit: 150000, storageUsed: 7800, storageLimit: 15000, agentQuotaUsed: 4, agentQuotaLimit: 8 },
   { id: '8', name: '科技信息化大队', dept: '科信大队', type: '工作空间', status: '启用', memberCount: 12, agentCount: 2, knowledgeCount: 4, promptCount: 3, toolCount: 5, creator: '技术员', createTime: '2025-12-01', updateTime: '2026-06-24', modelQuotaUsed: 15000, modelQuotaLimit: 30000, storageUsed: 3000, storageLimit: 5000, agentQuotaUsed: 2, agentQuotaLimit: 5 },
+  { id: '9', name: '电信诈骗专项小组', dept: '刑侦大队', type: '案情专项', status: '启用', memberCount: 15, agentCount: 4, knowledgeCount: 6, promptCount: 9, toolCount: 5, creator: '陈队长', createTime: '2026-04-15', updateTime: '2026-06-26', modelQuotaUsed: 35000, modelQuotaLimit: 60000, storageUsed: 3200, storageLimit: 6000, agentQuotaUsed: 4, agentQuotaLimit: 8 },
+  { id: '10', name: '跨境赌博专案组', dept: '治安支队', type: '案情专项', status: '启用', memberCount: 10, agentCount: 3, knowledgeCount: 5, promptCount: 7, toolCount: 3, creator: '张警官', createTime: '2026-05-20', updateTime: '2026-06-27', modelQuotaUsed: 22000, modelQuotaLimit: 40000, storageUsed: 1800, storageLimit: 4000, agentQuotaUsed: 3, agentQuotaLimit: 6 },
 ];
 
 // ==================== 空间成员 ====================

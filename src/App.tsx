@@ -25,6 +25,7 @@ import AgentConfigPage from './pages/agent-config';
 import PlaceholderPage from './pages/Placeholder';
 import ResourceSquarePage from './pages/resource-square';
 import MyResourcesPage from './pages/my-resources';
+import KnowledgeBasePage from './pages/knowledge';
 
 /** 通过 MasterLayout 包装的路由 */
 function AppRoutes() {
@@ -56,7 +57,7 @@ function AppRoutes() {
         <Route path="/dev/connectors" element={<ConnectorsPage />} />
         <Route path="/dev/skills" element={<PlaceholderPage title="技能管理" description="可复用技能单元管理" />} />
         <Route path="/dev/datasources" element={<DataSourcesPage />} />
-        <Route path="/dev/knowledge" element={<PlaceholderPage title="知识库" description="知识库创建、文档管理与检索配置" />} />
+        <Route path="/dev/knowledge" element={<KnowledgeBasePage />} />
         <Route path="/dev/stats" element={<SpaceStatsPage />} />
         <Route path="/dev/space-manage" element={<SpaceManagePage />} />
 

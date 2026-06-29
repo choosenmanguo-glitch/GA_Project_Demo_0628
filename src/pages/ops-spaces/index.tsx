@@ -25,10 +25,13 @@ const spaceFilterFields: FilterField[] = [
   { type: 'select', key: 'status', placeholder: '状态', width: 100, options: [
     { label: '启用', value: '启用' }, { label: '停用', value: '停用' }, { label: '归档', value: '归档' },
   ]},
+  { type: 'select', key: 'spaceType', placeholder: '空间类型', width: 120, options: [
+    { label: '个人空间', value: '个人空间' }, { label: '工作空间', value: '工作空间' }, { label: '案情专项', value: '案情专项' },
+  ]},
 ];
 
 export default function OpsSpacesPage() {
-  const [filters, setFilters] = useState<Record<string, any>>({ keyword: '', status: undefined });
+  const [filters, setFilters] = useState<Record<string, any>>({ keyword: '', status: undefined, spaceType: undefined });
   const [selectedSpace, setSelectedSpace] = useState<SpaceItem | null>(null);
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
@@ -38,14 +41,14 @@ export default function OpsSpacesPage() {
   // ── 统计卡片数据 ──
   const statCardItems = useMemo(() => {
     const total = mockSpaces.length;
-    const archived = mockSpaces.filter(s => s.status === '归档').length;
-    const memberSum = mockSpaces.reduce((sum, s) => sum + s.memberCount, 0);
-    const monthNew = mockSpaces.filter(s => s.createTime >= '2026-06-01').length;
+    const personalCount = mockSpaces.filter(s => s.type === '个人空间').length;
+    const workCount = mockSpaces.filter(s => s.type === '工作空间').length;
+    const caseSpecialCount = mockSpaces.filter(s => s.type === '案情专项').length;
     return [
       { title: '总空间数', value: total, color: '#1677ff' },
-      { title: '已归档空间数', value: archived, color: '#8c8c8c' },
-      { title: '总成员数', value: memberSum, color: '#722ed1' },
-      { title: '本月新增空间数', value: monthNew, color: '#52c41a' },
+      { title: '个人空间', value: personalCount, color: '#52c41a' },
+      { title: '工作空间', value: workCount, color: '#722ed1' },
+      { title: '案情专项空间', value: caseSpecialCount, color: '#fa8c16' },
     ];
   }, []);
 
@@ -56,6 +59,7 @@ export default function OpsSpacesPage() {
     return mockSpaces.filter((s) => {
       if (filters.keyword && !s.name.includes(filters.keyword)) return false;
       if (filters.status && s.status !== filters.status) return false;
+      if (filters.spaceType && s.type !== filters.spaceType) return false;
       return true;
     });
   }, [filters]);
