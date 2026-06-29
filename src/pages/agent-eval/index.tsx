@@ -170,9 +170,9 @@ const taskFilterFields: FilterField[] = [
       return <div><span style={{ fontWeight: 700, fontSize: 15, color: ok ? '#52c41a' : '#ff4d4f' }}>{s?.toFixed(1)}</span><span style={{ fontSize: 12, color: '#999' }}> /5.0</span><div style={{ fontSize: 11, fontWeight: 600, color: ok ? '#52c41a' : '#ff4d4f' }}>{ok ? 'PASS' : 'FAIL'}</div></div>;
     }},
     { title: '智能体', dataIndex: 'agentName', width: 180, ellipsis: true },
-    { title: '评测集', dataIndex: 'datasetName', width: 180, render: (t, r) => <span>{t}<span style={{ color: '#999', fontSize: 12, marginLeft: 6, fontFamily: 'monospace' }}>{r.datasetVersion}</span></span> },
+    { title: '评测集', dataIndex: 'datasetName', width: 180, render: (t, r) => <span>{t}<span style={{ color: '#999', fontSize: 12, marginLeft: 6 }}>{r.datasetVersion}</span></span> },
     { title: '评估器', dataIndex: 'evaluators', width: 200, ellipsis: true, render: (t) => <Tooltip title={t}><span style={{ fontSize: 12, color: '#666' }}>{t}</span></Tooltip> },
-    { title: '完成时间', dataIndex: 'completedAt', width: 150, render: (t: string) => <span style={{ fontSize: 12, color: '#999', fontFamily: 'monospace' }}>{t === '-' ? '–' : t}</span> },
+    { title: '完成时间', dataIndex: 'completedAt', width: 150, render: (t: string) => <span style={{ fontSize: 12, color: '#999' }}>{t === '-' ? '–' : t}</span> },
     {
       title: '操作', width: 220, fixed: 'right' as const,
       render: (_: any, r: any) => (
@@ -269,7 +269,7 @@ const taskFilterFields: FilterField[] = [
                 <div>
                   <Tag icon={taskStatusMap[currentTask.status]?.icon} color={taskStatusMap[currentTask.status]?.color} style={{ borderRadius: 4 }}>{taskStatusMap[currentTask.status]?.label}</Tag>
                   <span style={{ fontSize: 12, color: '#999', marginLeft: 12 }}>执行人: {currentTask.executor}</span>
-                  <div style={{ fontSize: 12, color: '#999', marginTop: 8 }}>创建: <span style={{ color: '#666', fontFamily: 'monospace' }}>{currentTask.createdAt}</span>&emsp;完成: <span style={{ color: '#666', fontFamily: 'monospace' }}>{currentTask.completedAt === '-' ? '–' : currentTask.completedAt}</span></div>
+                  <div style={{ fontSize: 12, color: '#999', marginTop: 8 }}>创建: <span style={{ color: '#666' }}>{currentTask.createdAt}</span>&emsp;完成: <span style={{ color: '#666' }}>{currentTask.completedAt === '-' ? '–' : currentTask.completedAt}</span></div>
                 </div>
                 <div style={{ background: '#fafafa', borderRadius: 8, padding: '12px 20px', border: '1px solid #f0f0f0' }}>
                   <div style={{ fontSize: 11, color: '#999', marginBottom: 4, textTransform: 'uppercase' }}>综合得分</div>
@@ -278,7 +278,7 @@ const taskFilterFields: FilterField[] = [
               </div>
               <Row gutter={24} style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #f5f5f5' }}>
                 <Col span={8}><div style={{ fontSize: 11, color: '#999' }}>受测智能体</div><div style={{ fontWeight: 600, color: '#1677ff' }}>{currentTask.agentName}</div></Col>
-                <Col span={8}><div style={{ fontSize: 11, color: '#999' }}>评测集</div><div style={{ fontWeight: 600 }}>{currentTask.datasetName} <span style={{ color: '#999', fontFamily: 'monospace', fontSize: 12, marginLeft: 6 }}>{currentTask.datasetVersion}</span></div></Col>
+                <Col span={8}><div style={{ fontSize: 11, color: '#999' }}>评测集</div><div style={{ fontWeight: 600 }}>{currentTask.datasetName} <span style={{ color: '#999', fontSize: 12, marginLeft: 6 }}>{currentTask.datasetVersion}</span></div></Col>
                 <Col span={8}><div style={{ fontSize: 11, color: '#999' }}>评估器</div><Tooltip title={currentTask.evaluators}><div style={{ fontWeight: 600, fontSize: 12 }} className="ellipsis">{currentTask.evaluators}</div></Tooltip></Col>
               </Row>
             </div>
@@ -328,7 +328,7 @@ const taskFilterFields: FilterField[] = [
                           { title: '实际输出', dataIndex: 'actual', width: 220, ellipsis: true, render: (t) => <Tooltip title={t}><span style={{ fontSize: 12, color: '#666' }}>{t}</span></Tooltip> },
                           { title: '评分', dataIndex: 'score', width: 70, render: (s, r) => <span style={{ fontWeight: 700, color: r.pass ? '#52c41a' : '#ff4d4f' }}>{s}/5</span> },
                           { title: '评估器', dataIndex: 'details', width: 150, render: (d) => <Space size={4}>{Object.entries(d).map(([k, v]: any) => <Tooltip title={v.reason} key={k}><Tag style={{ borderRadius: 4 }}>{v.score}</Tag></Tooltip>)}</Space> },
-                          { title: '延时', dataIndex: 'latency', width: 80, render: (l) => <span style={{ fontSize: 12, color: '#999', fontFamily: 'monospace' }}>{l}ms</span> },
+                          { title: '延时', dataIndex: 'latency', width: 80, render: (l) => <span style={{ fontSize: 12, color: '#999' }}>{l}ms</span> },
                         ]}
                       />
                     </div>
@@ -383,10 +383,10 @@ const DatasetTab: React.FC = () => {
   const dsColumns: ColumnsType<any> = [
     { title: '评测集名称', dataIndex: 'name', width: 220, render: (t) => <span style={{ fontWeight: 600 }}>{t}</span> },
     { title: '来源类型', dataIndex: 'type', width: 110, render: (t) => <Tag icon={datasetTypeMap[t]?.icon} color={datasetTypeMap[t]?.color} style={{ borderRadius: 4 }}>{datasetTypeMap[t]?.label}</Tag> },
-    { title: '数据量', dataIndex: 'itemCount', width: 90, render: (n) => <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{n}<span style={{ color: '#999', fontWeight: 400, fontSize: 12 }}> 条</span></span> },
+    { title: '数据量', dataIndex: 'itemCount', width: 90, render: (n) => <span style={{ fontWeight: 600 }}>{n}<span style={{ color: '#999', fontWeight: 400, fontSize: 12 }}> 条</span></span> },
     { title: '当前版本', dataIndex: 'version', width: 150, render: (v, r) => <Space size={4}><Tag color="green" style={{ borderRadius: 4, margin: 0 }}>{v}</Tag>{r.hasDraft && <Tag color="orange" style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>含草稿</Tag>}</Space> },
     { title: '管理者', dataIndex: 'manager', width: 100, render: (t) => <span style={{ fontSize: 12, color: '#666' }}>{t}</span> },
-    { title: '创建时间', dataIndex: 'createdAt', width: 150, render: (t) => <span style={{ fontSize: 12, color: '#999', fontFamily: 'monospace' }}>{t}</span> },
+    { title: '创建时间', dataIndex: 'createdAt', width: 150, render: (t) => <span style={{ fontSize: 12, color: '#999' }}>{t}</span> },
     { title: '操作', width: 200, fixed: 'right', render: (_: any, r: any) => (
         <Space size={0}>
           <Tooltip title="管理"><Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setCurrentDs(r); setDataTab('data'); setDataDrawer(true); }}>管理</Button></Tooltip>
@@ -583,11 +583,11 @@ const DatasetTab: React.FC = () => {
                 <div style={{ padding: '16px 24px' }}>
                   <Table rowKey="version" size="middle" dataSource={MOCK_VERSIONS} pagination={false}
                     columns={[
-                      { title: '版本号', dataIndex: 'version', width: 100, render: (v, r) => <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{v}{r.isLatest && <Tag color="blue" style={{ borderRadius: 4, marginLeft: 8, fontSize: 10 }}>当前</Tag>}</span> },
+                      { title: '版本号', dataIndex: 'version', width: 100, render: (v, r) => <span style={{ fontWeight: 700 }}>{v}{r.isLatest && <Tag color="blue" style={{ borderRadius: 4, marginLeft: 8, fontSize: 10 }}>当前</Tag>}</span> },
                       { title: '数据量', dataIndex: 'itemCount', width: 80, render: (n) => <span>{n} 条</span> },
                       { title: '变更说明', dataIndex: 'note', ellipsis: true },
                       { title: '发布人', dataIndex: 'publisher', width: 100 },
-                      { title: '发布时间', dataIndex: 'publishedAt', width: 160, render: (t) => <span style={{ fontSize: 12, color: '#999', fontFamily: 'monospace' }}>{t}</span> },
+                      { title: '发布时间', dataIndex: 'publishedAt', width: 160, render: (t) => <span style={{ fontSize: 12, color: '#999' }}>{t}</span> },
                       { title: '', width: 60, render: () => <Button type="link" size="small" icon={<EyeOutlined />}>预览</Button> },
                     ]}
                   />
@@ -602,11 +602,11 @@ const DatasetTab: React.FC = () => {
       <Drawer title={`版本历史: ${currentDs?.name || '–'}`} open={versionsDrawer} onClose={() => setVersionsDrawer(false)} size="48%">
         <Table rowKey="version" size="middle" dataSource={MOCK_VERSIONS} pagination={false}
           columns={[
-            { title: '版本号', dataIndex: 'version', width: 100, render: (v, r) => <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{v}{r.isLatest && <Tag color="blue" style={{ borderRadius: 4, marginLeft: 8, fontSize: 10 }}>当前</Tag>}</span> },
+            { title: '版本号', dataIndex: 'version', width: 100, render: (v, r) => <span style={{ fontWeight: 700 }}>{v}{r.isLatest && <Tag color="blue" style={{ borderRadius: 4, marginLeft: 8, fontSize: 10 }}>当前</Tag>}</span> },
             { title: '数据量', dataIndex: 'itemCount', width: 80, render: (n) => <span>{n} 条</span> },
             { title: '变更说明', dataIndex: 'note', ellipsis: true },
             { title: '发布人', dataIndex: 'publisher', width: 100 },
-            { title: '发布时间', dataIndex: 'publishedAt', width: 160, render: (t) => <span style={{ fontSize: 12, color: '#999', fontFamily: 'monospace' }}>{t}</span> },
+            { title: '发布时间', dataIndex: 'publishedAt', width: 160, render: (t) => <span style={{ fontSize: 12, color: '#999' }}>{t}</span> },
             { title: '', width: 60, render: () => <Button type="link" size="small" icon={<EyeOutlined />}>预览</Button> },
           ]}
         />
@@ -622,7 +622,7 @@ const DatasetTab: React.FC = () => {
               <div><div style={{ fontSize: 24, fontWeight: 700, color: '#faad14' }}>5</div><div style={{ fontSize: 12, color: '#999' }}>修改</div></div>
               <div><div style={{ fontSize: 24, fontWeight: 700, color: '#ff4d4f' }}>2</div><div style={{ fontSize: 12, color: '#999' }}>删除</div></div>
             </div>
-            <div style={{ marginTop: 12, fontSize: 12, color: '#999' }}>版本号: <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#666' }}>v1.2 → v1.3</span></div>
+            <div style={{ marginTop: 12, fontSize: 12, color: '#999' }}>版本号: <span style={{ fontWeight: 600, color: '#666' }}>v1.2 → v1.3</span></div>
           </div>
           <Form.Item name="note" label="版本变更说明"><Input.TextArea placeholder="描述本次变更内容（选填）" rows={3} /></Form.Item>
         </Form>
@@ -669,9 +669,9 @@ const EvaluatorTab: React.FC = () => {
       )},
     { title: '类型', dataIndex: 'type', width: 80, render: (t) => <Tag style={{ borderRadius: 4, border: 0, background: t === 'LLM' ? '#e6f4ff' : '#f5f5f5', color: t === 'LLM' ? '#1677ff' : '#999' }}>{t}</Tag> },
     { title: '描述', dataIndex: 'description', width: 300, ellipsis: true, render: (t) => <Tooltip title={t}><span style={{ fontSize: 12, color: '#666' }}>{t}</span></Tooltip> },
-    { title: '引用次数', dataIndex: 'useCount', width: 100, render: (n) => <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{n.toLocaleString()}<span style={{ color: '#999', fontWeight: 400, fontSize: 12 }}> 次</span></span> },
+    { title: '引用次数', dataIndex: 'useCount', width: 100, render: (n) => <span style={{ fontWeight: 600 }}>{n.toLocaleString()}<span style={{ color: '#999', fontWeight: 400, fontSize: 12 }}> 次</span></span> },
     { title: '管理者', dataIndex: 'manager', width: 100 },
-    { title: '创建时间', dataIndex: 'createdAt', width: 150, render: (t) => <span style={{ fontSize: 12, color: '#999', fontFamily: 'monospace' }}>{t}</span> },
+    { title: '创建时间', dataIndex: 'createdAt', width: 150, render: (t) => <span style={{ fontSize: 12, color: '#999' }}>{t}</span> },
     { title: '操作', width: 180, render: () => (
         <Space size={0}>
           <Button type="link" size="small" icon={<EditOutlined />}>编辑</Button>
@@ -749,7 +749,7 @@ const EvaluatorTab: React.FC = () => {
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 14, margin: '8px 0 16px', color: '#1677ff', borderLeft: '3px solid #1677ff', paddingLeft: 10 }}>代码编辑器（暂未开放）</div>
                       <Card size="small" style={{ borderRadius: 8, borderColor: '#f0f0f0', background: '#fafafa' }}>
-                        <div style={{ fontSize: 12, color: '#999', fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>{`def evaluate(user_query, ai_output, expected, context):\n    # 编写你的评估逻辑\n    score = 0\n    # ...\n    return {"score": score, "reason": "..."}\n`}</div>
+                        <div style={{ fontSize: 12, color: '#999', whiteSpace: 'pre-wrap' }}>{`def evaluate(user_query, ai_output, expected, context):\n    # 编写你的评估逻辑\n    score = 0\n    # ...\n    return {"score": score, "reason": "..."}\n`}</div>
                         <Button icon={<CodeOutlined />} size="small" disabled style={{ marginTop: 12 }}>代码编辑器开发中</Button>
                       </Card>
                     </div>

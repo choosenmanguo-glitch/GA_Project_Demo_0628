@@ -4,7 +4,6 @@ import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import HeaderNav from './HeaderNav';
 import TabBar from '@/components/TabBar';
-import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
 import AppErrorBoundary from '@/components/AppErrorBoundary';
 import { topNavModules, moduleSideMenus, resolvePageLabel } from '@/config';
 import { useTabs } from '@/contexts/TabsContext';
@@ -103,12 +102,9 @@ const MasterLayout: React.FC<MasterLayoutProps> = ({ children }) => {
             flexShrink: 0,
           }}
         >
-          {/* 工作空间切换器 — 仅开发中心显示 */}
-          {activeModule === 'dev' && (
-            <WorkspaceSwitcher collapsed={collapsed} />
-          )}
+          {/* 工作空间切换器 - 已移至工作台页面顶部 */}
 
-          <div className={collapsed ? 'sidebar-collapsed' : undefined} style={{ flex: 1, overflow: 'auto', overflowX: 'hidden' }}>
+          <div className={collapsed ? 'sidebar-collapsed' : undefined} style={{ flex: 1, overflow: 'auto', overflowX: 'hidden', paddingTop: 12 }}>
             <Menu
               mode="inline"
               inlineCollapsed={collapsed}

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Avatar, Badge, Button, Card, Col, Progress, Row, Space, Tag, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
+import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
 import {
   ApiOutlined,
   ClockCircleOutlined,
@@ -264,15 +265,16 @@ const WorkbenchPage: React.FC = () => {
             <Avatar size={42} className="workspace-avatar">
               W
             </Avatar>
-            <div>
+            <div style={{ flex: 1 }}>
               <Space size={8} align="center">
                 <Text className="workspace-name">{currentSpace.name}</Text>
                 <Tag className="trust-tag" icon={<SafetyCertificateOutlined />}>
                   可信空间
                 </Tag>
               </Space>
-              <div className="workspace-sub">{currentSpace.memberCount} 位成员 · {currentSpace.dept} · 今日 09:20 更新</div>
+              <div className="workspace-sub">{currentSpace.memberCount} 位成员 · {currentSpace.dept} · 今日 09:20 活跃</div>
             </div>
+            <WorkspaceSwitcher inline />
           </div>
 
           <div className="header-main">

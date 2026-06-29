@@ -14,9 +14,11 @@ const brandBg = '#e6f4ff';
 
 interface Props {
   collapsed?: boolean;
+  /** 内联模式：用于页面头部，无边框无背景 */
+  inline?: boolean;
 }
 
-const WorkspaceSwitcher: React.FC<Props> = ({ collapsed }) => {
+const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
   const { currentSpace, spaces, switchSpace } = useWorkspace();
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -40,12 +42,12 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed }) => {
 
   return (
     <>
-      {/* ── Sidebar trigger ── */}
+      {/* ── Trigger ── */}
       <div
         onClick={() => setModalOpen(true)}
         style={{
-          padding: collapsed ? '12px 0' : '12px 16px',
-          borderBottom: '1px solid #f0f0f0',
+          padding: inline ? '0' : collapsed ? '12px 0' : '12px 16px',
+          borderBottom: inline ? 'none' : '1px solid #f0f0f0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: collapsed ? 'center' : 'space-between',
@@ -53,8 +55,9 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed }) => {
           flexShrink: 0,
           transition: 'background 0.15s',
           userSelect: 'none',
+          gap: inline ? 8 : 0,
         }}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#fafafa'; }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = inline ? 'transparent' : '#fafafa'; }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
       >
         {collapsed ? (

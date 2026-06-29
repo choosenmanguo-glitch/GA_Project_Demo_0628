@@ -5,7 +5,7 @@ import {
 } from 'antd';
 import {
   RobotOutlined, FolderOutlined, FileTextOutlined, ToolOutlined,
-  TeamOutlined, ThunderboltOutlined, RightOutlined,
+  ThunderboltOutlined, ApiOutlined, RightOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import PageHeader from '@/components/PageHeader';
@@ -64,20 +64,28 @@ export default function SpaceStatsPage() {
 
   // ── 指标卡片数据 ──
   const statItems = [
-    { title: '智能体数', value: currentSpace.agentCount, suffix: ` / ${currentSpace.agentQuotaLimit}`, color: '#1677ff' },
-    { title: '知识库数', value: currentSpace.knowledgeCount, suffix: ` 项`, color: '#722ed1' },
-    { title: '提示词数', value: currentSpace.promptCount, suffix: ` 条`, color: '#52c41a' },
-    { title: '工具数', value: currentSpace.toolCount, suffix: ` 个`, color: '#fa8c16' },
-    { title: '成员数', value: currentSpace.memberCount, suffix: ` 人`, color: '#13c2c2' },
+    { title: '智能体数', value: currentSpace.agentCount, icon: <RobotOutlined />, color: '#1677ff' },
+    { title: '知识库数', value: currentSpace.knowledgeCount, icon: <FolderOutlined />, color: '#722ed1' },
+    { title: '提示词数', value: currentSpace.promptCount, icon: <FileTextOutlined />, color: '#52c41a' },
+    { title: '工具数', value: currentSpace.toolCount, icon: <ToolOutlined />, color: '#fa8c16' },
+    { title: '模型数', value: currentSpace.modelCount ?? 0, icon: <ThunderboltOutlined />, color: '#13c2c2' },
+    { title: '连接器数', value: currentSpace.connectorCount ?? 0, icon: <ApiOutlined />, color: '#eb2f96' },
   ];
 
   // ── 配额数据 ──
   const quotaItems = [
     {
-      label: '模型调用配额',
-      used: currentSpace.modelQuotaUsed,
-      limit: currentSpace.modelQuotaLimit,
-      unit: '次',
+      label: '每日 Token 配额',
+      used: currentSpace.dailyTokenUsed ?? 0,
+      limit: currentSpace.dailyTokenLimit ?? 0,
+      unit: 'Token',
+      color: '#1677ff',
+    },
+    {
+      label: '每月 Token 配额',
+      used: currentSpace.monthlyTokenUsed ?? 0,
+      limit: currentSpace.monthlyTokenLimit ?? 0,
+      unit: 'Token',
       color: '#1677ff',
     },
     {
@@ -93,6 +101,13 @@ export default function SpaceStatsPage() {
       limit: currentSpace.agentQuotaLimit,
       unit: '个',
       color: '#52c41a',
+    },
+    {
+      label: '成员数量配额',
+      used: currentSpace.memberCount,
+      limit: currentSpace.memberLimit ?? 0,
+      unit: '人',
+      color: '#13c2c2',
     },
   ];
 
@@ -136,10 +151,10 @@ export default function SpaceStatsPage() {
         />
       </div>
 
-      {/* ── 5 指标卡片行 ── */}
+      {/* ── 6 指标卡片行 ── */}
       <Row gutter={16} style={{ marginBottom: 20 }}>
         {statItems.map((item, idx) => (
-          <Col span={Math.floor(24 / 5)} key={idx}>
+          <Col span={4} key={idx}>
             <Card
               className="stat-card"
               size="small"
@@ -153,7 +168,6 @@ export default function SpaceStatsPage() {
                   <Text type="secondary" style={{ fontSize: 12 }}>{item.title}</Text>
                   <div style={{ fontSize: 26, fontWeight: 700, marginTop: 4, color: item.color }}>
                     {item.value}
-                    <span style={{ fontSize: 13, fontWeight: 400, color: '#999', marginLeft: 2 }}>{item.suffix}</span>
                   </div>
                 </div>
                 <div style={{
@@ -162,7 +176,7 @@ export default function SpaceStatsPage() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 16, color: item.color,
                 }}>
-                  {idx === 0 ? <RobotOutlined /> : idx === 1 ? <FolderOutlined /> : idx === 2 ? <FileTextOutlined /> : idx === 3 ? <ToolOutlined /> : <TeamOutlined />}
+                  {item.icon}
                 </div>
               </div>
             </Card>
@@ -176,11 +190,10 @@ export default function SpaceStatsPage() {
           const pct = Math.min(Math.round((q.used / q.limit) * 100), 100);
           const warnColor = pct >= 100 ? '#ff4d4f' : pct >= 80 ? '#fa8c16' : q.color;
           return (
-            <Col span={8} key={idx}>
+            <Col span={4} key={idx}>
               <Card size="small" style={{ borderRadius: 10, border: '1px solid #f0f0f0' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                   <Text strong style={{ fontSize: 13 }}>{q.label}</Text>
-                  <Text type="secondary" style={{ fontSize: 11 }}>配额由平台管理员在运维中心统一设置</Text>
                 </div>
                 <div style={{ fontSize: 20, fontWeight: 700, color: warnColor, marginBottom: 4 }}>
                   {q.used.toLocaleString()} <span style={{ fontSize: 12, fontWeight: 400, color: '#999' }}>/ {q.limit.toLocaleString()} {q.unit}</span>
