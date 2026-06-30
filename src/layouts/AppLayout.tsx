@@ -22,8 +22,8 @@ const MasterLayout: React.FC<MasterLayoutProps> = ({ children }) => {
   // 路由变化时自动添加页签
   useEffect(() => {
     const path = location.pathname;
-    // 排除根路径和仅含模块前缀的路径
-    if (path === '/') return;
+    // 排除根路径和一级模块根路径（不创建页签）
+    if (path === '/' || topNavModules.some(m => m.path === path)) return;
     const label = resolvePageLabel(path);
     setActivePath(path);
     addTab(path, label);

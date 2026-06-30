@@ -152,7 +152,11 @@ export const moduleLabelMap: Record<string, string> = {
 
 /** 根据路由路径解析页面名称（用于页签标题） */
 export function resolvePageLabel(path: string): string {
-  // 先精确匹配菜单项
+  // 先匹配一级模块根路径
+  for (const mod of topNavModules) {
+    if (path === mod.path) return mod.label;
+  }
+  // 精确匹配菜单项
   for (const menus of Object.values(moduleSideMenus)) {
     if (!menus) continue;
     for (const group of menus as any[]) {

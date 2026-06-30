@@ -82,9 +82,9 @@ const StatCards: React.FC<StatCardsProps> = ({ items, stats, gutter = 16, colSpa
             style={{
               borderRadius: 8,
               borderColor: activeIndex === idx ? (item.color || '#1677ff') : '#f0f0f0',
-              borderWidth: activeIndex === idx ? 2 : 1,
               cursor: item.onClick ? 'pointer' : 'default',
-              boxShadow: activeIndex === idx ? `0 0 0 2px ${item.color || '#1677ff'}20` : 'none',
+              background: activeIndex === idx ? `${item.color || '#1677ff'}08` : '#fff',
+              boxShadow: activeIndex === idx ? `0 2px 8px ${item.color || '#1677ff'}18` : 'none',
             }}
           >
             <Statistic

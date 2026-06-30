@@ -50,6 +50,9 @@ export default function OpsSpacesPage() {
   const [spaceMembers, setSpaceMembers] = useState<SpaceMember[]>(mockMembers);
   const [presetSelections, setPresetSelections] = useState<Record<string, string[]>>({});
   const [confirmState, setConfirmState] = useState<{ action: string; space: SpaceItem } | null>(null);
+  const [createSpaceName, setCreateSpaceName] = useState('');
+  const [createSpaceDept, setCreateSpaceDept] = useState<string | undefined>(undefined);
+  const [createSpaceType, setCreateSpaceType] = useState('工作空间');
 
   // ── 确认操作执行 ──
   const handleConfirm = () => {
@@ -255,7 +258,7 @@ export default function OpsSpacesPage() {
       <StepDrawer
         title="创建空间"
         open={createDrawerOpen}
-        onClose={() => setCreateDrawerOpen(false)}
+        onClose={() => { setCreateDrawerOpen(false); setCreateSpaceName(''); setCreateSpaceDept(undefined); setCreateSpaceType('工作空间'); setPresetSelections({}); }}
         steps={createSteps}
         current={createStep}
         totalSteps={createSteps.length}
@@ -263,13 +266,22 @@ export default function OpsSpacesPage() {
         onFinish={() => {
           message.success('空间创建成功');
           setCreateDrawerOpen(false);
+          setCreateSpaceName('');
+          setCreateSpaceDept(undefined);
+          setCreateSpaceType('工作空间');
+          setPresetSelections({});
         }}
       >
         {/* 第一步：基本信息 */}
         {createStep === 0 && (
           <Form layout="vertical">
             <Form.Item label="空间名称" required rules={[{ required: true }]}>
-              <Input placeholder="请输入空间名称" style={{ borderRadius: 6 }} />
+              <Input
+                placeholder="请输入空间名称"
+                style={{ borderRadius: 6 }}
+                value={createSpaceName}
+                onChange={(e) => setCreateSpaceName(e.target.value)}
+              />
             </Form.Item>
             <Form.Item label="空间描述">
               <TextArea rows={3} placeholder="描述该空间的用途和适用范围" style={{ borderRadius: 6 }} />
@@ -289,6 +301,8 @@ export default function OpsSpacesPage() {
               <Select
                 placeholder="从组织架构中选择"
                 style={{ borderRadius: 6 }}
+                value={createSpaceDept}
+                onChange={setCreateSpaceDept}
                 options={[
                   '指挥中心', '反诈中心', '刑警大队', '交警支队', '治安支队',
                   '法制大队', '派出所', '科信大队', '巡特警支队',
@@ -297,7 +311,8 @@ export default function OpsSpacesPage() {
             </Form.Item>
             <Form.Item label="空间类型" required>
               <Select
-                defaultValue="工作空间"
+                value={createSpaceType}
+                onChange={setCreateSpaceType}
                 style={{ borderRadius: 6 }}
                 options={[
                   { label: '工作空间', value: '工作空间' },
@@ -421,9 +436,9 @@ export default function OpsSpacesPage() {
               <Title level={5} style={{ margin: 0 }}>基本信息</Title>
               <div style={{ marginTop: 12 }}>
                 {[
-                  { label: '空间名称', value: '（请在第一步填写）' },
-                  { label: '空间类型', value: '工作空间' },
-                  { label: '所属部门', value: '（请在第一步选择）' },
+                  { label: '空间名称', value: createSpaceName || '未填写' },
+                  { label: '空间类型', value: createSpaceType },
+                  { label: '所属部门', value: createSpaceDept || '未选择' },
                 ].map(item => (
                   <div key={item.label} style={{ display: 'flex', padding: '6px 0' }}>
                     <Text type="secondary" style={{ width: 100 }}>{item.label}</Text>
@@ -439,16 +454,29 @@ export default function OpsSpacesPage() {
               <Title level={5} style={{ margin: 0 }}>预置资源清单</Title>
               <div style={{ marginTop: 12 }}>
                 {[
-                  { label: '模型', value: '请在第二步勾选' },
-                  { label: '知识库', value: '请在第二步勾选' },
-                  { label: '提示词模板', value: '请在第二步勾选' },
-                  { label: '工具集', value: '请在第二步勾选' },
-                ].map(item => (
-                  <div key={item.label} style={{ display: 'flex', padding: '6px 0' }}>
-                    <Text type="secondary" style={{ width: 100 }}>{item.label}</Text>
-                    <span>{item.value}</span>
-                  </div>
-                ))}
+                  { label: '模型', key: '模型' },
+                  { label: '提示词', key: '提示词' },
+                  { label: '工具', key: '工具' },
+                  { label: '连接器', key: '连接器' },
+                  { label: '技能', key: '技能' },
+                  { label: '知识库', key: '知识库' },
+                  { label: '数据连接', key: '数据连接' },
+                ].map(item => {
+                  const selected = presetSelections[item.key] || [];
+                  return (
+                    <div key={item.label} style={{ display: 'flex', padding: '6px 0' }}>
+                      <Text type="secondary" style={{ width: 100 }}>{item.label}</Text>
+                      <span>
+                        {selected.length > 0
+                          ? selected.map(v => (
+                              <Tag key={v} style={{ marginBottom: 4 }}>{v}</Tag>
+                            ))
+                          : <Text type="secondary">未选择</Text>
+                        }
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

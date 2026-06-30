@@ -86,7 +86,6 @@ export default function AgentManagePage() {
       </Space>
     )},
     { title: '类型', dataIndex: 'type', width: 120, render: (t: AgentType) => <Tag color={typeColorMap[t]}>{t}</Tag> },
-    { title: '所属空间', dataIndex: 'spaceName', width: 120, render: (n) => <Text type="secondary">{n}</Text> },
     { title: '绑定模型', dataIndex: 'modelName', width: 140 },
     { title: '状态', dataIndex: 'status', width: 90, render: (s: string) => <Tag color={statusColorMap[s]}>{s}</Tag> },
     { title: '调用次数', dataIndex: 'callCount', width: 100, render: (n: number) => n.toLocaleString(), sorter: (a, b) => a.callCount - b.callCount },
