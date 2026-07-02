@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Table, Tabs, Tag, Button, Space, Drawer, Steps, Form, Input, Select, Checkbox, Typography, message } from 'antd';
 import { AlertOutlined, BellOutlined, CheckCircleOutlined, SyncOutlined, CloseCircleOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
@@ -146,7 +146,7 @@ export default function AlertPage() {
       </div>
 
       {/* 告警详情抽屉 */}
-      <Drawer title="告警详情" open={!!selectedAlert} onClose={() => setSelectedAlert(null)} width={640} destroyOnClose
+      <Drawer title="告警详情" open={!!selectedAlert} onClose={() => setSelectedAlert(null)} size={640} destroyOnClose
         extra={selectedAlert?.status === '待处理' && <Button type="primary" icon={<CheckCircleOutlined />}>认领处理</Button>}>
         {selectedAlert && (
           <div>
@@ -195,7 +195,7 @@ export default function AlertPage() {
       </Drawer>
 
       {/* 创建规则抽屉 */}
-      <Drawer title="创建告警规则" open={ruleDrawerOpen} onClose={() => setRuleDrawerOpen(false)} width={600} destroyOnClose
+      <Drawer title="创建告警规则" open={ruleDrawerOpen} onClose={() => setRuleDrawerOpen(false)} size={600} destroyOnClose
         extra={<Space><Button onClick={() => setRuleDrawerOpen(false)}>取消</Button>{ruleStep === 3 ? <Button type="primary" onClick={() => { message.success('规则创建成功'); setRuleDrawerOpen(false); }}>完成创建</Button> : <Button type="primary" onClick={() => setRuleStep(ruleStep + 1)}>下一步</Button>}</Space>}>
         <Steps current={ruleStep} size="small" style={{ marginBottom: 24 }} items={[{ title: '基本信息' }, { title: '触发条件' }, { title: '通知配置' }, { title: '确认创建' }]} />
         {ruleStep === 0 && (

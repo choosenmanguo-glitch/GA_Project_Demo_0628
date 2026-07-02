@@ -308,7 +308,7 @@ const ConnectorsPage: React.FC = () => {
       </Drawer>
 
       {/* Detail Drawer */}
-      <Drawer title="连接器详情" open={!!viewingItem} onClose={() => setViewingItem(null)} width={480} placement="right">
+      <Drawer title="连接器详情" open={!!viewingItem} onClose={() => setViewingItem(null)} size={480} placement="right">
         {viewingItem && (() => {
           const sc = statusConfig[viewingItem.status];
           const tc = typeConfig[viewingItem.type];

@@ -26,7 +26,7 @@ const { RangePicker } = DatePicker;
 
 // ── 角色颜色映射 ──
 const roleColorMap: Record<string, string> = {
-  '创建人': 'gold',
+  '所有者': 'gold',
   '管理员': 'blue',
   '普通用户': 'default',
 };
@@ -36,7 +36,7 @@ const memberFilterFields: FilterField[] = [
   { type: 'search', key: 'keyword', placeholder: '搜索姓名或部门', width: 220 },
   { type: 'select', key: 'role', placeholder: '角色筛选', width: 120, options: [
     { label: '全部角色', value: 'all' },
-    { label: '创建人', value: '创建人' },
+    { label: '所有者', value: '所有者' },
     { label: '管理员', value: '管理员' },
     { label: '普通用户', value: '普通用户' },
   ]},
@@ -74,7 +74,7 @@ export default function SpaceManagePage() {
     return mockMembers.filter(m => {
       const roleFilter = memberFilters.role;
       if (roleFilter && roleFilter !== 'all') {
-        if (roleFilter === '创建人' && m.role !== '创建人') return false;
+        if (roleFilter === '所有者' && m.role !== '所有者') return false;
         if (roleFilter === '管理员' && m.role !== '管理员') return false;
         if (roleFilter === '普通用户' && m.role !== '普通用户') return false;
       }
@@ -122,7 +122,7 @@ export default function SpaceManagePage() {
       title: '角色', dataIndex: 'role', width: 100,
       render: (r: string) => (
         <Tag color={roleColorMap[r] || 'default'} style={{ borderRadius: 4 }}>
-          {r === '创建人' ? <><CrownOutlined style={{ marginRight: 2 }} />{r}</> : r === '管理员' ? <><SafetyOutlined style={{ marginRight: 2 }} />{r}</> : <><UserOutlined style={{ marginRight: 2 }} />{r}</>}
+          {r === '所有者' ? <><CrownOutlined style={{ marginRight: 2 }} />{r}</> : r === '管理员' ? <><SafetyOutlined style={{ marginRight: 2 }} />{r}</> : <><UserOutlined style={{ marginRight: 2 }} />{r}</>}
         </Tag>
       ),
     },
@@ -131,13 +131,13 @@ export default function SpaceManagePage() {
     {
       title: '操作', width: 160,
       render: (_, r) => {
-        const isCreator = r.role === '创建人';
+        const isOwner = r.role === '所有者';
         return (
           <Space size={0}>
             <Select
               size="small"
               value={r.role}
-              disabled={isCreator}
+              disabled={isOwner}
               onChange={(val) => message.success(`已将 ${r.name} 的角色变更为 ${val}`)}
               style={{ width: 88 }}
               options={[
@@ -147,11 +147,11 @@ export default function SpaceManagePage() {
               variant="borderless"
             />
             <Popconfirm
-              title={isCreator ? '创建人不可被移除' : `确定移除 ${r.name}？`}
-              disabled={isCreator}
+              title={isOwner ? '所有者不可被移除' : `确定移除 ${r.name}？`}
+              disabled={isOwner}
               onConfirm={() => message.success(`已移除 ${r.name}`)}
             >
-              <Button type="link" size="small" danger disabled={isCreator}>移除</Button>
+              <Button type="link" size="small" danger disabled={isOwner}>移除</Button>
             </Popconfirm>
           </Space>
         );
@@ -267,7 +267,7 @@ export default function SpaceManagePage() {
 
             <Row gutter={16}>
               <Col span={12}>
-                <Form.Item label="创建人" name="creator">
+                <Form.Item label="所有者" name="creator">
                   <Input disabled style={{ borderRadius: 6 }} />
                 </Form.Item>
               </Col>
@@ -480,10 +480,11 @@ export default function SpaceManagePage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 16, fontWeight: 600 }}>{currentSpace.name}</span>
             <Tag color={currentSpace.type === '个人空间' ? 'blue' : 'green'} style={{ borderRadius: 4 }}>{currentSpace.type}</Tag>
+            <Tag color="gold" style={{ borderRadius: 4 }}><CrownOutlined style={{ marginRight: 2 }} />所有者</Tag>
           </div>
           <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
             <span>创建时间：{currentSpace.createTime}</span>
-            <span>创建人：{currentSpace.creator}</span>
+            <span>所有者：{currentSpace.creator}</span>
           </div>
         </div>
       </div>

@@ -29,7 +29,7 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({ open, 
         </div>
       }
       placement="right"
-      width={640}
+      size={640}
       open={open}
       onClose={onClose}
       destroyOnClose

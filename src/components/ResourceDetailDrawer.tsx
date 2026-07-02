@@ -49,7 +49,7 @@ export const ResourceDetailDrawer: React.FC<ResourceDetailDrawerProps> = ({ open
         </div>
       }
       placement="right"
-      width={720}
+      size={720}
       open={open}
       onClose={onClose}
       destroyOnClose

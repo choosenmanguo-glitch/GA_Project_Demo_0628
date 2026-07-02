@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Row, Col, Card, Statistic, Typography, Progress, Tabs, Tag, Button, Space,
+  Row, Col, Card, Statistic, Typography, Tag, Button, Space,
   Segmented,
 } from 'antd';
 import {
   RobotOutlined, FolderOutlined, FileTextOutlined, ToolOutlined,
-  ThunderboltOutlined, ApiOutlined, RightOutlined,
+  ThunderboltOutlined, ApiOutlined, RightOutlined, CrownOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import PageHeader from '@/components/PageHeader';
@@ -47,12 +47,12 @@ const tokenTrend = Array.from({ length: 30 }, (_, i) => {
   };
 }).reverse();
 
-// ── 活跃成员 TOP10 ──
-const activeMembers = [
-  { name: '李警官', calls: 4820 }, { name: '王大队', calls: 3910 }, { name: '陈队长', calls: 3520 },
-  { name: '赵警官', calls: 3240 }, { name: '周科长', calls: 2870 }, { name: '张警官', calls: 2150 },
-  { name: '演示用户', calls: 1980 }, { name: '刘队长', calls: 1620 }, { name: '孙民警', calls: 1380 },
-  { name: '钱交警', calls: 1150 },
+// ── 智能体活跃 Top10 ──
+const activeAgents = [
+  { name: '110接警智能助手', calls: 4820 }, { name: '反诈研判分析助手', calls: 3910 }, { name: '案情摘要生成器', calls: 3520 },
+  { name: '交通执法辅助', calls: 3240 }, { name: '社区警务助手', calls: 2870 }, { name: '文书生成智能体', calls: 2150 },
+  { name: '人口信息查询助手', calls: 1980 }, { name: '图像识别助手', calls: 1620 }, { name: '治安巡逻辅助', calls: 1380 },
+  { name: '车管业务助手', calls: 1150 },
 ];
 
 // ── 获取当前空间资源 ──
@@ -70,45 +70,6 @@ export default function SpaceStatsPage() {
     { title: '工具数', value: currentSpace.toolCount, icon: <ToolOutlined />, color: '#fa8c16' },
     { title: '模型数', value: currentSpace.modelCount ?? 0, icon: <ThunderboltOutlined />, color: '#13c2c2' },
     { title: '连接器数', value: currentSpace.connectorCount ?? 0, icon: <ApiOutlined />, color: '#eb2f96' },
-  ];
-
-  // ── 配额数据 ──
-  const quotaItems = [
-    {
-      label: '每日 Token 配额',
-      used: currentSpace.dailyTokenUsed ?? 0,
-      limit: currentSpace.dailyTokenLimit ?? 0,
-      unit: 'Token',
-      color: '#1677ff',
-    },
-    {
-      label: '每月 Token 配额',
-      used: currentSpace.monthlyTokenUsed ?? 0,
-      limit: currentSpace.monthlyTokenLimit ?? 0,
-      unit: 'Token',
-      color: '#1677ff',
-    },
-    {
-      label: '存储空间配额',
-      used: currentSpace.storageUsed,
-      limit: currentSpace.storageLimit,
-      unit: 'MB',
-      color: '#722ed1',
-    },
-    {
-      label: '智能体数量配额',
-      used: currentSpace.agentQuotaUsed,
-      limit: currentSpace.agentQuotaLimit,
-      unit: '个',
-      color: '#52c41a',
-    },
-    {
-      label: '成员数量配额',
-      used: currentSpace.memberCount,
-      limit: currentSpace.memberLimit ?? 0,
-      unit: '人',
-      color: '#13c2c2',
-    },
   ];
 
   return (
@@ -136,11 +97,12 @@ export default function SpaceStatsPage() {
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 16, fontWeight: 600 }}>{currentSpace.name}</span>
-            <Tag color="blue" style={{ borderRadius: 4 }}>管理员</Tag>
+            <Tag color={currentSpace.type === '个人空间' ? 'blue' : 'green'} style={{ borderRadius: 4 }}>{currentSpace.type}</Tag>
+            <Tag color="gold" style={{ borderRadius: 4 }}><CrownOutlined style={{ marginRight: 2 }} />所有者</Tag>
           </div>
           <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
             <span>创建时间：{currentSpace.createTime}</span>
-            <span>最近更新：{currentSpace.updateTime}</span>
+            <span>所有者：{currentSpace.creator}</span>
           </div>
         </div>
         <Segmented
@@ -182,34 +144,6 @@ export default function SpaceStatsPage() {
             </Card>
           </Col>
         ))}
-      </Row>
-
-      {/* ── 配额使用概览（只读） ── */}
-      <Row gutter={16} style={{ marginBottom: 20 }}>
-        {quotaItems.map((q, idx) => {
-          const pct = Math.min(Math.round((q.used / q.limit) * 100), 100);
-          const warnColor = pct >= 100 ? '#ff4d4f' : pct >= 80 ? '#fa8c16' : q.color;
-          return (
-            <Col span={4} key={idx}>
-              <Card size="small" style={{ borderRadius: 10, border: '1px solid #f0f0f0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <Text strong style={{ fontSize: 13 }}>{q.label}</Text>
-                </div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: warnColor, marginBottom: 4 }}>
-                  {q.used.toLocaleString()} <span style={{ fontSize: 12, fontWeight: 400, color: '#999' }}>/ {q.limit.toLocaleString()} {q.unit}</span>
-                </div>
-                <Progress
-                  percent={pct}
-                  size="small"
-                  strokeColor={warnColor}
-                  trailColor="#f0f0f0"
-                  showInfo={false}
-                />
-                <Text type="secondary" style={{ fontSize: 11 }}>{pct}% 已使用</Text>
-              </Card>
-            </Col>
-          );
-        })}
       </Row>
 
       {/* ── 图表区：第一行 ── */}
@@ -309,16 +243,16 @@ export default function SpaceStatsPage() {
           </Card>
         </Col>
 
-        {/* 活跃成员 TOP10 - 横向条形图 */}
+        {/* 智能体活跃 Top10 - 横向条形图 */}
         <Col span={12}>
           <Card
-            title={<span style={{ fontSize: 14, fontWeight: 600 }}>活跃成员 TOP10</span>}
+            title={<span style={{ fontSize: 14, fontWeight: 600 }}>智能体活跃 Top10</span>}
             size="small"
             style={{ borderRadius: 10, border: '1px solid #f0f0f0' }}
           >
             <ResponsiveContainer width="100%" height={260}>
               <BarChart
-                data={activeMembers}
+                data={activeAgents}
                 layout="vertical"
                 margin={{ top: 0, right: 20, bottom: 0, left: 10 }}
               >

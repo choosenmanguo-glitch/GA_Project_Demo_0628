@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Table, Tag, Button, Drawer, Form, Input, Select, message, Popconfirm, Typography, Space } from 'antd';
 import { EditOutlined, DeleteOutlined, EyeOutlined, CopyOutlined } from '@ant-design/icons';
 import PageHeader from '@/components/PageHeader';
@@ -28,7 +28,7 @@ const filterFields: FilterField[] = [
 
 const PromptDrawer: React.FC<{ prompt: PromptTemplate; open: boolean; onClose: () => void }> = ({ prompt, open, onClose }) => {
   return (
-    <Drawer title="提示词详情" open={open} onClose={onClose} width={560} placement="right">
+    <Drawer title="提示词详情" open={open} onClose={onClose} size={560} placement="right">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
           <Text type="secondary">名称</Text>

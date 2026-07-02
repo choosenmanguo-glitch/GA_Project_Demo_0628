@@ -342,7 +342,7 @@ const GlobalAssistantDrawer: React.FC<GlobalAssistantDrawerProps> = ({ open, onC
       title={null}
       open={open}
       onClose={onClose}
-      width={480}
+      size={480}
       placement="right"
       styles={{
         body: { padding: 0, display: 'flex', flexDirection: 'column', height: '100%' },

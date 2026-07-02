@@ -802,7 +802,7 @@ const ConversationalCreateDrawer: React.FC<ConversationalCreateDrawerProps> = ({
 
   // ═══ 主渲染 ═══
   return (
-    <Drawer title={null} open={open} onClose={onClose} width={1020} placement="right"
+    <Drawer title={null} open={open} onClose={onClose} size={1020} placement="right"
       styles={{ body: { padding: 0, display: 'flex', height: '100%', background: T.bgPage }, header: { display: 'none' } }}
       closable={false} destroyOnClose mask>
 

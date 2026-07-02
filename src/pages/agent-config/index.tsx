@@ -2677,7 +2677,7 @@ export default function AgentConfigPage() {
       </div>
 
       {/* ═══ Edit Drawer ═══ */}
-      <Drawer title="编辑智能体信息" open={drawerOpen} onClose={() => setDrawerOpen(false)} width={400}>
+      <Drawer title="编辑智能体信息" open={drawerOpen} onClose={() => setDrawerOpen(false)} size={400}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div>
             <div style={{ ...DS.label, marginBottom: 6 }}>智能体名称</div>

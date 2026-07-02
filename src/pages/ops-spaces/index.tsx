@@ -1,15 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
-  Table, Button, Space, Tag, Drawer, Form, Input, Select, Row, Col, Progress, Typography, Tabs, message, Dropdown, Modal, InputNumber, Popconfirm,
+  Table, Button, Space, Tag, Drawer, Form, Input, Select, Row, Col, Typography, Tabs, message, Dropdown, Modal, Popconfirm,
 } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   PlusOutlined, SettingOutlined, InfoCircleOutlined, TeamOutlined,
-  HistoryOutlined, LockOutlined, SearchOutlined, CrownOutlined,
+  HistoryOutlined, SearchOutlined, CrownOutlined,
   SafetyOutlined, UserOutlined, EditOutlined,
   StopOutlined, CheckCircleOutlined, DeleteOutlined, EllipsisOutlined,
   RobotOutlined, FileTextOutlined, ToolOutlined, ApiOutlined,
-  ThunderboltOutlined, BookOutlined, DatabaseOutlined,
+  ThunderboltOutlined, BookOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import PageHeader from '@/components/PageHeader';
@@ -24,12 +24,12 @@ import ConfirmActionModal from '@/components/ConfirmActionModal';
 const { Text, Title } = Typography;
 const { TextArea } = Input;
 
-const statusColorMap: Record<string, string> = { '启用': 'green', '停用': 'orange', '归档': 'default' };
+const statusColorMap: Record<string, string> = { '启用': 'green', '冻结': 'blue', '归档': 'default' };
 
 const spaceFilterFields: FilterField[] = [
   { type: 'search', key: 'keyword', placeholder: '搜索空间名称', width: 220 },
   { type: 'select', key: 'status', placeholder: '状态', width: 100, options: [
-    { label: '启用', value: '启用' }, { label: '停用', value: '停用' }, { label: '归档', value: '归档' },
+    { label: '启用', value: '启用' }, { label: '冻结', value: '冻结' }, { label: '归档', value: '归档' },
   ]},
   { type: 'select', key: 'spaceType', placeholder: '空间类型', width: 120, options: [
     { label: '个人空间', value: '个人空间' }, { label: '工作空间', value: '工作空间' }, { label: '专案空间', value: '专案空间' },
@@ -44,7 +44,6 @@ export default function OpsSpacesPage() {
   const [createStep, setCreateStep] = useState(0);
   const [detailTab, setDetailTab] = useState('info');
   const [editingInfo, setEditingInfo] = useState(false);
-  const [quotaModalOpen, setQuotaModalOpen] = useState(false);
   const [memberAddOpen, setMemberAddOpen] = useState(false);
   const [memberAddRole, setMemberAddRole] = useState<'管理员' | '普通用户'>('普通用户');
   const [spaceMembers, setSpaceMembers] = useState<SpaceMember[]>(mockMembers);
@@ -53,14 +52,43 @@ export default function OpsSpacesPage() {
   const [createSpaceName, setCreateSpaceName] = useState('');
   const [createSpaceDept, setCreateSpaceDept] = useState<string | undefined>(undefined);
   const [createSpaceType, setCreateSpaceType] = useState('工作空间');
+  const [createSpaceOwner, setCreateSpaceOwner] = useState<string | undefined>(undefined);
+  const [createMembers, setCreateMembers] = useState<SpaceMember[]>([]);
+
+  // ── 创建空间：同步负责人到成员管理 ──
+  useEffect(() => {
+    if (createStep === 2 && createSpaceOwner) {
+      const ownerInfo = memberOptions.find(m => m.value === createSpaceOwner);
+      if (ownerInfo) {
+        setCreateMembers(prev => {
+          const existingOwner = prev.find(m => m.role === '所有者');
+          // 负责人没变，跳过
+          if (existingOwner && existingOwner.name === ownerInfo.name) return prev;
+          // 移除旧的负责人成员，加入新的
+          const withoutOwner = prev.filter(m => m.role !== '所有者');
+          return [
+            {
+              id: `owner-${ownerInfo.value}`,
+              name: ownerInfo.name,
+              dept: ownerInfo.dept,
+              role: '所有者' as const,
+              joinTime: new Date().toISOString().slice(0, 10),
+              lastActive: '',
+            },
+            ...withoutOwner,
+          ];
+        });
+      }
+    }
+  }, [createStep, createSpaceOwner]);
 
   // ── 确认操作执行 ──
   const handleConfirm = () => {
     if (!confirmState) return;
     const { action, space } = confirmState;
-    if (action === '停用') {
-      space.status = '停用';
-      message.success(`空间「${space.name}」已停用`);
+    if (action === '冻结') {
+      space.status = '冻结';
+      message.success(`空间「${space.name}」已冻结`);
     } else if (action === '归档') {
       space.status = '归档';
       message.success(`空间「${space.name}」已归档`);
@@ -158,9 +186,6 @@ export default function OpsSpacesPage() {
     },
     {
       title: '智能体数', dataIndex: 'agentCount', width: 90,
-      render: (v: number, r: SpaceItem) => (
-        <span>{r.agentQuotaUsed} <Text type="secondary" style={{ fontSize: 11 }}>/ {r.agentQuotaLimit}</Text></span>
-      ),
       sorter: (a, b) => a.agentCount - b.agentCount,
     },
     {
@@ -175,13 +200,11 @@ export default function OpsSpacesPage() {
       title: '操作', width: 220,
       render: (_, r) => {
         const menuItems: MenuProps['items'] = [
-          { key: 'quota', label: '资源配额', icon: <LockOutlined />, onClick: () => { setSelectedSpace(r); setDetailTab('quota'); setDetailDrawerOpen(true); } },
-          { type: 'divider' },
           ...(r.status === '归档'
             ? [{ key: 'restore', label: '恢复', icon: <CheckCircleOutlined />, onClick: () => { r.status = '启用'; message.success(`空间「${r.name}」已恢复`); setFilters({ ...filters }); } }]
-            : r.status === '停用'
+            : r.status === '冻结'
               ? [{ key: 'enable', label: '启用', icon: <CheckCircleOutlined />, onClick: () => { r.status = '启用'; message.success(`空间「${r.name}」已启用`); setFilters({ ...filters }); } }]
-              : [{ key: 'disable', label: '停用', icon: <StopOutlined />, onClick: () => setConfirmState({ action: '停用', space: r }) }]
+              : [{ key: 'freeze', label: '冻结', icon: <StopOutlined />, onClick: () => setConfirmState({ action: '冻结', space: r }) }]
           ),
           ...(r.status !== '归档' ? [{ key: 'archive', label: '归档', icon: <SettingOutlined />, onClick: () => setConfirmState({ action: '归档', space: r }) }] : []),
           { type: 'divider' },
@@ -204,13 +227,13 @@ export default function OpsSpacesPage() {
   const createSteps = [
     { title: '基本信息' },
     { title: '预置资源' },
-    { title: '资源配额' },
+    { title: '成员管理' },
     { title: '确认创建' },
   ];
 
   return (
     <div style={{ flex: 1, padding: '16px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <PageHeader title="空间管理" hint="管理平台全部工作空间，包括创建、编辑、状态管理和配额配置" />
+      <PageHeader title="空间管理" hint="管理平台全部工作空间，包括创建、编辑和状态管理" />
 
       {/* ── 统计概览卡片组 ── */}
       <StatCards
@@ -258,7 +281,7 @@ export default function OpsSpacesPage() {
       <StepDrawer
         title="创建空间"
         open={createDrawerOpen}
-        onClose={() => { setCreateDrawerOpen(false); setCreateSpaceName(''); setCreateSpaceDept(undefined); setCreateSpaceType('工作空间'); setPresetSelections({}); }}
+        onClose={() => { setCreateDrawerOpen(false); setCreateSpaceName(''); setCreateSpaceDept(undefined); setCreateSpaceType('工作空间'); setCreateSpaceOwner(undefined); setCreateMembers([]); setPresetSelections({}); }}
         steps={createSteps}
         current={createStep}
         totalSteps={createSteps.length}
@@ -269,6 +292,8 @@ export default function OpsSpacesPage() {
           setCreateSpaceName('');
           setCreateSpaceDept(undefined);
           setCreateSpaceType('工作空间');
+          setCreateSpaceOwner(undefined);
+          setCreateMembers([]);
           setPresetSelections({});
         }}
       >
@@ -297,16 +322,30 @@ export default function OpsSpacesPage() {
                 +
               </div>
             </Form.Item>
-            <Form.Item label="所属警种/部门" required>
+            <Form.Item label="所属警种/部门">
               <Select
-                placeholder="从组织架构中选择"
+                placeholder="从组织架构中选择（选填）"
                 style={{ borderRadius: 6 }}
                 value={createSpaceDept}
                 onChange={setCreateSpaceDept}
+                allowClear
                 options={[
                   '指挥中心', '反诈中心', '刑警大队', '交警支队', '治安支队',
                   '法制大队', '派出所', '科信大队', '巡特警支队',
                 ].map(d => ({ label: d, value: d }))}
+              />
+            </Form.Item>
+            <Form.Item label="负责人" required rules={[{ required: true, message: '请选择空间负责人' }]}>
+              <Select
+                placeholder="请选择空间负责人"
+                style={{ borderRadius: 6 }}
+                value={createSpaceOwner}
+                onChange={setCreateSpaceOwner}
+                options={memberOptions.map(m => ({ label: `${m.name} (${m.dept})`, value: m.value }))}
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
               />
             </Form.Item>
             <Form.Item label="空间类型" required>
@@ -360,20 +399,10 @@ export default function OpsSpacesPage() {
                 { label: '交管数据连接器', value: 'traffic-mcp' },
                 { label: '政务云连接器', value: 'gov-cloud-mcp' },
               ]},
-              { label: '技能', icon: <ThunderboltOutlined />, placeholder: '搜索并选择技能', options: [
-                { label: '法律文书生成', value: 'legal-doc-gen' },
-                { label: '案情脉络分析', value: 'case-timeline' },
-                { label: '证据链构建', value: 'evidence-chain' },
-              ]},
               { label: '知识库', icon: <BookOutlined />, placeholder: '搜索并选择知识库', options: [
                 { label: '公安法规库', value: 'legal-db' },
                 { label: '警情案例库', value: 'case-db' },
                 { label: '标准文书库', value: 'template-db' },
-              ]},
-              { label: '数据连接', icon: <DatabaseOutlined />, placeholder: '搜索并选择数据连接', options: [
-                { label: '常住人口数据源', value: 'population-ds' },
-                { label: '车辆管理数据源', value: 'vehicle-ds' },
-                { label: '案事件数据源', value: 'case-ds' },
               ]},
             ].map(group => {
               const selectedCount = (presetSelections[group.label] || []).length;
@@ -404,26 +433,71 @@ export default function OpsSpacesPage() {
           </div>
         )}
 
-        {/* 第三步：资源配额 */}
+        {/* 第三步：成员管理 */}
         {createStep === 2 && (
-          <Form layout="vertical">
-            <Form.Item label="每日 Token 限额" tooltip="防止单个空间一日内过量消耗平台算力">
-              <InputNumber style={{ width: 300, borderRadius: 6 }} defaultValue={200000} min={0} suffix="Token/日" />
-            </Form.Item>
-            <Form.Item label="每月 Token 限额" tooltip="限制空间整月算力总消耗，防止预算超支">
-              <InputNumber style={{ width: 300, borderRadius: 6 }} defaultValue={5000000} min={0} suffix="Token/月" />
-            </Form.Item>
-            <Form.Item label="存储空间上限" tooltip="控制知识库文档与向量数据的累计存储容量">
-              <InputNumber style={{ width: 300, borderRadius: 6 }} defaultValue={5000} min={0} suffix="MB" />
-            </Form.Item>
-            <Form.Item label="智能体数量上限" tooltip="避免空间内智能体无限制创建导致管理混乱">
-              <InputNumber style={{ width: 300, borderRadius: 6 }} defaultValue={10} min={0} suffix="个" />
-            </Form.Item>
-            <Form.Item label="成员数量上限" tooltip="控制空间协作规模，个人空间默认为 1">
-              <InputNumber style={{ width: 300, borderRadius: 6 }} defaultValue={50} min={1} suffix="人" />
-            </Form.Item>
-            <Text type="secondary" style={{ fontSize: 12 }}>以上配额均填充平台统一默认值，可手动调整。后续可在空间详情面板中修改。</Text>
-          </Form>
+          <div>
+            <Text type="secondary" style={{ display: 'block', marginBottom: 16, fontSize: 13 }}>
+              为空间添加成员并设置初始角色，创建后可继续在空间详情中管理。
+            </Text>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => setMemberAddOpen(true)}>添加成员</Button>
+            </div>
+            {createMembers.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+                <Text type="secondary">暂未添加成员，可跳过此步骤</Text>
+              </div>
+            ) : (
+              createMembers.map((m) => (
+                <div key={m.id} style={{
+                  display: 'flex', alignItems: 'center', padding: '10px 0',
+                  borderBottom: '1px solid #f5f5f5',
+                }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: '50%', background: '#1677ff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#fff', fontSize: 13, marginRight: 10, flexShrink: 0,
+                  }}>
+                    {m.name.charAt(0)}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 500 }}>{m.name}</div>
+                    <Text type="secondary" style={{ fontSize: 12 }}>{m.dept}</Text>
+                  </div>
+                  {m.role === '所有者' ? (
+                    <Tag color="gold" style={{ borderRadius: 4, marginRight: 8 }}>
+                      <CrownOutlined style={{ marginRight: 2 }} />所有者
+                    </Tag>
+                  ) : (
+                    <>
+                      <Select
+                        size="small"
+                        value={m.role}
+                        style={{ width: 100, marginRight: 8 }}
+                        onChange={(val) => {
+                          setCreateMembers(prev => prev.map(p => p.id === m.id ? { ...p, role: val as '管理员' | '普通用户' } : p));
+                        }}
+                        options={[
+                          { label: '管理员', value: '管理员' },
+                          { label: '普通用户', value: '普通用户' },
+                        ]}
+                      />
+                      <Popconfirm
+                        title="确认移除"
+                        description={`确定将 ${m.name} 移出？`}
+                        onConfirm={() => {
+                          setCreateMembers(prev => prev.filter(p => p.id !== m.id));
+                        }}
+                        okText="确认"
+                        cancelText="取消"
+                      >
+                        <Button type="link" size="small" danger>移除</Button>
+                      </Popconfirm>
+                    </>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         )}
 
         {/* 第四步：确认创建 */}
@@ -439,6 +513,7 @@ export default function OpsSpacesPage() {
                   { label: '空间名称', value: createSpaceName || '未填写' },
                   { label: '空间类型', value: createSpaceType },
                   { label: '所属部门', value: createSpaceDept || '未选择' },
+                  { label: '负责人', value: createSpaceOwner ? memberOptions.find(m => m.value === createSpaceOwner)?.name || createSpaceOwner : '未选择' },
                 ].map(item => (
                   <div key={item.label} style={{ display: 'flex', padding: '6px 0' }}>
                     <Text type="secondary" style={{ width: 100 }}>{item.label}</Text>
@@ -449,7 +524,7 @@ export default function OpsSpacesPage() {
             </div>
             <div style={{
               padding: '20px', borderRadius: 10, background: '#fafafa',
-              border: '1px solid #f0f0f0',
+              border: '1px solid #f0f0f0', marginBottom: 16,
             }}>
               <Title level={5} style={{ margin: 0 }}>预置资源清单</Title>
               <div style={{ marginTop: 12 }}>
@@ -458,9 +533,7 @@ export default function OpsSpacesPage() {
                   { label: '提示词', key: '提示词' },
                   { label: '工具', key: '工具' },
                   { label: '连接器', key: '连接器' },
-                  { label: '技能', key: '技能' },
                   { label: '知识库', key: '知识库' },
-                  { label: '数据连接', key: '数据连接' },
                 ].map(item => {
                   const selected = presetSelections[item.key] || [];
                   return (
@@ -477,6 +550,32 @@ export default function OpsSpacesPage() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+            <div style={{
+              padding: '20px', borderRadius: 10, background: '#fafafa',
+              border: '1px solid #f0f0f0',
+            }}>
+              <Title level={5} style={{ margin: 0 }}>成员清单</Title>
+              <div style={{ marginTop: 12 }}>
+                {createMembers.length > 0 ? (
+                  createMembers.map(m => (
+                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', padding: '6px 0' }}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: '50%', background: '#1677ff',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: '#fff', fontSize: 12, marginRight: 8, flexShrink: 0,
+                      }}>
+                        {m.name.charAt(0)}
+                      </div>
+                      <span style={{ fontWeight: 500 }}>{m.name}</span>
+                      <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>{m.dept}</Text>
+                      <Tag style={{ marginLeft: 8 }}>{m.role}</Tag>
+                    </div>
+                  ))
+                ) : (
+                  <Text type="secondary">未添加成员</Text>
+                )}
               </div>
             </div>
           </div>
@@ -620,7 +719,7 @@ export default function OpsSpacesPage() {
                             <Text type="secondary" style={{ fontSize: 12 }}>{selectedSpace.dept} · 创建于 {selectedSpace.createTime}</Text>
                           </div>
                           <Tag color="gold" style={{ borderRadius: 4 }}>
-                            <CrownOutlined style={{ marginRight: 2 }} />创建人
+                            <CrownOutlined style={{ marginRight: 2 }} />所有者
                           </Tag>
                         </div>
                       </div>
@@ -634,7 +733,7 @@ export default function OpsSpacesPage() {
                               style={{ width: 110 }}
                               options={[
                                 { label: '全部', value: 'all' },
-                                { label: '创建人', value: '创建人' },
+                                { label: '所有者', value: '所有者' },
                                 { label: '管理员', value: '管理员' },
                                 { label: '普通用户', value: '普通用户' },
                               ]}
@@ -664,9 +763,9 @@ export default function OpsSpacesPage() {
                               <div style={{ fontWeight: 500 }}>{m.name}</div>
                               <Text type="secondary" style={{ fontSize: 12 }}>{m.dept} · 加入于 {m.joinTime}</Text>
                             </div>
-                            {m.role === '创建人' ? (
+                            {m.role === '所有者' ? (
                               <Tag color="gold" style={{ borderRadius: 4, marginRight: 8 }}>
-                                <CrownOutlined style={{ marginRight: 2 }} />创建人
+                                <CrownOutlined style={{ marginRight: 2 }} />所有者
                               </Tag>
                             ) : (
                               <>
@@ -705,98 +804,7 @@ export default function OpsSpacesPage() {
                 ),
               },
 
-              // Tab 3: 资源配额
-              {
-                key: 'quota',
-                label: <Space><LockOutlined />资源配额</Space>,
-                children: (
-                  <div>
-                    <Title level={5} style={{ marginTop: 0 }}>配额概览</Title>
-                    <Row gutter={16}>
-                      <Col span={24}>
-                        <div style={{ marginBottom: 20 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                            <span style={{ fontSize: 13, fontWeight: 500 }}>每日 Token 限额</span>
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                              {(selectedSpace.dailyTokenUsed ?? 0).toLocaleString()} / {(selectedSpace.dailyTokenLimit ?? 0).toLocaleString()}
-                            </Text>
-                          </div>
-                          <Progress
-                            percent={Math.round((selectedSpace.dailyTokenUsed ?? 0) / (selectedSpace.dailyTokenLimit ?? 1) * 100)}
-                            size="small"
-                            strokeColor={{ from: '#1677ff', to: '#69b1ff' }}
-                          />
-                        </div>
-                      </Col>
-                      <Col span={24}>
-                        <div style={{ marginBottom: 20 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                            <span style={{ fontSize: 13, fontWeight: 500 }}>每月 Token 限额</span>
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                              {(selectedSpace.monthlyTokenUsed ?? 0).toLocaleString()} / {(selectedSpace.monthlyTokenLimit ?? 0).toLocaleString()}
-                            </Text>
-                          </div>
-                          <Progress
-                            percent={Math.round((selectedSpace.monthlyTokenUsed ?? 0) / (selectedSpace.monthlyTokenLimit ?? 1) * 100)}
-                            size="small"
-                            strokeColor={{ from: '#1677ff', to: '#69b1ff' }}
-                          />
-                        </div>
-                      </Col>
-                      <Col span={24}>
-                        <div style={{ marginBottom: 20 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                            <span style={{ fontSize: 13, fontWeight: 500 }}>存储空间上限</span>
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                              {selectedSpace.storageUsed}MB / {selectedSpace.storageLimit}MB
-                            </Text>
-                          </div>
-                          <Progress
-                            percent={Math.round(selectedSpace.storageUsed / selectedSpace.storageLimit * 100)}
-                            size="small"
-                            strokeColor={{ from: '#722ed1', to: '#d3adf7' }}
-                          />
-                        </div>
-                      </Col>
-                      <Col span={24}>
-                        <div style={{ marginBottom: 20 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                            <span style={{ fontSize: 13, fontWeight: 500 }}>智能体数量上限</span>
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                              {selectedSpace.agentQuotaUsed} / {selectedSpace.agentQuotaLimit}
-                            </Text>
-                          </div>
-                          <Progress
-                            percent={Math.round(selectedSpace.agentQuotaUsed / selectedSpace.agentQuotaLimit * 100)}
-                            size="small"
-                            strokeColor={{ from: '#52c41a', to: '#95de64' }}
-                          />
-                        </div>
-                      </Col>
-                      <Col span={24}>
-                        <div style={{ marginBottom: 16 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                            <span style={{ fontSize: 13, fontWeight: 500 }}>成员数量上限</span>
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                              {selectedSpace.memberCount} / {selectedSpace.memberLimit ?? 0}
-                            </Text>
-                          </div>
-                          <Progress
-                            percent={Math.round(selectedSpace.memberCount / (selectedSpace.memberLimit ?? 1) * 100)}
-                            size="small"
-                            strokeColor={{ from: '#fa8c16', to: '#ffd591' }}
-                          />
-                        </div>
-                      </Col>
-                    </Row>
-                    <Button type="primary" size="small" style={{ borderRadius: 6 }} onClick={() => setQuotaModalOpen(true)}>
-                      设置配额
-                    </Button>
-                  </div>
-                ),
-              },
-
-              // Tab 4: 操作日志
+              // Tab 3: 操作日志
               {
                 key: 'logs',
                 label: <Space><HistoryOutlined />操作日志</Space>,
@@ -850,7 +858,12 @@ export default function OpsSpacesPage() {
             joinTime: new Date().toISOString().slice(0, 10),
             lastActive: '',
           };
-          setSpaceMembers(prev => [...prev, newMember]);
+          // 如果在创建流程中，添加到 createMembers
+          if (createDrawerOpen) {
+            setCreateMembers(prev => [...prev, newMember]);
+          } else {
+            setSpaceMembers(prev => [...prev, newMember]);
+          }
           message.success(`已添加成员 ${name}（${memberAddRole}）`);
         }}
         okText="确认添加"
@@ -877,62 +890,6 @@ export default function OpsSpacesPage() {
         </Form>
       </Modal>
 
-      {/* ── 配额设置对话框 ── */}
-      <Modal
-        title="设置配额"
-        open={quotaModalOpen}
-        onCancel={() => setQuotaModalOpen(false)}
-        onOk={() => { setQuotaModalOpen(false); message.success('配额已更新'); }}
-        okText="保存"
-        cancelText="取消"
-        destroyOnClose
-      >
-        {selectedSpace && (
-          <Form layout="vertical">
-            <Form.Item label="每日 Token 限额" tooltip="防止单个空间一日内过量消耗平台算力">
-              <InputNumber
-                defaultValue={selectedSpace.dailyTokenLimit ?? 200000}
-                style={{ width: '100%' }}
-                min={0}
-                suffix="Token/日"
-              />
-            </Form.Item>
-            <Form.Item label="每月 Token 限额" tooltip="限制空间整月算力总消耗，防止预算超支">
-              <InputNumber
-                defaultValue={selectedSpace.monthlyTokenLimit ?? 5000000}
-                style={{ width: '100%' }}
-                min={0}
-                suffix="Token/月"
-              />
-            </Form.Item>
-            <Form.Item label="存储空间上限" tooltip="控制知识库文档与向量数据的累计存储容量">
-              <InputNumber
-                defaultValue={selectedSpace.storageLimit}
-                style={{ width: '100%' }}
-                min={0}
-                suffix="MB"
-              />
-            </Form.Item>
-            <Form.Item label="智能体数量上限" tooltip="避免空间内智能体无限制创建导致管理混乱">
-              <InputNumber
-                defaultValue={selectedSpace.agentQuotaLimit}
-                style={{ width: '100%' }}
-                min={0}
-                suffix="个"
-              />
-            </Form.Item>
-            <Form.Item label="成员数量上限" tooltip="控制空间协作规模，个人空间默认为 1">
-              <InputNumber
-                defaultValue={selectedSpace.memberLimit ?? 50}
-                style={{ width: '100%' }}
-                min={1}
-                suffix="人"
-              />
-            </Form.Item>
-          </Form>
-        )}
-      </Modal>
-
       {/* ── 操作确认对话框 ── */}
       <ConfirmActionModal
         open={!!confirmState}
@@ -940,12 +897,12 @@ export default function OpsSpacesPage() {
         onConfirm={handleConfirm}
         title={
           confirmState?.action === '删除' ? '删除空间' :
-          confirmState?.action === '停用' ? '停用空间' : '归档空间'
+          confirmState?.action === '冻结' ? '冻结空间' : '归档空间'
         }
         targetName={confirmState?.space.name ?? ''}
-        severity={confirmState?.action === '删除' ? 'danger' : confirmState?.action === '停用' ? 'warning' : 'info'}
+        severity={confirmState?.action === '删除' ? 'danger' : confirmState?.action === '冻结' ? 'warning' : 'info'}
         description={
-          confirmState?.action === '停用'
+          confirmState?.action === '冻结'
             ? ['空间不可进入、不可编辑', '已发布的智能体对外服务<b>继续运行</b>', '可随时恢复启用，数据不受影响']
             : confirmState?.action === '归档'
               ? ['空间不可进入、不可操作', '已发布的智能体对外服务<b>停止</b>', '归档前请确认空间内无已发布的智能体', '可恢复，但不轻易操作；适用于长期不活跃或使命完成的空间']
@@ -954,7 +911,7 @@ export default function OpsSpacesPage() {
         requireNameInput={confirmState?.action === '删除'}
         okText={
           confirmState?.action === '删除' ? '确认删除' :
-          confirmState?.action === '停用' ? '确认停用' : '确认归档'
+          confirmState?.action === '冻结' ? '确认冻结' : '确认归档'
         }
       />
     </div>

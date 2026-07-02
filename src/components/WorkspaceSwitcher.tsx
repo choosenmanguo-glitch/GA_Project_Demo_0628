@@ -26,9 +26,10 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
   const iconChar = currentSpace.name.charAt(0);
 
   const filteredSpaces = useMemo(() => {
-    if (!search.trim()) return spaces;
+    const available = spaces.filter(s => s.status !== '归档');
+    if (!search.trim()) return available;
     const kw = search.trim().toLowerCase();
-    return spaces.filter(s =>
+    return available.filter(s =>
       s.name.toLowerCase().includes(kw) ||
       s.dept.toLowerCase().includes(kw) ||
       s.creator.toLowerCase().includes(kw)
@@ -46,7 +47,7 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
       <div
         onClick={() => setModalOpen(true)}
         style={{
-          padding: inline ? '0' : collapsed ? '12px 0' : '12px 16px',
+          padding: inline ? '0' : collapsed ? '8px 0' : '8px 16px',
           borderBottom: inline ? 'none' : '1px solid #f0f0f0',
           display: 'flex',
           alignItems: 'center',
@@ -63,8 +64,8 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
         {collapsed ? (
           <div
             style={{
-              width: 30,
-              height: 30,
+              width: 26,
+              height: 26,
               borderRadius: 7,
               background: brandBg,
               display: 'flex',
@@ -82,14 +83,14 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
               <div
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 6,
+                  width: 24,
+                  height: 24,
+                  borderRadius: 5,
                   background: brandBg,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: 700,
                   color: brandColor,
                   flexShrink: 0,
@@ -99,7 +100,7 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
               </div>
               <span
                 style={{
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: 600,
                   color: '#1D2129',
                   overflow: 'hidden',
@@ -133,7 +134,7 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
             切换工作空间
           </div>
           <Text style={{ fontSize: 13, color: '#7A8599' }}>
-            选择您要进入的工作空间，当前共有 {spaces.length} 个可用空间
+            选择您要进入的工作空间，当前共有 {spaces.filter(s => s.status !== '归档').length} 个可用空间
           </Text>
         </div>
 
@@ -159,36 +160,38 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
             filteredSpaces.map((space) => {
               const isCurrent = space.id === currentSpace.id;
               const isPersonal = space.type === '个人空间';
+              const isFrozen = space.status === '冻结';
               return (
                 <div
                   key={space.id}
                   onClick={() => {
-                    if (!isCurrent) {
+                    if (!isCurrent && !isFrozen) {
                       switchSpace(space.id);
                       setModalOpen(false);
                       setSearch('');
                     }
                   }}
                   style={{
-                    background: isCurrent ? '#F7F9FC' : '#fff',
+                    background: isFrozen ? '#fafafa' : isCurrent ? '#F7F9FC' : '#fff',
                     borderRadius: 8,
-                    border: isCurrent ? `1px solid ${brandColor}30` : '1px solid #E5EAF3',
+                    border: isCurrent ? `1px solid ${brandColor}30` : isFrozen ? '1px solid #e8e8e8' : '1px solid #E5EAF3',
                     padding: '16px 20px',
-                    cursor: isCurrent ? 'default' : 'pointer',
+                    cursor: isFrozen ? 'not-allowed' : isCurrent ? 'default' : 'pointer',
                     transition: 'all 0.15s ease',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 14,
                     flexShrink: 0,
+                    opacity: isFrozen ? 0.6 : 1,
                   }}
                   onMouseEnter={e => {
-                    if (!isCurrent) {
+                    if (!isCurrent && !isFrozen) {
                       e.currentTarget.style.borderColor = '#BCC7DB';
                       e.currentTarget.style.background = '#FAFBFC';
                     }
                   }}
                   onMouseLeave={e => {
-                    if (!isCurrent) {
+                    if (!isCurrent && !isFrozen) {
                       e.currentTarget.style.borderColor = '#E5EAF3';
                       e.currentTarget.style.background = '#fff';
                     }
@@ -233,6 +236,22 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
                           }}
                         >
                           默认空间
+                        </Tag>
+                      )}
+                      {isFrozen && (
+                        <Tag
+                          style={{
+                            borderRadius: 4,
+                            margin: 0,
+                            fontSize: 11,
+                            color: '#8c8c8c',
+                            background: '#fafafa',
+                            border: '1px solid #d9d9d9',
+                            lineHeight: '18px',
+                            flexShrink: 0,
+                          }}
+                        >
+                          已冻结
                         </Tag>
                       )}
                       {isCurrent && (
@@ -284,18 +303,18 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
 
                   {/* Action */}
                   <div style={{ flexShrink: 0 }}>
-                    {isCurrent ? (
+                    {isFrozen ? (
                       <span style={{
                         fontSize: 12,
-                        color: '#7A8599',
+                        color: '#8c8c8c',
                         fontWeight: 500,
                         padding: '5px 14px',
                         borderRadius: 5,
-                        background: '#F2F3F8',
+                        background: '#f5f5f5',
                       }}>
-                        当前已进入
+                        已冻结
                       </span>
-                    ) : (
+                    ) : !isCurrent ? (
                       <span
                         onClick={(e) => {
                           e.stopPropagation();
@@ -319,7 +338,7 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
                       >
                         进入
                       </span>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               );

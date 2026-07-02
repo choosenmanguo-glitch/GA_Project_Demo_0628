@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Table, Tag, Button, Drawer, Form, Input, InputNumber, Select, message, Popconfirm, Typography, Space } from 'antd';
 import { EditOutlined, DeleteOutlined, EyeOutlined, DatabaseOutlined, CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import PageHeader from '@/components/PageHeader';
@@ -219,7 +219,7 @@ const DataSourcesPage: React.FC = () => {
       </Drawer>
 
       {/* 详情抽屉 */}
-      <Drawer title="数据连接详情" open={!!viewingItem} onClose={() => setViewingItem(null)} width={460} placement="right">
+      <Drawer title="数据连接详情" open={!!viewingItem} onClose={() => setViewingItem(null)} size={460} placement="right">
         {viewingItem && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>

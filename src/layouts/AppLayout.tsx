@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import HeaderNav from './HeaderNav';
 import TabBar from '@/components/TabBar';
 import AppErrorBoundary from '@/components/AppErrorBoundary';
+import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
 import { topNavModules, moduleSideMenus, resolvePageLabel } from '@/config';
 import { useTabs } from '@/contexts/TabsContext';
 import type { MenuProps } from 'antd';
@@ -102,7 +103,8 @@ const MasterLayout: React.FC<MasterLayoutProps> = ({ children }) => {
             flexShrink: 0,
           }}
         >
-          {/* 工作空间切换器 - 已移至工作台页面顶部 */}
+          {/* 工作空间切换器 - 运维中心不显示 */}
+          {activeModule !== 'ops' && <WorkspaceSwitcher collapsed={collapsed} />}
 
           <div className={collapsed ? 'sidebar-collapsed' : undefined} style={{ flex: 1, overflow: 'auto', overflowX: 'hidden', paddingTop: 12 }}>
             <Menu

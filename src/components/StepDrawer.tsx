@@ -5,7 +5,7 @@ export interface StepDrawerProps {
   title: string;
   open: boolean;
   onClose: () => void;
-  width?: number;
+  size?: number;
   destroyOnClose?: boolean;
   /** Steps 配置 */
   steps: { title: string }[];
@@ -25,7 +25,7 @@ const StepDrawer: React.FC<StepDrawerProps> = ({
   title,
   open,
   onClose,
-  width = 640,
+  size = 640,
   destroyOnClose = true,
   steps,
   current,
@@ -41,7 +41,7 @@ const StepDrawer: React.FC<StepDrawerProps> = ({
       title={title}
       open={open}
       onClose={onClose}
-      width={width}
+      size={size}
       destroyOnClose={destroyOnClose}
       footer={
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>

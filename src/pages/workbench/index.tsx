@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Avatar, Badge, Button, Card, Col, Progress, Row, Space, Tag, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
-import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
+
 import {
   ApiOutlined,
   ClockCircleOutlined,
@@ -274,7 +274,6 @@ const WorkbenchPage: React.FC = () => {
               </Space>
               <div className="workspace-sub">{currentSpace.memberCount} 位成员 · {currentSpace.dept} · 今日 09:20 活跃</div>
             </div>
-            <WorkspaceSwitcher inline />
           </div>
 
           <div className="header-main">
@@ -315,7 +314,7 @@ const WorkbenchPage: React.FC = () => {
               percent={60}
               size="small"
               strokeColor="#1677ff"
-              trailColor="#edf2f7"
+              railColor="#edf2f7"
               className="workflow-progress"
             />
           </div>
@@ -349,7 +348,7 @@ const WorkbenchPage: React.FC = () => {
             <Card
               key={stat.title}
               className="stat-card"
-              bordered
+              variant="outlined"
               onClick={() => navigate(stat.path)}
               styles={{ body: { padding: 16 } }}
             >

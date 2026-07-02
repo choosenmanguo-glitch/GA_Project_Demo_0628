@@ -239,7 +239,7 @@ const ToolsPage: React.FC = () => {
       </div>
 
       {/* Detail Drawer */}
-      <Drawer title={viewingTool?.name} open={!!viewingTool} onClose={() => setViewingTool(null)} width={520} placement="right">
+      <Drawer title={viewingTool?.name} open={!!viewingTool} onClose={() => setViewingTool(null)} size={520} placement="right">
         {viewingTool && (() => {
           const tc = typeConfig[viewingTool.type];
           return (

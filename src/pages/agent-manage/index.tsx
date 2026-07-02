@@ -254,7 +254,7 @@ export default function AgentManagePage() {
         title={editingAgent ? `编辑智能体 - ${editingAgent.name}` : '创建智能体'}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        width={activePane === 'config' ? '80%' : 560}
+        size={activePane === 'config' ? '80%' as any : 560}
         destroyOnClose
         extra={activePane === 'create' ? (
           <Space>
@@ -346,7 +346,7 @@ export default function AgentManagePage() {
       </Drawer>
 
       {/* 查看详情抽屉 */}
-      <Drawer title="智能体详情" open={!!viewingAgent} onClose={() => setViewingAgent(null)} width={560} destroyOnClose>
+      <Drawer title="智能体详情" open={!!viewingAgent} onClose={() => setViewingAgent(null)} size={560} destroyOnClose>
         {viewingAgent && (
           <div>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>

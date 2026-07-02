@@ -69,7 +69,7 @@ export default function AgentMonitorDrawer({ agent, open, onClose }: Props) {
       }
       open={open}
       onClose={onClose}
-      width="50%"
+      size="large"
       destroyOnClose
       styles={{ body: { padding: 0 } }}
     >
