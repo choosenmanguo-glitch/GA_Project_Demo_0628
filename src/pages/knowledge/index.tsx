@@ -1,26 +1,60 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Input, Button, Switch, Dropdown, Modal, Drawer, Form, Select, InputNumber,
-  Slider, Upload, Tree, Table, Tag, message, Space, Radio, Tabs, Pagination
+  Alert,
+  Badge,
+  Button,
+  Descriptions,
+  Drawer,
+  Empty,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Pagination,
+  Progress,
+  Radio,
+  Select,
+  Slider,
+  Space,
+  Switch,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+  message,
 } from 'antd';
 import {
-  PlusOutlined, SearchOutlined, EllipsisOutlined, ArrowLeftOutlined,
-  FileTextOutlined, BlockOutlined, ApiOutlined, DatabaseOutlined,
-  FolderOutlined, UploadOutlined, DownloadOutlined, SettingOutlined,
-  ReloadOutlined, DeleteOutlined, SendOutlined, FilterOutlined
+  ApiOutlined,
+  ArrowLeftOutlined,
+  BlockOutlined,
+  CheckCircleOutlined,
+  CloudSyncOutlined,
+  CodeSandboxOutlined,
+  DatabaseOutlined,
+  DeleteOutlined,
+  EllipsisOutlined,
+  ExclamationCircleOutlined,
+  FileSearchOutlined,
+  FileTextOutlined,
+  FolderOutlined,
+  LinkOutlined,
+  LoadingOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+  SettingOutlined,
+  SyncOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import PageHeader from '@/components/PageHeader';
 
+const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
-
-// ═══════════════════════════════════════════════════
-// Types & Config
-// ═══════════════════════════════════════════════════
 
 type KBCategory = 'easy' | 'professional' | 'external';
 type KBStatus = 'available' | 'processing' | 'error';
-type DetailTab = 'files' | 'retrieval' | 'logs' | 'settings';
+type RagflowSyncStatus = 'none' | 'creating' | 'synced' | 'failed';
 
 interface KnowledgeBase {
   id: string;
@@ -28,1349 +62,940 @@ interface KnowledgeBase {
   category: KBCategory;
   typeTag: string;
   desc: string;
-  date: string;
   owner: string;
-  active: boolean;
+  date: string;
   fileCount: number | null;
+  active: boolean;
   status: KBStatus;
-  // External
+  ragflowDatasetId?: string;
+  ragflowTenantId?: string;
+  ragflowUserId?: string;
+  ragflowPageUrl?: string;
+  ragflowSyncStatus?: RagflowSyncStatus;
+  syncError?: string;
+  embeddingModelId?: string;
+  chunkMethod?: string;
+  parserConfig?: {
+    chunkSize: number;
+    delimiter: string;
+    overlap: number;
+    enableTableContext: boolean;
+    enableParentChild: boolean;
+    autoMetadata: boolean;
+  };
   apiEndpoint?: string;
-  apiKey?: string;
   externalKbId?: string;
-  topK?: number;
-  score?: number;
-  scoreEnabled?: boolean;
-  // Professional
-  embeddingModel?: string;
-  parseMethod?: string;
-  builtinMethod?: string;
 }
 
-interface KBFile {
+interface KnowledgeFile {
   id: string;
   name: string;
-  format: string;
   size: string;
   status: string;
-  dir: string;
-  uploadDate: string;
+  updatedAt: string;
 }
 
 const categoryConfig: Record<KBCategory, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  easy: { label: '简易', color: '#1677ff', bg: '#e6f4ff', icon: <FileTextOutlined /> },
-  professional: { label: '专业', color: '#722ed1', bg: '#f9f0ff', icon: <BlockOutlined /> },
-  external: { label: '外部', color: '#fa8c16', bg: '#fff7e6', icon: <ApiOutlined /> },
+  easy: { label: '简易知识库', color: '#1677ff', bg: '#e6f4ff', icon: <FileTextOutlined /> },
+  professional: { label: '专业知识库', color: '#722ed1', bg: '#f9f0ff', icon: <BlockOutlined /> },
+  external: { label: '外部知识库', color: '#fa8c16', bg: '#fff7e6', icon: <ApiOutlined /> },
 };
 
-const statusConfig: Record<KBStatus, { label: string; color: string }> = {
-  available: { label: '可用', color: '#52c41a' },
-  processing: { label: '向量化中', color: '#faad14' },
-  error: { label: '异常', color: '#ff4d4f' },
+const statusConfig: Record<KBStatus, { label: string; color: string; badge: 'success' | 'processing' | 'error' }> = {
+  available: { label: '可用', color: 'success', badge: 'success' },
+  processing: { label: '处理中', color: 'processing', badge: 'processing' },
+  error: { label: '异常', color: 'error', badge: 'error' },
 };
 
-// ═══════════════════════════════════════════════════
-// Mock Data
-// ═══════════════════════════════════════════════════
+const syncConfig: Record<RagflowSyncStatus, { label: string; color: string; icon: React.ReactNode }> = {
+  none: { label: '标准能力', color: 'default', icon: <CheckCircleOutlined /> },
+  creating: { label: '创建中', color: 'processing', icon: <LoadingOutlined /> },
+  synced: { label: '已就绪', color: 'success', icon: <CheckCircleOutlined /> },
+  failed: { label: '创建失败', color: 'error', icon: <ExclamationCircleOutlined /> },
+};
+
+const defaultEmbeddingModel = {
+  id: 'model-bge-m3',
+  displayName: 'BGE-M3',
+  ragflowModel: 'bge-m3@BAAI',
+};
 
 const initialKBList: KnowledgeBase[] = [
-  { id: '1', name: '产品文档库', category: 'easy', typeTag: '文档知识库', desc: '包含产品需求、操作指南和技术架构等核心文档的完整知识库。', date: '2026-05-20', owner: '管理员', active: true, fileCount: 45, status: 'available' },
-  { id: '2', name: '技术架构图谱', category: 'professional', typeTag: '结构化知识库', desc: '系统架构及微服务依赖关系图谱，支撑技术方案评审与架构演进决策。', date: '2026-04-11', owner: '管理员', active: true, fileCount: 128, status: 'processing' },
-  { id: '3', name: 'HR规章制度', category: 'easy', typeTag: '文档知识库', desc: '公司人力资源相关的制度和政策文件汇编。', date: '2026-04-30', owner: '李人事', active: true, fileCount: 12, status: 'error' },
-  { id: '4', name: '法务合规库', category: 'external', typeTag: '外部接入', desc: '接入外部律师事务所提供的合规知识库接口。', date: '2026-05-01', owner: '王法务', active: true, fileCount: null, status: 'available', apiEndpoint: 'https://api.dify.ai/v1/retrieval', apiKey: 'sk-abcdef1234567890', externalKbId: 'lawyer-kb-001', topK: 4, score: 0.65, scoreEnabled: true },
-  { id: '5', name: '政策知识库', category: 'professional', typeTag: '结构化知识库', desc: '包含历年政策法规相关资料及实施细则。', date: '2026-04-10', owner: '张主任', active: true, fileCount: 8, status: 'available', embeddingModel: 'bge-m3', parseMethod: 'builtin', builtinMethod: 'general' },
-  { id: '6', name: '运维手册', category: 'easy', typeTag: '文档知识库', desc: '系统运维操作手册及故障排查指南。', date: '2026-03-15', owner: '陈运维', active: false, fileCount: 23, status: 'available' },
-  { id: '7', name: '客服知识库', category: 'external', typeTag: '外部接入', desc: '通过API对接第三方智能客服知识库平台。', date: '2026-05-10', owner: '管理员', active: true, fileCount: null, status: 'available', apiEndpoint: 'https://kb.example.com/api/v2', apiKey: 'kb-api-key-xxxxx', externalKbId: 'cs-kb-2026', topK: 5, score: 0.7, scoreEnabled: true },
-  { id: '8', name: '安全审计库', category: 'professional', typeTag: '结构化知识库', desc: '安全审计标准、检查项及历史审计报告。', date: '2026-02-20', owner: '赵安全', active: true, fileCount: 56, status: 'available', embeddingModel: 'text-embedding-v2', parseMethod: 'builtin', builtinMethod: 'qa' },
-  { id: '9', name: '培训材料库', category: 'easy', typeTag: '文档知识库', desc: '新员工入职培训、技能提升培训相关材料。', date: '2026-01-08', owner: '周培训', active: true, fileCount: 34, status: 'available' },
+  {
+    id: 'kb-001',
+    name: '反诈案例专业知识库',
+    category: 'professional',
+    typeTag: '专业知识库',
+    desc: '沉淀电信网络诈骗案件材料、资金穿透研判报告和处置规范，用于专业检索与智能体问答。',
+    owner: '王大队',
+    date: '2026-06-18',
+    fileCount: 203,
+    active: true,
+    status: 'available',
+    ragflowDatasetId: 'rf_ds_fz_20260618',
+    ragflowTenantId: 'tenant-police-demo',
+    ragflowUserId: 'rf_user_wang',
+    ragflowPageUrl: '/ragflow/proxy/datasets/rf_ds_fz_20260618',
+    ragflowSyncStatus: 'synced',
+    embeddingModelId: defaultEmbeddingModel.id,
+    chunkMethod: 'General',
+    parserConfig: {
+      chunkSize: 512,
+      delimiter: '\\n',
+      overlap: 10,
+      enableTableContext: true,
+      enableParentChild: true,
+      autoMetadata: true,
+    },
+  },
+  {
+    id: 'kb-002',
+    name: '警情分类知识库',
+    category: 'easy',
+    typeTag: '文档知识库',
+    desc: '面向 110 接警场景的警情分类标准、处置流程和常见问答。',
+    owner: '李警官',
+    date: '2026-05-22',
+    fileCount: 128,
+    active: true,
+    status: 'available',
+    ragflowSyncStatus: 'none',
+  },
+  {
+    id: 'kb-003',
+    name: '法律法规外部库',
+    category: 'external',
+    typeTag: '外部 API 接入',
+    desc: '通过第三方法规检索服务接入现行法律法规、司法解释和执法规范。',
+    owner: '周科长',
+    date: '2026-05-09',
+    fileCount: null,
+    active: true,
+    status: 'available',
+    ragflowSyncStatus: 'none',
+    apiEndpoint: 'https://law.example.com/api/retrieval',
+    externalKbId: 'law-kb-prod',
+  },
+  {
+    id: 'kb-004',
+    name: '卷宗证据链知识库',
+    category: 'professional',
+    typeTag: '专业知识库',
+    desc: '用于刑事卷宗材料解析、证据链要素抽取与检索增强。',
+    owner: '陈队长',
+    date: '2026-06-24',
+    fileCount: 0,
+    active: true,
+    status: 'error',
+    ragflowSyncStatus: 'failed',
+    syncError: '专业知识库服务连接超时，请稍后重试。',
+    embeddingModelId: defaultEmbeddingModel.id,
+    chunkMethod: 'Q&A',
+    parserConfig: {
+      chunkSize: 768,
+      delimiter: '\\n\\n',
+      overlap: 15,
+      enableTableContext: true,
+      enableParentChild: false,
+      autoMetadata: true,
+    },
+  },
+  {
+    id: 'kb-005',
+    name: '道路交通安全法规库',
+    category: 'easy',
+    typeTag: '文档知识库',
+    desc: '交通事故责任认定、道路交通安全法及地方实施细则。',
+    owner: '赵警官',
+    date: '2026-04-16',
+    fileCount: 84,
+    active: true,
+    status: 'processing',
+    ragflowSyncStatus: 'none',
+  },
 ];
 
-const mockFiles: KBFile[] = [
-  { id: 'f1', name: '平台部署指南.md', format: 'md', size: '4.29 KB', status: '已向量化', dir: '全部/技术文档', uploadDate: '2026-05-20' },
-  { id: 'f2', name: '企业文化手册.pdf', format: 'pdf', size: '2.1 MB', status: '已向量化', dir: '全部/公司制度', uploadDate: '2026-04-30' },
-  { id: 'f3', name: 'API接口文档.docx', format: 'docx', size: '856 KB', status: '向量化中', dir: '全部/技术文档', uploadDate: '2026-05-18' },
-  { id: 'f4', name: '产品需求规格书.pdf', format: 'pdf', size: '3.4 MB', status: '已向量化', dir: '全部/产品文档', uploadDate: '2026-05-15' },
-  { id: 'f5', name: '系统架构设计.pptx', format: 'pptx', size: '5.7 MB', status: '失败', dir: '全部/技术文档', uploadDate: '2026-05-10' },
+const mockFiles: KnowledgeFile[] = [
+  { id: 'file-1', name: '2026年Q2电信诈骗新趋势分析.pdf', size: '8.4 MB', status: '已解析', updatedAt: '2026-06-20 16:22' },
+  { id: 'file-2', name: '涉诈资金穿透研判报告.docx', size: '2.1 MB', status: '已解析', updatedAt: '2026-06-19 10:15' },
+  { id: 'file-3', name: '高发诈骗话术样本.xlsx', size: '768 KB', status: '解析中', updatedAt: '2026-06-18 09:30' },
 ];
 
-const mockLogs = [
-  { time: '2026-06-16 14:30:22', operator: '管理员', action: '上传文件', detail: '上传《平台部署指南.md》' },
-  { time: '2026-06-15 10:15:00', operator: '管理员', action: '修改配置', detail: '将嵌入模型从 text-embedding-v2 切换为 bge-m3' },
-  { time: '2026-06-14 09:00:00', operator: '管理员', action: '创建知识库', detail: '创建知识库"产品文档库"' },
-  { time: '2026-06-13 16:45:00', operator: '李人事', action: '删除文件', detail: '删除《旧版考勤制度.pdf》' },
-];
+const cardStyle: React.CSSProperties = {
+  background: '#fff',
+  border: '1px solid #E5EAF3',
+  borderRadius: 8,
+  padding: 18,
+};
 
-const logColumns: ColumnsType<typeof mockLogs[0]> = [
-  { title: '时间', dataIndex: 'time', key: 'time', width: 180 },
-  { title: '操作人', dataIndex: 'operator', key: 'operator', width: 100 },
-  { title: '操作类型', dataIndex: 'action', key: 'action', width: 100, render: (v: string) => <Tag>{v}</Tag> },
-  { title: '详情', dataIndex: 'detail', key: 'detail' },
-];
+const getKnowledgeCode = (kb: KnowledgeBase) => kb.id.replace('kb-', 'KB-').toUpperCase();
 
-// ═══════════════════════════════════════════════════
-// Sub-components
-// ═══════════════════════════════════════════════════
-
-/** Type Selection Modal */
 const TypeSelectModal: React.FC<{
   open: boolean;
-  onSelect: (type: KBCategory) => void;
   onCancel: () => void;
-}> = ({ open, onSelect, onCancel }) => {
-  const types: { key: KBCategory; title: string; desc: string; icon: React.ReactNode; color: string; bg: string }[] = [
-    { key: 'easy', title: '简易知识库', desc: '只需上传文件即可自动切块并形成向量表示，适合不懂知识库构建的人群快速上手使用。', icon: <FolderOutlined />, color: '#1677ff', bg: '#e6f4ff' },
-    { key: 'professional', title: '专业知识库', desc: '提供自定义切分策略和数据清洗能力，适合知识库专家针对特定业务进行个性化整理和干预。', icon: <SettingOutlined />, color: '#722ed1', bg: '#f9f0ff' },
-    { key: 'external', title: '外部知识库', desc: '无缝接入外部已有的知识库服务或 API，用于为当前系统和智能体构建提供更丰富的上下文数据支持。', icon: <ApiOutlined />, color: '#fa8c16', bg: '#fff7e6' },
-  ];
-
-  return (
-    <Modal
-      title={<div style={{ fontSize: 16, fontWeight: 600 }}>选择知识库类型</div>}
-      open={open}
-      onCancel={onCancel}
-      footer={null}
-      width={620}
-      destroyOnClose
-      styles={{ body: { padding: '24px 28px 28px' } }}
-    >
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-        {types.map(t => (
-          <div
-            key={t.key}
-            onClick={() => onSelect(t.key)}
+  onSelect: (category: KBCategory) => void;
+}> = ({ open, onCancel, onSelect }) => (
+  <Modal title="选择知识库类型" open={open} footer={null} onCancel={onCancel} width={720} destroyOnClose>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, paddingTop: 8 }}>
+      {(Object.keys(categoryConfig) as KBCategory[]).map((category) => {
+        const item = categoryConfig[category];
+        const desc = {
+          easy: '快速上传文档，适合轻量知识沉淀和常规问答。',
+          professional: '提供高级解析、切片管理、检索测试等能力，适合复杂业务资料治理。',
+          external: '连接已有第三方知识库 API，平台统一调用检索能力。',
+        }[category];
+        return (
+          <button
+            key={category}
+            type="button"
+            onClick={() => onSelect(category)}
             style={{
-              border: '1px solid #E5EAF3',
-              borderRadius: 8,
-              padding: '24px 16px 16px',
+              ...cardStyle,
+              minHeight: 174,
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              textAlign: 'center',
-              background: '#fff',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = t.color;
-              e.currentTarget.style.boxShadow = `0 4px 16px ${t.color}15`;
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = '#E5EAF3';
-              e.currentTarget.style.boxShadow = 'none';
+              textAlign: 'left',
+              borderColor: category === 'professional' ? '#d3adf7' : '#E5EAF3',
+              boxShadow: category === 'professional' ? '0 4px 16px rgba(114,46,209,0.08)' : 'none',
             }}
           >
-            <div style={{
-              width: 48, height: 48, borderRadius: 12, background: t.bg, color: t.color,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 24, margin: '0 auto 12px', transition: 'transform 0.2s ease',
-            }}
-              className="type-icon"
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 8,
+                background: item.bg,
+                color: item.color,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 22,
+                marginBottom: 14,
+              }}
             >
-              {t.icon}
+              {item.icon}
             </div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#1D2129', marginBottom: 8 }}>{t.title}</div>
-            <div style={{ fontSize: 12, color: '#7A8599', lineHeight: '20px' }}>{t.desc}</div>
-          </div>
-        ))}
-      </div>
-      <style>{`
-        .type-select-card:hover .type-icon { transform: scale(1.1); }
-      `}</style>
-    </Modal>
-  );
-};
-
-/** Rename Modal */
-const RenameModal: React.FC<{
-  open: boolean;
-  currentName: string;
-  onOk: (name: string) => void;
-  onCancel: () => void;
-}> = ({ open, currentName, onOk, onCancel }) => {
-  const [name, setName] = useState(currentName);
-  React.useEffect(() => { setName(currentName); }, [currentName]);
-  return (
-    <Modal
-      title="重命名知识库"
-      open={open}
-      onOk={() => { if (name.trim()) onOk(name.trim()); }}
-      onCancel={onCancel}
-      okText="确定"
-      cancelText="取消"
-      width={420}
-      destroyOnClose
-    >
-      <div style={{ marginTop: 8 }}>
-        <div style={{ fontSize: 13, color: '#5F6B7A', marginBottom: 8 }}>请输入新名称</div>
-        <Input value={name} onChange={e => setName(e.target.value)} placeholder="知识库名称" maxLength={50} />
-      </div>
-    </Modal>
-  );
-};
-
-// ═══════════════════════════════════════════════════
-// Easy KB Create Drawer
-// ═══════════════════════════════════════════════════
-
-const EasyCreateDrawer: React.FC<{
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (values: any) => void;
-}> = ({ open, onClose, onSubmit }) => {
-  const [form] = Form.useForm();
-  const [avatarType, setAvatarType] = useState<'preset' | 'upload'>('preset');
-  const presetIcons = ['📄', '📚', '📖', '📝', '📋', '📑', '📔', '📕'];
-
-  const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      onSubmit(values);
-      form.resetFields();
-    } catch { /* validation failed */ }
-  };
-
-  return (
-    <Drawer
-      title={<span style={{ fontSize: 16, fontWeight: 600 }}>创建简易知识库</span>}
-      placement="right"
-      width={560}
-      open={open}
-      onClose={onClose}
-      destroyOnClose
-      footer={
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          <Button onClick={onClose}>取消</Button>
-          <Button type="primary" onClick={handleSubmit}>提交</Button>
-        </div>
-      }
-    >
-      <Form form={form} layout="vertical" style={{ marginTop: 8 }}>
-        <Form.Item name="name" label="知识库名称" rules={[{ required: true, message: '请输入知识库名称' }]}>
-          <Input placeholder="请输入知识库名称" maxLength={50} />
-        </Form.Item>
-
-        <Form.Item name="kbType" label="知识库类型" rules={[{ required: true }]} initialValue="文档知识库">
-          <Select
-            options={[
-              { label: '文档知识库', value: '文档知识库' },
-              { label: '结构化数据知识库', value: '结构化数据知识库' },
-            ]}
-          />
-        </Form.Item>
-
-        <div style={{ background: '#e6f4ff', borderRadius: 8, padding: '12px 16px', marginBottom: 24, fontSize: 13, color: '#1677ff', lineHeight: '22px' }}>
-          支持 PDF、Word、TXT 等格式批量导入，自动切分段落并向量化，依托语义检索实现即问即答。
-        </div>
-
-        <Form.Item label="知识库头像">
-          <Radio.Group value={avatarType} onChange={e => setAvatarType(e.target.value)} style={{ marginBottom: 12 }}>
-            <Radio.Button value="preset">选择头像</Radio.Button>
-            <Radio.Button value="upload">上传头像</Radio.Button>
-          </Radio.Group>
-          {avatarType === 'preset' ? (
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {presetIcons.map((icon, i) => (
-                <div key={i} style={{
-                  width: 44, height: 44, borderRadius: 8, border: '1px solid #E5EAF3',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 20, cursor: 'pointer', background: '#fff',
-                  transition: 'all 0.15s',
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#1677ff'; e.currentTarget.style.background = '#e6f4ff'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5EAF3'; e.currentTarget.style.background = '#fff'; }}
-                >
-                  {icon}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Upload.Dragger accept="image/*" maxCount={1} style={{ padding: '20px 0' }}>
-              <p className="text-gray-400 text-2xl"><UploadOutlined /></p>
-              <p className="text-gray-500 text-sm">点击或拖拽文件至此区域上传</p>
-              <p className="text-gray-400 text-xs">支持 PNG、JPG，最大 2MB</p>
-            </Upload.Dragger>
-          )}
-        </Form.Item>
-
-        <Form.Item name="desc" label="知识库介绍">
-          <TextArea rows={3} placeholder="请简要描述知识库的内容和用途（选填）" maxLength={200} showCount />
-        </Form.Item>
-
-        <Form.Item name="embeddingModel" label="向量化模型" initialValue="bge-m3">
-          <Select
-            options={[
-              { label: 'bge-m3', value: 'bge-m3' },
-              { label: 'text-embedding-v2', value: 'text-embedding-v2' },
-            ]}
-          />
-        </Form.Item>
-      </Form>
-    </Drawer>
-  );
-};
-
-// ═══════════════════════════════════════════════════
-// Professional KB Create Drawer
-// ═══════════════════════════════════════════════════
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#1D2129', marginBottom: 8 }}>{item.label}</div>
+            <div style={{ fontSize: 12, lineHeight: '20px', color: '#5F6B7A' }}>{desc}</div>
+            {category === 'professional' && <Tag color="purple" style={{ marginTop: 12 }}>专业能力</Tag>}
+          </button>
+        );
+      })}
+    </div>
+  </Modal>
+);
 
 const ProfessionalCreateDrawer: React.FC<{
   open: boolean;
   onClose: () => void;
-  onSubmit: (values: any) => void;
+  onSubmit: (values: Record<string, unknown>) => void;
 }> = ({ open, onClose, onSubmit }) => {
   const [form] = Form.useForm();
-
   const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      onSubmit(values);
-      form.resetFields();
-    } catch { /* validation failed */ }
+    const values = await form.validateFields();
+    onSubmit(values);
+    form.resetFields();
   };
 
   return (
     <Drawer
-      title={<span style={{ fontSize: 16, fontWeight: 600 }}>创建专业知识库</span>}
-      placement="right"
-      width={560}
+      title="创建专业知识库"
+      width={620}
       open={open}
       onClose={onClose}
       destroyOnClose
       footer={
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
           <Button onClick={onClose}>取消</Button>
-          <Button type="primary" onClick={handleSubmit}>保存</Button>
-        </div>
-      }
-    >
-      <Form form={form} layout="vertical" style={{ marginTop: 8 }}>
-        <Form.Item name="name" label="名称" rules={[{ required: true, message: '请输入知识库名称' }]}>
-          <Input placeholder="请输入知识库名称" maxLength={50} />
-        </Form.Item>
-
-        <Form.Item name="embeddingModel" label="嵌入模型" rules={[{ required: true }]} initialValue="bge-m3">
-          <Select
-            options={[
-              { label: 'bge-m3', value: 'bge-m3' },
-              { label: 'text-embedding-v2', value: 'text-embedding-v2' },
-            ]}
-          />
-        </Form.Item>
-
-        <Form.Item name="parseMethod" label="解析方法" initialValue="builtin">
-          <Radio.Group>
-            <Radio.Button value="builtin">内置</Radio.Button>
-            <Radio.Button value="pipeline">选择 pipeline</Radio.Button>
-          </Radio.Group>
-        </Form.Item>
-
-        <Form.Item name="builtinMethod" label="内置方法" initialValue="general">
-          <Select
-            options={[
-              { label: 'General', value: 'general' },
-              { label: 'Q&A', value: 'qa' },
-              { label: 'Resume', value: 'resume' },
-              { label: 'Manual', value: 'manual' },
-            ]}
-          />
-        </Form.Item>
-
-        <Form.Item name="desc" label="描述">
-          <TextArea rows={2} placeholder="简要描述该知识库的用途（选填）" />
-        </Form.Item>
-
-        <Form.Item label="头像">
-          <Upload.Dragger accept="image/*" maxCount={1} style={{ padding: '16px 0' }}>
-            <p className="text-gray-400 text-xl"><UploadOutlined /></p>
-            <p className="text-gray-500 text-sm">点击或拖拽上传头像</p>
-            <p className="text-gray-400 text-xs">最大 4MB</p>
-          </Upload.Dragger>
-        </Form.Item>
-
-        {/* Ingestion Pipeline */}
-        <div style={{ fontSize: 14, fontWeight: 600, color: '#1D2129', margin: '24px 0 12px', paddingBottom: 8, borderBottom: '1px solid #F0F2F5' }}>
-          Ingestion Pipeline 配置
-        </div>
-
-        <Form.Item name="pdfParser" label="PDF解析器" initialValue="deepdoc">
-          <Select options={[{ label: 'DeepDOC', value: 'deepdoc' }, { label: 'Default', value: 'default' }]} />
-        </Form.Item>
-
-        <Form.Item label="建议文本块大小">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Form.Item name="chunkSize" noStyle initialValue={512}>
-              <InputNumber min={0} max={2048} style={{ width: 90 }} />
-            </Form.Item>
-            <Form.Item name="chunkSizeSlider" noStyle initialValue={512}>
-              <Slider min={0} max={2048} style={{ flex: 1 }} />
-            </Form.Item>
-          </div>
-        </Form.Item>
-
-        <Form.Item name="delimiter" label="文本分段标识符" initialValue="\n">
-          <Input />
-        </Form.Item>
-
-        <Form.Item name="childChunk" label="Child Chunk Retrieval" valuePropName="checked">
-          <Switch />
-        </Form.Item>
-
-        <Form.Item name="pageIndex" label="PageIndex" valuePropName="checked">
-          <Switch />
-        </Form.Item>
-
-        <Form.Item label="图像与表格上下文窗口">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Form.Item name="contextWindow" noStyle initialValue={2}>
-              <InputNumber min={0} max={10} style={{ width: 90 }} />
-            </Form.Item>
-            <Form.Item name="contextWindowSlider" noStyle initialValue={2}>
-              <Slider min={0} max={10} style={{ flex: 1 }} />
-            </Form.Item>
-          </div>
-        </Form.Item>
-
-        <Form.Item name="autoMetadata" label="自动元数据" valuePropName="checked">
-          <Switch />
-        </Form.Item>
-
-        <Form.Item label="Overlapped %">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Form.Item name="overlapped" noStyle initialValue={0}>
-              <InputNumber min={0} max={100} style={{ width: 90 }} />
-            </Form.Item>
-            <Form.Item name="overlappedSlider" noStyle initialValue={0}>
-              <Slider min={0} max={100} style={{ flex: 1 }} />
-            </Form.Item>
-          </div>
-        </Form.Item>
-      </Form>
-    </Drawer>
-  );
-};
-
-// ═══════════════════════════════════════════════════
-// External KB Drawer (Create / Edit)
-// ═══════════════════════════════════════════════════
-
-const ExternalKBDrawer: React.FC<{
-  open: boolean;
-  mode: 'create' | 'edit';
-  initialData?: KnowledgeBase | null;
-  onClose: () => void;
-  onSubmit: (values: any) => void;
-}> = ({ open, mode, initialData, onClose, onSubmit }) => {
-  const [form] = Form.useForm();
-  const [connecting, setConnecting] = useState(false);
-  const [scoreEnabled, setScoreEnabled] = useState(initialData?.scoreEnabled ?? true);
-
-  React.useEffect(() => {
-    if (open && mode === 'edit' && initialData) {
-      form.setFieldsValue({
-        name: initialData.name,
-        desc: initialData.desc === '暂无描述信息' ? undefined : initialData.desc,
-        apiEndpoint: initialData.apiEndpoint,
-        apiKey: initialData.apiKey,
-        externalKbId: initialData.externalKbId,
-        topK: initialData.topK ?? 4,
-        score: initialData.score ?? 0.5,
-      });
-      setScoreEnabled(initialData.scoreEnabled ?? true);
-    }
-    if (open && mode === 'create') {
-      form.resetFields();
-      form.setFieldsValue({ topK: 4, score: 0.5 });
-      setScoreEnabled(true);
-    }
-  }, [open, mode, initialData, form]);
-
-  const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      setConnecting(true);
-      // Simulate connection check
-      await new Promise(r => setTimeout(r, 1500));
-      if (values.apiKey === 'error') throw new Error('连接外部知识库失败，请检查 API Endpoint 或 Key 是否正确');
-      onSubmit({ ...values, scoreEnabled });
-      setConnecting(false);
-    } catch (e: any) {
-      setConnecting(false);
-      if (e.message) message.error(e.message);
-    }
-  };
-
-  return (
-    <Drawer
-      title={<span style={{ fontSize: 16, fontWeight: 600 }}>{mode === 'create' ? '连接外部知识库' : '编辑外部知识库'}</span>}
-      placement="right"
-      width={560}
-      open={open}
-      onClose={onClose}
-      destroyOnClose
-      footer={
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          <Button onClick={onClose}>取消</Button>
-          <Button type="primary" loading={connecting} onClick={handleSubmit}>
-            {mode === 'create' ? '连接' : '保存'}
+          <Button type="primary" icon={<CloudSyncOutlined />} onClick={handleSubmit}>
+            创建专业知识库
           </Button>
         </div>
       }
     >
-      <div style={{ background: '#e6f4ff', borderRadius: 8, padding: '12px 16px', marginBottom: 24, fontSize: 13, color: '#1677ff', lineHeight: '22px' }}>
-        通过 API 和知识库 ID 连接到外部知识库。目前仅支持检索功能，暂不支持对知识库内容进行增删改操作。
-      </div>
-
-      <Form form={form} layout="vertical">
-        <Form.Item name="name" label="外部知识库名称" rules={[{ required: true, message: '请输入名称' }]}>
-          <Input placeholder="请输入外部知识库名称" />
+      <Alert
+        type="info"
+        showIcon
+        style={{ marginBottom: 20 }}
+        message="将创建专业知识库"
+        description={`模型由平台统一配置，当前默认向量模型为 ${defaultEmbeddingModel.displayName}。`}
+      />
+      <Form form={form} layout="vertical" initialValues={{ chunkMethod: 'General', chunkSize: 512, overlap: 10, delimiter: '\\n', enableTableContext: true, enableParentChild: true, autoMetadata: true }}>
+        <Form.Item name="name" label="知识库名称" rules={[{ required: true, message: '请输入知识库名称' }]}>
+          <Input placeholder="例如：反诈案例专业知识库" maxLength={50} />
         </Form.Item>
-
         <Form.Item name="desc" label="知识库描述">
-          <TextArea rows={2} placeholder="简要描述该外部知识库（选填）" />
+          <TextArea rows={3} placeholder="说明知识库的内容范围和使用场景" maxLength={200} showCount />
         </Form.Item>
-
-        <Form.Item
-          name="apiEndpoint"
-          label={<span>API Endpoint <a href="#" style={{ fontSize: 12, fontWeight: 400, marginLeft: 8 }}>了解如何创建外部知识库API</a></span>}
-          rules={[{ required: true, message: '请输入 API Endpoint' }]}
-        >
-          <Input placeholder="https://api.example.com/v1/retrieval" />
+        <Form.Item name="chunkMethod" label="解析方式">
+          <Select
+            options={[
+              { label: 'General 通用文档解析', value: 'General' },
+              { label: 'Q&A 问答对解析', value: 'Q&A' },
+              { label: 'Manual 手动切片', value: 'Manual' },
+              { label: 'Pipeline 自定义流水线', value: 'Pipeline' },
+            ]}
+          />
         </Form.Item>
-
-        <Form.Item
-          name="apiKey"
-          label="API Key"
-          rules={[{ required: true, message: '请输入 API Key' }]}
-          extra={<span style={{ fontSize: 12, color: '#7A8599' }}>您的 API Token 将进行加密存储</span>}
-        >
-          <Input.Password placeholder="请输入 API Key" />
-        </Form.Item>
-
-        <Form.Item name="externalKbId" label="外部知识库 ID" rules={[{ required: true, message: '请输入外部知识库 ID' }]}>
-          <Input placeholder="请输入外部知识库 ID" />
-        </Form.Item>
-
-        <div style={{ fontSize: 14, fontWeight: 600, color: '#1D2129', margin: '24px 0 12px', paddingBottom: 8, borderBottom: '1px solid #F0F2F5' }}>
-          召回设置
-        </div>
-
-        <Form.Item label="Top K">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Form.Item name="topK" noStyle initialValue={4}>
-              <InputNumber min={1} max={10} style={{ width: 80 }} />
+        <Form.Item label="切片大小">
+          <Space.Compact style={{ width: '100%' }}>
+            <Form.Item name="chunkSize" noStyle>
+              <InputNumber min={128} max={2048} style={{ width: 110 }} />
             </Form.Item>
-            <Form.Item name="topKSlider" noStyle initialValue={4}>
-              <Slider min={1} max={10} style={{ flex: 1 }} />
+            <Form.Item name="chunkSizeSlider" noStyle>
+              <Slider min={128} max={2048} style={{ flex: 1, marginInline: 16 }} />
             </Form.Item>
-          </div>
+          </Space.Compact>
         </Form.Item>
-
-        <Form.Item label="Score 阈值">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Switch checked={scoreEnabled} onChange={setScoreEnabled} size="small" />
-            <Form.Item name="score" noStyle initialValue={0.5}>
-              <InputNumber min={0} max={1} step={0.01} disabled={!scoreEnabled} style={{ width: 80 }} />
+        <Form.Item name="delimiter" label="分段符">
+          <Input placeholder="例如：\\n 或 \\n\\n" />
+        </Form.Item>
+        <Form.Item label="重叠比例">
+          <Space.Compact style={{ width: '100%' }}>
+            <Form.Item name="overlap" noStyle>
+              <InputNumber min={0} max={50} addonAfter="%" style={{ width: 110 }} />
             </Form.Item>
-            <Form.Item name="scoreSlider" noStyle initialValue={0.5}>
-              <Slider min={0} max={1} step={0.01} disabled={!scoreEnabled} style={{ flex: 1 }} />
+            <Form.Item name="overlapSlider" noStyle>
+              <Slider min={0} max={50} style={{ flex: 1, marginInline: 16 }} />
             </Form.Item>
-          </div>
+          </Space.Compact>
+        </Form.Item>
+        <Form.Item name="enableTableContext" label="图片与表格上下文窗口" valuePropName="checked">
+          <Switch />
+        </Form.Item>
+        <Form.Item name="enableParentChild" label="父子块检索" valuePropName="checked">
+          <Switch />
+        </Form.Item>
+        <Form.Item name="autoMetadata" label="自动元数据" valuePropName="checked">
+          <Switch />
         </Form.Item>
       </Form>
     </Drawer>
   );
 };
 
-// ═══════════════════════════════════════════════════
-// Main Page
-// ═══════════════════════════════════════════════════
+const SimpleCreateDrawer: React.FC<{
+  open: boolean;
+  category: Exclude<KBCategory, 'professional'>;
+  onClose: () => void;
+  onSubmit: (values: Record<string, unknown>) => void;
+}> = ({ open, category, onClose, onSubmit }) => {
+  const [form] = Form.useForm();
+  const isExternal = category === 'external';
+  const handleSubmit = async () => {
+    const values = await form.validateFields();
+    onSubmit(values);
+    form.resetFields();
+  };
+
+  return (
+    <Drawer
+      title={isExternal ? '连接外部知识库' : '创建简易知识库'}
+      width={560}
+      open={open}
+      onClose={onClose}
+      destroyOnClose
+      footer={
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <Button onClick={onClose}>取消</Button>
+          <Button type="primary" onClick={handleSubmit}>{isExternal ? '连接' : '创建'}</Button>
+        </div>
+      }
+    >
+      <Form form={form} layout="vertical">
+        <Form.Item name="name" label="知识库名称" rules={[{ required: true, message: '请输入知识库名称' }]}>
+          <Input maxLength={50} />
+        </Form.Item>
+        <Form.Item name="desc" label="描述">
+          <TextArea rows={3} maxLength={200} showCount />
+        </Form.Item>
+        {isExternal ? (
+          <>
+            <Form.Item name="apiEndpoint" label="API Endpoint" rules={[{ required: true, message: '请输入 API Endpoint' }]}>
+              <Input placeholder="https://api.example.com/v1/retrieval" />
+            </Form.Item>
+            <Form.Item name="externalKbId" label="外部知识库 ID" rules={[{ required: true, message: '请输入外部知识库 ID' }]}>
+              <Input />
+            </Form.Item>
+          </>
+        ) : (
+          <Form.Item label="上传文档">
+            <Button icon={<UploadOutlined />}>选择文件</Button>
+          </Form.Item>
+        )}
+      </Form>
+    </Drawer>
+  );
+};
+
+const RagflowEmbeddedPreview: React.FC<{ kb: KnowledgeBase }> = ({ kb }) => {
+  const srcDoc = `
+    <html>
+      <head>
+        <style>
+          body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; color: #1d2129; background: #fff; }
+          .wrap { padding: 22px 24px; }
+          .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+          .tabs { display: flex; gap: 22px; border-bottom: 1px solid #edf0f5; margin-bottom: 18px; }
+          .tab { padding: 0 0 12px; font-size: 14px; color: #5f6b7a; }
+          .active { color: #1677ff; border-bottom: 2px solid #1677ff; font-weight: 600; }
+          .btn { background: #1677ff; color: #fff; border-radius: 6px; padding: 8px 14px; font-size: 13px; }
+          .grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+          .panel { border: 1px solid #e5eaf3; border-radius: 8px; padding: 16px; min-height: 180px; }
+          table { width: 100%; border-collapse: collapse; font-size: 13px; }
+          th { text-align: left; color: #7a8599; background: #f8f9fb; padding: 10px; font-weight: 500; }
+          td { padding: 12px 10px; border-bottom: 1px solid #f0f2f5; }
+          .tag { color: #389e0d; background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 4px; padding: 2px 7px; }
+          .muted { color: #7a8599; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="wrap">
+          <div class="toolbar">
+            <div>
+              <div style="font-size:18px;font-weight:700;">${kb.name}</div>
+              <div class="muted">专业知识库编号：${getKnowledgeCode(kb)}</div>
+            </div>
+            <div class="btn">上传文档</div>
+          </div>
+          <div class="tabs">
+            <div class="tab active">文档</div>
+            <div class="tab">分段</div>
+            <div class="tab">检索测试</div>
+            <div class="tab">配置</div>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <table>
+                <thead><tr><th>名称</th><th>状态</th><th>分段数</th><th>更新时间</th></tr></thead>
+                <tbody>
+                  <tr><td>2026年Q2电信诈骗新趋势分析.pdf</td><td><span class="tag">已解析</span></td><td>356</td><td>06-20 16:22</td></tr>
+                  <tr><td>涉诈资金穿透研判报告.docx</td><td><span class="tag">已解析</span></td><td>148</td><td>06-19 10:15</td></tr>
+                  <tr><td>高发诈骗话术样本.xlsx</td><td><span class="tag">解析中</span></td><td>--</td><td>06-18 09:30</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="panel">
+              <div style="font-size:14px;font-weight:700;margin-bottom:12px;">解析配置</div>
+              <div class="muted">向量模型</div>
+              <div style="margin-bottom:12px;">${defaultEmbeddingModel.displayName}</div>
+              <div class="muted">解析方式</div>
+              <div style="margin-bottom:12px;">${kb.chunkMethod || 'General'}</div>
+              <div class="muted">切片大小</div>
+              <div>${kb.parserConfig?.chunkSize || 512}</div>
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  return (
+    <iframe
+      title="专业知识库详情预览"
+      srcDoc={srcDoc}
+      sandbox=""
+      style={{ width: '100%', minHeight: 520, border: 0, background: '#fff', display: 'block' }}
+    />
+  );
+};
+
+const RagflowDetail: React.FC<{
+  kb: KnowledgeBase;
+  onBack: () => void;
+  onRetry: (id: string) => void;
+}> = ({ kb, onBack, onRetry }) => {
+  const sync = syncConfig[kb.ragflowSyncStatus ?? 'none'];
+  const isSynced = kb.ragflowSyncStatus === 'synced';
+
+  return (
+    <div style={{ flex: 1, background: '#F5F7FA', overflow: 'auto' }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #F0F2F5', padding: '12px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Space size={14}>
+          <ArrowLeftOutlined onClick={onBack} style={{ color: '#5F6B7A', cursor: 'pointer' }} />
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: '#f9f0ff', color: '#722ed1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <BlockOutlined />
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 16, fontWeight: 700 }}>{kb.name}</span>
+              <Tag color="purple">专业知识库</Tag>
+              <Tag color={sync.color} icon={sync.icon}>{sync.label}</Tag>
+            </div>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              文档管理 / 分段管理 / 检索测试
+            </Text>
+          </div>
+        </Space>
+        <Space>
+          <Tooltip title="模型由平台统一配置">
+            <Tag icon={<CodeSandboxOutlined />}>{defaultEmbeddingModel.displayName}</Tag>
+          </Tooltip>
+          {kb.ragflowPageUrl && (
+            <Button icon={<LinkOutlined />} onClick={() => message.info('已在当前平台内打开专业知识库详情')}>
+              打开详情
+            </Button>
+          )}
+          {kb.ragflowSyncStatus === 'failed' && (
+            <Button type="primary" icon={<ReloadOutlined />} onClick={() => onRetry(kb.id)}>
+              重试创建
+            </Button>
+          )}
+        </Space>
+      </div>
+
+      <div style={{ padding: '18px 28px 28px' }}>
+        <Alert
+          type={isSynced ? 'success' : kb.ragflowSyncStatus === 'failed' ? 'error' : 'info'}
+          showIcon
+          style={{ marginBottom: 16 }}
+          message={isSynced ? '专业知识库已就绪' : '专业知识库尚未可用'}
+          description={
+            isSynced
+              ? '你可以在这里完成文档上传、解析管理、分段查看和检索测试等操作。'
+              : kb.syncError || '系统正在创建专业知识库，请稍后刷新。'
+          }
+        />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16 }}>
+          <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
+            <div style={cardStyle}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>基础信息</div>
+              <Descriptions column={1} size="small" colon={false}>
+                <Descriptions.Item label="知识库编号">{getKnowledgeCode(kb)}</Descriptions.Item>
+                <Descriptions.Item label="创建人">{kb.owner}</Descriptions.Item>
+                <Descriptions.Item label="所属空间">{kb.ragflowTenantId ? '当前工作空间' : '默认空间'}</Descriptions.Item>
+                <Descriptions.Item label="解析方式">{kb.chunkMethod || '-'}</Descriptions.Item>
+              </Descriptions>
+            </div>
+            <div style={cardStyle}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>统一配置</div>
+              <Space direction="vertical" size={10} style={{ width: '100%' }}>
+                <div>
+                  <Text type="secondary" style={{ fontSize: 12 }}>平台默认向量模型</Text>
+                  <div style={{ fontWeight: 600 }}>{defaultEmbeddingModel.displayName}</div>
+                </div>
+                <div>
+                  <Text type="secondary" style={{ fontSize: 12 }}>切片大小</Text>
+                  <div>{kb.parserConfig?.chunkSize ?? 512}</div>
+                </div>
+                <div>
+                  <Text type="secondary" style={{ fontSize: 12 }}>重叠比例</Text>
+                  <div>{kb.parserConfig?.overlap ?? 0}%</div>
+                </div>
+              </Space>
+            </div>
+          </div>
+
+          <div style={{ background: '#fff', border: '1px solid #E5EAF3', borderRadius: 8, overflow: 'hidden' }}>
+            <div style={{ height: 42, borderBottom: '1px solid #F0F2F5', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', background: '#fff' }}>
+              <Space>
+                <Badge status={isSynced ? 'success' : 'error'} />
+                <Text strong>专业知识库工作区</Text>
+              </Space>
+              <Text type="secondary" style={{ fontSize: 12 }}>文档、分段、检索配置统一管理</Text>
+            </div>
+            {isSynced ? (
+              <RagflowEmbeddedPreview kb={kb} />
+            ) : (
+              <div style={{ minHeight: 520, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={kb.ragflowSyncStatus === 'failed' ? '专业知识库创建失败，重试后可进入详情' : '正在创建专业知识库'}
+                >
+                  {kb.ragflowSyncStatus === 'failed' && <Button type="primary" onClick={() => onRetry(kb.id)}>重试创建</Button>}
+                </Empty>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const NativeDetail: React.FC<{ kb: KnowledgeBase; onBack: () => void }> = ({ kb, onBack }) => {
+  const columns: ColumnsType<KnowledgeFile> = [
+    { title: '文件名', dataIndex: 'name', render: (name: string) => <a>{name}</a> },
+    { title: '大小', dataIndex: 'size', width: 120 },
+    { title: '状态', dataIndex: 'status', width: 120, render: (status: string) => <Tag color={status === '已解析' ? 'success' : 'processing'}>{status}</Tag> },
+    { title: '更新时间', dataIndex: 'updatedAt', width: 170 },
+  ];
+
+  return (
+    <div style={{ flex: 1, background: '#F5F7FA', overflow: 'auto' }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #F0F2F5', padding: '12px 28px', display: 'flex', alignItems: 'center', gap: 14 }}>
+        <ArrowLeftOutlined onClick={onBack} style={{ color: '#5F6B7A', cursor: 'pointer' }} />
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: categoryConfig[kb.category].bg, color: categoryConfig[kb.category].color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {categoryConfig[kb.category].icon}
+        </div>
+        <span style={{ fontSize: 16, fontWeight: 700 }}>{kb.name}</span>
+        <Tag color={categoryConfig[kb.category].color}>{categoryConfig[kb.category].label}</Tag>
+      </div>
+      <div style={{ padding: '20px 28px' }}>
+        <div style={{ ...cardStyle, marginBottom: 16 }}>
+          <Descriptions column={3} size="small">
+            <Descriptions.Item label="类型">{kb.typeTag}</Descriptions.Item>
+            <Descriptions.Item label="创建人">{kb.owner}</Descriptions.Item>
+            <Descriptions.Item label="创建时间">{kb.date}</Descriptions.Item>
+            <Descriptions.Item label="状态">{statusConfig[kb.status].label}</Descriptions.Item>
+            <Descriptions.Item label="文件数">{kb.fileCount ?? '-'}</Descriptions.Item>
+            <Descriptions.Item label="启用状态">{kb.active ? '启用' : '停用'}</Descriptions.Item>
+          </Descriptions>
+          <Paragraph style={{ margin: '12px 0 0', color: '#5F6B7A' }}>{kb.desc}</Paragraph>
+        </div>
+        {kb.category === 'external' ? (
+          <div style={cardStyle}>
+            <Descriptions column={1} size="small">
+              <Descriptions.Item label="API Endpoint">{kb.apiEndpoint}</Descriptions.Item>
+              <Descriptions.Item label="外部知识库 ID">{kb.externalKbId}</Descriptions.Item>
+            </Descriptions>
+          </div>
+        ) : (
+          <Table rowKey="id" columns={columns} dataSource={mockFiles} pagination={false} style={{ background: '#fff', borderRadius: 8 }} />
+        )}
+      </div>
+    </div>
+  );
+};
 
 const KnowledgeBasePage: React.FC = () => {
-  // ── View State ──
-  const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
+  const [kbList, setKbList] = useState<KnowledgeBase[]>(initialKBList);
+  const [activeCategory, setActiveCategory] = useState<'all' | KBCategory>('all');
+  const [keyword, setKeyword] = useState('');
+  const [statusFilter, setStatusFilter] = useState<KBStatus | undefined>();
+  const [page, setPage] = useState(1);
+  const [typeModalOpen, setTypeModalOpen] = useState(false);
+  const [professionalDrawerOpen, setProfessionalDrawerOpen] = useState(false);
+  const [simpleDrawerCategory, setSimpleDrawerCategory] = useState<Exclude<KBCategory, 'professional'> | null>(null);
   const [activeKB, setActiveKB] = useState<KnowledgeBase | null>(null);
 
-  // ── List State ──
-  const [kbList, setKbList] = useState<KnowledgeBase[]>(initialKBList);
-  const [activeCategoryTab, setActiveCategoryTab] = useState<string>('all');
-  const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState<KBStatus[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 12;
+  const pageSize = 8;
 
-  // ── Modal/Drawer State ──
-  const [typeSelectOpen, setTypeSelectOpen] = useState(false);
-  const [renameOpen, setRenameOpen] = useState(false);
-  const [renameTarget, setRenameTarget] = useState<KnowledgeBase | null>(null);
-  const [easyDrawerOpen, setEasyDrawerOpen] = useState(false);
-  const [professionalDrawerOpen, setProfessionalDrawerOpen] = useState(false);
-  const [externalDrawerOpen, setExternalDrawerOpen] = useState(false);
-  const [externalDrawerMode, setExternalDrawerMode] = useState<'create' | 'edit'>('create');
-  const [externalEditTarget, setExternalEditTarget] = useState<KnowledgeBase | null>(null);
-
-  // ── Detail State ──
-  const [detailTab, setDetailTab] = useState<DetailTab>('files');
-
-  // ── Computed Stats ──
   const stats = useMemo(() => {
-    const total = kbList.length;
-    const easy = kbList.filter(k => k.category === 'easy');
-    const professional = kbList.filter(k => k.category === 'professional');
-    const external = kbList.filter(k => k.category === 'external');
-    const available = kbList.filter(k => k.status === 'available').length;
-    const processing = kbList.filter(k => k.status === 'processing').length;
-    const error = kbList.filter(k => k.status === 'error').length;
+    const professional = kbList.filter((item) => item.category === 'professional');
     return [
-      { label: '知识库总数', value: total, sub: `${available} 可用 / ${processing} 向量化中 / ${error} 异常`, key: 'all', color: '#1677ff' },
-      { label: '简易知识库', value: easy.length, sub: `${easy.reduce((s, k) => s + (k.fileCount ?? 0), 0)} 个文件`, key: 'easy', color: '#1677ff' },
-      { label: '专业知识库', value: professional.length, sub: `${professional.reduce((s, k) => s + (k.fileCount ?? 0), 0)} 个文件`, key: 'professional', color: '#722ed1' },
-      { label: '外部知识库', value: external.length, sub: `${external.filter(k => k.status === 'available').length} 已连接 / ${external.filter(k => k.status === 'error').length} 异常`, key: 'external', color: '#fa8c16' },
+      { key: 'all', label: '知识库总数', value: kbList.length, sub: `${kbList.filter((item) => item.status === 'available').length} 个可用`, color: '#1677ff' },
+      { key: 'easy', label: '简易知识库', value: kbList.filter((item) => item.category === 'easy').length, sub: '平台轻量能力', color: '#1677ff' },
+      { key: 'professional', label: '专业知识库', value: professional.length, sub: `${professional.filter((item) => item.ragflowSyncStatus === 'synced').length} 个已就绪`, color: '#722ed1' },
+      { key: 'external', label: '外部知识库', value: kbList.filter((item) => item.category === 'external').length, sub: '第三方 API 接入', color: '#fa8c16' },
     ];
   }, [kbList]);
 
-  const tabs = useMemo(() => {
-    const counts: Record<string, number> = { all: kbList.length };
-    ['easy', 'professional', 'external'].forEach(c => { counts[c] = kbList.filter(k => k.category === c).length; });
-    return [
-      { label: '全部', key: 'all', count: counts.all },
-      { label: '简易知识库', key: 'easy', count: counts.easy },
-      { label: '专业知识库', key: 'professional', count: counts.professional },
-      { label: '外部知识库', key: 'external', count: counts.external },
-    ];
-  }, [kbList]);
-
-  // ── Filtered List ──
   const filteredList = useMemo(() => {
-    return kbList.filter(k => {
-      if (activeCategoryTab !== 'all' && k.category !== activeCategoryTab) return false;
-      if (searchText && !k.name.toLowerCase().includes(searchText.toLowerCase())) return false;
-      if (statusFilter.length > 0 && !statusFilter.includes(k.status)) return false;
+    return kbList.filter((item) => {
+      if (activeCategory !== 'all' && item.category !== activeCategory) return false;
+      if (keyword && !item.name.includes(keyword) && !item.desc.includes(keyword)) return false;
+      if (statusFilter && item.status !== statusFilter) return false;
       return true;
     });
-  }, [kbList, activeCategoryTab, searchText, statusFilter]);
+  }, [activeCategory, kbList, keyword, statusFilter]);
 
-  const paginatedList = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredList.slice(start, start + pageSize);
-  }, [filteredList, currentPage]);
+  const pagedList = filteredList.slice((page - 1) * pageSize, page * pageSize);
 
-  // Reset page when filters change
-  React.useEffect(() => { setCurrentPage(1); }, [activeCategoryTab, searchText, statusFilter]);
-
-  // ── Handlers ──
-  const handleStatClick = (key: string) => {
-    setActiveCategoryTab(key);
-    setStatusFilter([]);
+  const openCreateByType = (category: KBCategory) => {
+    setTypeModalOpen(false);
+    if (category === 'professional') setProfessionalDrawerOpen(true);
+    else setSimpleDrawerCategory(category);
   };
 
-  const handleCreateClick = () => setTypeSelectOpen(true);
-
-  const handleTypeSelect = (type: KBCategory) => {
-    setTypeSelectOpen(false);
-    if (type === 'easy') setEasyDrawerOpen(true);
-    else if (type === 'professional') setProfessionalDrawerOpen(true);
-    else {
-      setExternalDrawerMode('create');
-      setExternalEditTarget(null);
-      setExternalDrawerOpen(true);
-    }
-  };
-
-  const addKB = (kb: KnowledgeBase) => setKbList(prev => [kb, ...prev]);
-
-  const handleEasySubmit = (values: any) => {
+  const handleProfessionalSubmit = (values: Record<string, unknown>) => {
+    const timestamp = Date.now();
+    const syncSucceeded = String(values.name).includes('失败') ? false : true;
     const newKB: KnowledgeBase = {
-      id: Date.now().toString(),
-      name: values.name,
-      category: 'easy',
-      typeTag: values.kbType || '文档知识库',
-      desc: values.desc || '暂无描述信息',
-      date: new Date().toISOString().slice(0, 10),
-      owner: '当前用户',
-      active: true,
-      fileCount: 0,
-      status: 'available',
-    };
-    addKB(newKB);
-    setEasyDrawerOpen(false);
-    message.success('简易知识库创建成功');
-  };
-
-  const handleProfessionalSubmit = (values: any) => {
-    const newKB: KnowledgeBase = {
-      id: Date.now().toString(),
-      name: values.name,
+      id: `kb-${timestamp}`,
+      name: String(values.name),
       category: 'professional',
-      typeTag: '结构化知识库',
-      desc: values.desc || '暂无描述信息',
-      date: new Date().toISOString().slice(0, 10),
+      typeTag: '专业知识库',
+      desc: String(values.desc || '暂无描述'),
       owner: '当前用户',
-      active: true,
+      date: new Date().toISOString().slice(0, 10),
       fileCount: 0,
-      status: 'available',
-      embeddingModel: values.embeddingModel,
-      parseMethod: values.parseMethod,
-      builtinMethod: values.builtinMethod,
+      active: true,
+      status: syncSucceeded ? 'available' : 'error',
+      ragflowSyncStatus: syncSucceeded ? 'synced' : 'failed',
+      ragflowDatasetId: syncSucceeded ? `rf_ds_${timestamp}` : undefined,
+      ragflowTenantId: 'tenant-police-demo',
+      ragflowUserId: 'rf_user_current',
+      ragflowPageUrl: syncSucceeded ? `/ragflow/proxy/datasets/rf_ds_${timestamp}` : undefined,
+      syncError: syncSucceeded ? undefined : '模拟：专业知识库创建失败。',
+      embeddingModelId: defaultEmbeddingModel.id,
+      chunkMethod: String(values.chunkMethod || 'General'),
+      parserConfig: {
+        chunkSize: Number(values.chunkSize || 512),
+        delimiter: String(values.delimiter || '\\n'),
+        overlap: Number(values.overlap || 0),
+        enableTableContext: Boolean(values.enableTableContext),
+        enableParentChild: Boolean(values.enableParentChild),
+        autoMetadata: Boolean(values.autoMetadata),
+      },
     };
-    addKB(newKB);
+    setKbList((prev) => [newKB, ...prev]);
     setProfessionalDrawerOpen(false);
-    message.success('专业知识库创建成功');
+    message.success(syncSucceeded ? '专业知识库已创建' : '专业知识库创建失败，请稍后重试');
   };
 
-  const handleExternalSubmit = (values: any) => {
-    if (externalDrawerMode === 'create') {
-      const newKB: KnowledgeBase = {
-        id: Date.now().toString(),
-        name: values.name,
-        category: 'external',
-        typeTag: '外部接入',
-        desc: values.desc || '暂无描述信息',
-        date: new Date().toISOString().slice(0, 10),
-        owner: '当前用户',
-        active: true,
-        fileCount: null,
-        status: 'available',
-        apiEndpoint: values.apiEndpoint,
-        apiKey: values.apiKey,
-        externalKbId: values.externalKbId,
-        topK: values.topK,
-        score: values.score,
-        scoreEnabled: values.scoreEnabled,
-      };
-      addKB(newKB);
-      message.success('已成功连接到外部知识库');
-    } else if (externalEditTarget) {
-      setKbList(prev => prev.map(k => k.id === externalEditTarget.id ? {
-        ...k,
-        name: values.name,
-        desc: values.desc || '暂无描述信息',
-        apiEndpoint: values.apiEndpoint,
-        apiKey: values.apiKey,
-        externalKbId: values.externalKbId,
-        topK: values.topK,
-        score: values.score,
-        scoreEnabled: values.scoreEnabled,
-      } : k));
-      setActiveKB(prev => prev?.id === externalEditTarget.id ? {
-        ...prev,
-        name: values.name,
-        desc: values.desc || '暂无描述信息',
-        apiEndpoint: values.apiEndpoint,
-        apiKey: values.apiKey,
-        externalKbId: values.externalKbId,
-        topK: values.topK,
-        score: values.score,
-        scoreEnabled: values.scoreEnabled,
-      } : prev);
-      message.success('外部知识库配置已更新');
-    }
-    setExternalDrawerOpen(false);
+  const handleSimpleSubmit = (values: Record<string, unknown>) => {
+    if (!simpleDrawerCategory) return;
+    const newKB: KnowledgeBase = {
+      id: `kb-${Date.now()}`,
+      name: String(values.name),
+      category: simpleDrawerCategory,
+      typeTag: simpleDrawerCategory === 'external' ? '外部 API 接入' : '文档知识库',
+      desc: String(values.desc || '暂无描述'),
+      owner: '当前用户',
+      date: new Date().toISOString().slice(0, 10),
+      fileCount: simpleDrawerCategory === 'external' ? null : 0,
+      active: true,
+      status: 'available',
+      ragflowSyncStatus: 'none',
+      apiEndpoint: String(values.apiEndpoint || ''),
+      externalKbId: String(values.externalKbId || ''),
+    };
+    setKbList((prev) => [newKB, ...prev]);
+    setSimpleDrawerCategory(null);
+    message.success(simpleDrawerCategory === 'external' ? '外部知识库已连接' : '简易知识库已创建');
   };
 
-  const handleEditExternal = (kb: KnowledgeBase) => {
-    setExternalEditTarget(kb);
-    setExternalDrawerMode('edit');
-    setExternalDrawerOpen(true);
-  };
-
-  const handleRename = (kb: KnowledgeBase) => {
-    setRenameTarget(kb);
-    setRenameOpen(true);
-  };
-
-  const handleRenameOk = (newName: string) => {
-    if (renameTarget) {
-      setKbList(prev => prev.map(k => k.id === renameTarget.id ? { ...k, name: newName } : k));
-      if (activeKB?.id === renameTarget.id) setActiveKB(prev => prev ? { ...prev, name: newName } : null);
-    }
-    setRenameOpen(false);
-    setRenameTarget(null);
-    message.success('重命名成功');
-  };
-
-  const handleToggleActive = (kbId: string, checked: boolean) => {
-    setKbList(prev => prev.map(k => k.id === kbId ? { ...k, active: checked } : k));
-    if (activeKB?.id === kbId) setActiveKB(prev => prev ? { ...prev, active: checked } : null);
+  const handleRetrySync = (id: string) => {
+    setKbList((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              status: 'available',
+              ragflowSyncStatus: 'synced',
+              syncError: undefined,
+              ragflowDatasetId: item.ragflowDatasetId || `rf_ds_retry_${Date.now()}`,
+              ragflowPageUrl: item.ragflowPageUrl || `/ragflow/proxy/datasets/rf_ds_retry_${Date.now()}`,
+              ragflowUserId: item.ragflowUserId || 'rf_user_current',
+            }
+          : item,
+      ),
+    );
+    setActiveKB((prev) =>
+      prev?.id === id
+        ? {
+            ...prev,
+            status: 'available',
+            ragflowSyncStatus: 'synced',
+            syncError: undefined,
+            ragflowDatasetId: prev.ragflowDatasetId || `rf_ds_retry_${Date.now()}`,
+            ragflowPageUrl: prev.ragflowPageUrl || `/ragflow/proxy/datasets/rf_ds_retry_${Date.now()}`,
+            ragflowUserId: prev.ragflowUserId || 'rf_user_current',
+          }
+        : prev,
+    );
+    message.success('专业知识库已重新创建');
   };
 
   const handleDelete = (kb: KnowledgeBase) => {
     Modal.confirm({
       title: '删除知识库',
-      content: `确定要删除知识库「${kb.name}」吗？删除后不可恢复。`,
-      okText: '确认删除',
+      content: `确定删除「${kb.name}」吗？删除后相关文档、分段与检索配置将不可恢复。`,
+      okText: '删除',
       okButtonProps: { danger: true },
       cancelText: '取消',
       onOk: () => {
-        setKbList(prev => prev.filter(k => k.id !== kb.id));
+        setKbList((prev) => prev.filter((item) => item.id !== kb.id));
         message.success('知识库已删除');
       },
     });
   };
 
-  const openDetail = (kb: KnowledgeBase) => {
-    setActiveKB(kb);
-    setDetailTab('files');
-    setViewMode('detail');
-  };
+  if (activeKB) {
+    return activeKB.category === 'professional' ? (
+      <RagflowDetail kb={activeKB} onBack={() => setActiveKB(null)} onRetry={handleRetrySync} />
+    ) : (
+      <NativeDetail kb={activeKB} onBack={() => setActiveKB(null)} />
+    );
+  }
 
-  const closeDetail = () => { setActiveKB(null); setViewMode('list'); };
+  return (
+    <>
+      <div style={{ flex: 1, background: '#F5F7FA', overflow: 'auto' }}>
+        <div style={{ padding: '24px 28px 40px' }}>
+          <PageHeader
+            title="知识库"
+            hint="平台统一管理简易知识库、专业知识库和外部知识库。专业知识库适合复杂资料解析、分段治理和高质量检索场景。"
+            extra={
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setTypeModalOpen(true)}>
+                创建知识库
+              </Button>
+            }
+          />
 
-  // ════════════════════ Render: List View ════════════════════
-  const renderListView = () => (
-    <div style={{ flex: 1, overflow: 'auto', background: '#F5F7FA' }}>
-      <div style={{ padding: '24px 28px 40px' }}>
-        {/* Header */}
-        <PageHeader
-          title="知识库"
-          hint="知识库为智能体提供可检索的高质量上下文数据支撑。支持简易知识库、专业知识库和外部知识库三种类型。"
-          extra={
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateClick} style={{ borderRadius: 6, fontWeight: 500 }}>
-              创建知识库
-            </Button>
-          }
-        />
-
-        {/* Stat Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
-          {stats.map(st => {
-            const active = activeCategoryTab === st.key;
-            return (
-              <div
-                key={st.key}
-                onClick={() => handleStatClick(st.key)}
-                style={{
-                  background: '#fff', borderRadius: 8, border: `1px solid ${active ? st.color + '40' : '#E5EAF3'}`,
-                  padding: '18px 20px', cursor: 'pointer', transition: 'all 0.2s ease',
-                  boxShadow: active ? `0 2px 8px ${st.color}15` : '0 1px 2px rgba(0,0,0,0.02)',
-                }}
-              >
-                <div style={{ fontSize: 12, color: '#7A8599', marginBottom: 4 }}>{st.label}</div>
-                <div style={{ fontSize: 28, fontWeight: 700, color: st.color, lineHeight: '36px' }}>{st.value}</div>
-                <div style={{ fontSize: 11, color: '#B0B8C8', marginTop: 2 }}>{st.sub}</div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Filter Row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
-          {/* Capsule Tabs */}
-          <div style={{ display: 'flex', gap: 6 }}>
-            {tabs.map(tab => {
-              const active = activeCategoryTab === tab.key;
-              const tabColor = tab.key === 'professional' ? '#722ed1' : tab.key === 'external' ? '#fa8c16' : '#1677ff';
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 18 }}>
+            {stats.map((stat) => {
+              const active = activeCategory === stat.key;
               return (
-                <div
-                  key={tab.key}
-                  onClick={() => setActiveCategoryTab(tab.key)}
+                <button
+                  type="button"
+                  key={stat.key}
+                  onClick={() => {
+                    setActiveCategory(stat.key as 'all' | KBCategory);
+                    setPage(1);
+                  }}
                   style={{
-                    background: active ? tabColor + '10' : '#fff',
-                    borderRadius: 6,
-                    border: `1px solid ${active ? tabColor + '30' : '#E5EAF3'}`,
-                    padding: '6px 14px', cursor: 'pointer', transition: 'all 0.15s ease',
-                    display: 'flex', alignItems: 'center', gap: 6, userSelect: 'none',
+                    ...cardStyle,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    borderColor: active ? `${stat.color}66` : '#E5EAF3',
+                    boxShadow: active ? `0 4px 14px ${stat.color}18` : 'none',
                   }}
                 >
-                  <span style={{ fontSize: 13, color: active ? tabColor : '#5F6B7A', fontWeight: active ? 600 : 400 }}>{tab.label}</span>
-                  <span style={{
-                    fontSize: 12, fontWeight: 700, color: active ? tabColor : '#B0B8C8',
-                    background: active ? tabColor + '15' : '#F2F3F8', borderRadius: 10,
-                    padding: '0 7px', lineHeight: '18px', minWidth: 22, textAlign: 'center',
-                  }}>{tab.count}</span>
-                </div>
+                  <div style={{ fontSize: 12, color: '#7A8599', marginBottom: 6 }}>{stat.label}</div>
+                  <div style={{ fontSize: 28, lineHeight: '34px', color: stat.color, fontWeight: 800 }}>{stat.value}</div>
+                  <div style={{ fontSize: 12, color: '#A0A8B8', marginTop: 4 }}>{stat.sub}</div>
+                </button>
               );
             })}
           </div>
 
-          {/* Status Filter */}
-          <Select
-            mode="multiple"
-            placeholder="状态筛选"
-            allowClear
-            style={{ width: 200 }}
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={[
-              { label: '可用', value: 'available' },
-              { label: '向量化中', value: 'processing' },
-              { label: '异常', value: 'error' },
-            ]}
-          />
+          <div style={{ ...cardStyle, padding: 14, marginBottom: 16 }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <Radio.Group
+                value={activeCategory}
+                onChange={(event) => {
+                  setActiveCategory(event.target.value);
+                  setPage(1);
+                }}
+                optionType="button"
+                buttonStyle="solid"
+                options={[
+                  { label: '全部', value: 'all' },
+                  { label: '简易知识库', value: 'easy' },
+                  { label: '专业知识库', value: 'professional' },
+                  { label: '外部知识库', value: 'external' },
+                ]}
+              />
+              <Select
+                allowClear
+                placeholder="状态"
+                value={statusFilter}
+                onChange={(value) => {
+                  setStatusFilter(value);
+                  setPage(1);
+                }}
+                style={{ width: 140 }}
+                options={[
+                  { label: '可用', value: 'available' },
+                  { label: '处理中', value: 'processing' },
+                  { label: '异常', value: 'error' },
+                ]}
+              />
+              <Input
+                prefix={<SearchOutlined style={{ color: '#B0B8C8' }} />}
+                placeholder="搜索知识库名称或描述"
+                allowClear
+                value={keyword}
+                onChange={(event) => {
+                  setKeyword(event.target.value);
+                  setPage(1);
+                }}
+                style={{ width: 260, marginLeft: 'auto' }}
+              />
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={() => {
+                  setKeyword('');
+                  setStatusFilter(undefined);
+                  setActiveCategory('all');
+                  setPage(1);
+                }}
+              >
+                重置
+              </Button>
+            </div>
+          </div>
 
-          <Input
-            prefix={<SearchOutlined style={{ color: '#B0B8C8' }} />}
-            placeholder="搜索知识库名称…"
-            value={searchText}
-            onChange={e => setSearchText(e.target.value)}
-            allowClear
-            style={{ width: 240, borderRadius: 6, marginLeft: 'auto' }}
-          />
-          <Button icon={<ReloadOutlined />} onClick={() => { setSearchText(''); setStatusFilter([]); setActiveCategoryTab('all'); }}>
-            重置
-          </Button>
-        </div>
-
-        {/* Card Grid */}
-        {paginatedList.length > 0 ? (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-              {paginatedList.map(kb => {
-                const cfg = categoryConfig[kb.category];
-                const st = statusConfig[kb.status];
-                return (
-                  <div
-                    key={kb.id}
-                    onClick={() => openDetail(kb)}
-                    style={{
-                      background: '#fff', borderRadius: 8, border: '1px solid #E5EAF3',
-                      padding: '20px 20px 16px', cursor: 'pointer', transition: 'all 0.2s ease',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column',
-                      minHeight: 200,
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.borderColor = '#BCC7DB';
-                      e.currentTarget.style.boxShadow = '0 3px 12px rgba(0,0,0,0.05), 0 1px 4px rgba(0,0,0,0.03)';
-                      e.currentTarget.style.transform = 'translateY(-1px)';
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.borderColor = '#E5EAF3';
-                      e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                  >
-                    {/* Top: Icon + Tag + More */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div style={{
-                          width: 42, height: 42, borderRadius: 10, background: cfg.bg, color: cfg.color,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0,
-                        }}>
-                          {cfg.icon}
+          {pagedList.length > 0 ? (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 16 }}>
+                {pagedList.map((kb) => {
+                  const category = categoryConfig[kb.category];
+                  const status = statusConfig[kb.status];
+                  const sync = syncConfig[kb.ragflowSyncStatus ?? 'none'];
+                  return (
+                    <div
+                      key={kb.id}
+                      onClick={() => setActiveKB(kb)}
+                      style={{ ...cardStyle, minHeight: 232, cursor: 'pointer', display: 'flex', flexDirection: 'column' }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+                        <div style={{ width: 42, height: 42, borderRadius: 8, background: category.bg, color: category.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                          {category.icon}
                         </div>
-                        <span style={{
-                          fontSize: 10, fontWeight: 500, color: '#5F6B7A', background: '#F2F3F8',
-                          borderRadius: 3, padding: '1px 6px', lineHeight: '18px',
-                        }}>{cfg.label}</span>
+                        <Tooltip title="更多操作">
+                          <Button
+                            type="text"
+                            icon={<EllipsisOutlined />}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleDelete(kb);
+                            }}
+                          />
+                        </Tooltip>
                       </div>
-                      <div onClick={e => e.stopPropagation()}>
-                        <Dropdown menu={{
-                          items: [
-                            { key: 'rename', label: '重命名', onClick: () => handleRename(kb) },
-                            ...(kb.category === 'external'
-                              ? [{ key: 'edit', label: '编辑配置', onClick: () => handleEditExternal(kb) }]
-                              : [{ key: 'edit', label: '编辑配置', disabled: true }]),
-                            { type: 'divider' as const },
-                            { key: 'delete', label: <span style={{ color: '#ff4d4f' }}>删除知识库</span>, onClick: () => handleDelete(kb) },
-                          ],
-                        }} trigger={['click']}>
-                          <div style={{ color: '#8A94A6', padding: '2px 6px', borderRadius: 4, cursor: 'pointer' }}
-                            onMouseEnter={e => { e.currentTarget.style.background = '#F2F3F8'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-                          >
-                            <EllipsisOutlined style={{ fontSize: 18 }} />
-                          </div>
-                        </Dropdown>
-                      </div>
-                    </div>
-
-                    {/* Name + Type */}
-                    <div style={{ marginBottom: 8 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#1D2129', lineHeight: '20px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={kb.name}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#1D2129', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }} title={kb.name}>
                         {kb.name}
                       </div>
-                      <div style={{ fontSize: 12, color: '#7A8599', marginTop: 2 }}>{kb.typeTag}</div>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                        <Tag color={category.color}>{category.label}</Tag>
+                        <Tag color={status.color}>
+                          <Badge status={status.badge} text={status.label} />
+                        </Tag>
+                      </div>
+                      <Paragraph ellipsis={{ rows: 2 }} style={{ color: '#5F6B7A', fontSize: 12, lineHeight: '20px', margin: '10px 0 0', minHeight: 40 }}>
+                        {kb.desc}
+                      </Paragraph>
+                      {kb.category === 'professional' ? (
+                        <div style={{ background: '#FAF8FF', border: '1px solid #EFE1FF', borderRadius: 6, padding: '8px 10px', marginTop: 10 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                            <Tag color={sync.color} icon={sync.icon} style={{ margin: 0 }}>{sync.label}</Tag>
+                            <Text type="secondary" style={{ fontSize: 11 }}>{kb.ragflowSyncStatus === 'synced' ? '专业能力已开启' : '待完成'}</Text>
+                          </div>
+                          {kb.ragflowSyncStatus === 'failed' ? (
+                            <Text type="danger" style={{ fontSize: 11 }}>{kb.syncError}</Text>
+                          ) : (
+                            <Progress percent={kb.ragflowSyncStatus === 'synced' ? 100 : 40} size="small" showInfo={false} strokeColor="#722ed1" />
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{ marginTop: 12, fontSize: 12, color: '#7A8599' }}>
+                          {kb.fileCount !== null ? <><DatabaseOutlined /> {kb.fileCount} 个文件</> : <><ApiOutlined /> {kb.externalKbId}</>}
+                        </div>
+                      )}
+                      <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, borderTop: '1px solid #F0F2F5' }}>
+                        <Text type="secondary" style={{ fontSize: 11 }}>{kb.date} / {kb.owner}</Text>
+                        <Switch size="small" checked={kb.active} onClick={(_, event) => event.stopPropagation()} onChange={(checked) => setKbList((prev) => prev.map((item) => item.id === kb.id ? { ...item, active: checked } : item))} />
+                      </div>
                     </div>
-
-                    {/* Description */}
-                    <div style={{
-                      fontSize: 12, color: '#5F6B7A', lineHeight: '20px',
-                      display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden', flex: 1, marginBottom: 12,
-                    }}>
-                      {kb.desc}
-                    </div>
-
-                    {/* File count + Status */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                      {kb.fileCount !== null ? (
-                        <span style={{ fontSize: 12, color: '#5F6B7A', display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <DatabaseOutlined style={{ color: '#B0B8C8' }} />{kb.fileCount} 个文件
-                        </span>
-                      ) : <span />}
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: st.color }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: st.color, display: 'inline-block' }} />
-                        {st.label}
-                      </span>
-                    </div>
-
-                    {/* Footer */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, borderTop: '1px solid #F0F2F5' }}>
-                      <span style={{ fontSize: 11, color: '#B0B8C8' }}>{kb.date} | {kb.owner}</span>
-                      <span onClick={e => e.stopPropagation()}>
-                        <Switch size="small" checked={kb.active} onChange={checked => handleToggleActive(kb.id, checked)} />
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Pagination */}
-            {filteredList.length > pageSize && (
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
-                <Pagination
-                  current={currentPage}
-                  total={filteredList.length}
-                  pageSize={pageSize}
-                  onChange={setCurrentPage}
-                  showSizeChanger
-                  pageSizeOptions={['12', '24', '48']}
-                  showTotal={(total) => `共 ${total} 个知识库`}
-                />
+                  );
+                })}
               </div>
-            )}
-          </>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '80px 0', background: '#fff', borderRadius: 8 }}>
-            <div style={{ fontSize: 48, color: '#D0D5DD', marginBottom: 16 }}><SearchOutlined /></div>
-            <div style={{ fontSize: 14, color: '#7A8599' }}>未找到匹配的知识库</div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  // ════════════════════ Render: Detail View ════════════════════
-
-  const renderEasyProDetail = () => {
-    if (!activeKB) return null;
-    const isEasy = activeKB.category === 'easy';
-
-    const easyFileColumns: ColumnsType<KBFile> = [
-      { title: '序号', dataIndex: 'id', key: 'id', width: 70, render: (_: any, __: any, idx: number) => idx + 1 },
-      {
-        title: '文件名称', dataIndex: 'name', key: 'name',
-        render: (text: string) => <a style={{ color: '#1677ff' }}>{text}</a>,
-      },
-      { title: '格式', dataIndex: 'format', key: 'format', width: 80 },
-      { title: '文件体积', dataIndex: 'size', key: 'size', width: 100, sorter: (a: any, b: any) => a.size.localeCompare(b.size) },
-      {
-        title: '文件状态', dataIndex: 'status', key: 'status', width: 120,
-        render: (s: string) => (
-          <span style={{ color: s === '已向量化' ? '#52c41a' : s === '向量化中' ? '#faad14' : '#ff4d4f', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: s === '已向量化' ? '#52c41a' : s === '向量化中' ? '#faad14' : '#ff4d4f', display: 'inline-block' }} />{s}
-          </span>
-        ),
-      },
-      { title: '所在目录', dataIndex: 'dir', key: 'dir', width: 160 },
-      { title: '操作', key: 'action', width: 80, render: () => <a style={{ color: '#1677ff' }}>删除</a> },
-    ];
-
-    const proFileColumns: ColumnsType<KBFile> = [
-      { title: '名称', dataIndex: 'name', key: 'name', render: (t: string) => <a style={{ color: '#1677ff' }}>{t}</a> },
-      { title: '上传日期', dataIndex: 'uploadDate', key: 'uploadDate', width: 120, sorter: (a: any, b: any) => a.uploadDate.localeCompare(b.uploadDate) },
-      { title: '文件体积', dataIndex: 'size', key: 'size', width: 100 },
-      {
-        title: '文件状态', dataIndex: 'status', key: 'status', width: 100,
-        render: (s: string) => <Tag color={s === '已向量化' ? 'success' : s === '向量化中' ? 'processing' : 'error'}>{s}</Tag>,
-      },
-      {
-        title: '操作', key: 'action', width: 120,
-        render: () => <Space size={4}><Switch size="small" defaultChecked /><a style={{ color: '#ff4d4f' }}>删除</a></Space>,
-      },
-    ];
-
-    return (
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#F5F7FA', overflow: 'auto' }}>
-        {/* Detail Header */}
-        <div style={{ background: '#fff', padding: '12px 28px', display: 'flex', alignItems: 'center', gap: 16, borderBottom: '1px solid #F0F2F5' }}>
-          <ArrowLeftOutlined style={{ fontSize: 16, cursor: 'pointer', color: '#5F6B7A' }} onClick={closeDetail} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 8, background: categoryConfig[activeKB.category].bg,
-              color: categoryConfig[activeKB.category].color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
-            }}>
-              {categoryConfig[activeKB.category].icon}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
+                <Pagination current={page} pageSize={pageSize} total={filteredList.length} showTotal={(total) => `共 ${total} 个知识库`} onChange={setPage} />
+              </div>
+            </>
+          ) : (
+            <div style={{ ...cardStyle, padding: 60 }}>
+              <Empty description="未找到匹配的知识库" />
             </div>
-            <span style={{ fontSize: 16, fontWeight: 600, color: '#1D2129' }}>{activeKB.name}</span>
-            <Tag style={{ borderRadius: 4, margin: 0 }}>{categoryConfig[activeKB.category].label}</Tag>
-          </div>
-        </div>
-
-        {/* Detail Content with Tabs */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '0 28px 28px' }}>
-          <Tabs
-            activeKey={detailTab}
-            onChange={k => setDetailTab(k as DetailTab)}
-            style={{ marginTop: 16 }}
-            items={[
-              {
-                key: 'files',
-                label: '文件',
-                children: (
-                  <div>
-                    {!isEasy && (
-                      <div style={{ background: '#e6f4ff', borderRadius: 8, padding: '10px 16px', marginBottom: 16, fontSize: 13, color: '#1677ff' }}>
-                        知识库文档在修改或上传后需要一定的时间进行向量化加载，请耐心等待。在此期间，知识库文档可能无法被检索。
-                      </div>
-                    )}
-
-                    {/* Action Bar */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                      <Space>
-                        {isEasy && <Button icon={<UploadOutlined />}>上传文件</Button>}
-                        {isEasy && <Button icon={<DownloadOutlined />}>导入文件</Button>}
-                        {!isEasy && <Button icon={<UploadOutlined />}>批量导入</Button>}
-                        <Button disabled>批量操作</Button>
-                      </Space>
-                      <Space>
-                        {isEasy && (
-                          <>
-                            <Input prefix={<SearchOutlined />} placeholder="文件名称" style={{ width: 180 }} />
-                            <Select placeholder="文件状态" style={{ width: 120 }} options={[
-                              { label: '全部', value: 'all' }, { label: '已向量化', value: 'done' }, { label: '向量化中', value: 'processing' }, { label: '失败', value: 'failed' },
-                            ]} />
-                            <Button icon={<SearchOutlined />}>搜索</Button>
-                            <Button icon={<ReloadOutlined />}>重置</Button>
-                          </>
-                        )}
-                      </Space>
-                    </div>
-
-                    <Table
-                      columns={isEasy ? easyFileColumns : proFileColumns}
-                      dataSource={mockFiles}
-                      rowKey="id"
-                      size="middle"
-                      rowSelection={isEasy ? { type: 'checkbox' } : undefined}
-                      pagination={{ pageSize: 10, showSizeChanger: true, showTotal: t => `共 ${t} 条` }}
-                      style={{ background: '#fff', borderRadius: 8 }}
-                    />
-                  </div>
-                ),
-              },
-              {
-                key: 'retrieval',
-                label: '检索测试',
-                children: (
-                  <div>
-                    <div style={{
-                      background: '#fff', borderRadius: 8, border: '1px solid #E5EAF3', padding: 24,
-                      maxWidth: 720,
-                    }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>知识库检索测试</div>
-                      <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-                        <Input.Search
-                          placeholder="输入检索内容进行测试…"
-                          enterButton={<><SendOutlined /> 检索</>}
-                          size="large"
-                          style={{ flex: 1 }}
-                          onSearch={v => message.info(`检索: ${v}`)}
-                        />
-                      </div>
-                      <div style={{
-                        textAlign: 'center', padding: '40px 0', color: '#B0B8C8',
-                        border: '1px dashed #E5EAF3', borderRadius: 8, fontSize: 13,
-                      }}>
-                        输入检索内容，测试知识库的语义检索效果
-                      </div>
-                    </div>
-                  </div>
-                ),
-              },
-              {
-                key: 'logs',
-                label: '操作记录',
-                children: (
-                  <Table
-                    columns={logColumns}
-                    dataSource={mockLogs}
-                    rowKey="time"
-                    size="middle"
-                    pagination={{ pageSize: 10 }}
-                    style={{ background: '#fff', borderRadius: 8 }}
-                  />
-                ),
-              },
-              {
-                key: 'settings',
-                label: '基础设置',
-                children: (
-                  <div style={{
-                    background: '#fff', borderRadius: 8, border: '1px solid #E5EAF3', padding: 24, maxWidth: 640,
-                  }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 20 }}>基础配置信息</div>
-                    <div style={{ display: 'grid', gap: 16 }}>
-                      <div style={{ display: 'flex' }}>
-                        <span style={{ width: 100, fontSize: 13, color: '#7A8599' }}>知识库类型</span>
-                        <span style={{ fontSize: 13, color: '#1D2129' }}>{activeKB.typeTag}</span>
-                      </div>
-                      <div style={{ display: 'flex' }}>
-                        <span style={{ width: 100, fontSize: 13, color: '#7A8599' }}>嵌入模型</span>
-                        <span style={{ fontSize: 13, color: '#1D2129' }}>{activeKB.embeddingModel || 'bge-m3'}</span>
-                      </div>
-                      <div style={{ display: 'flex' }}>
-                        <span style={{ width: 100, fontSize: 13, color: '#7A8599' }}>解析方法</span>
-                        <span style={{ fontSize: 13, color: '#1D2129' }}>{activeKB.parseMethod === 'builtin' ? `内置 (${activeKB.builtinMethod || 'general'})` : 'pipeline'}</span>
-                      </div>
-                      <div style={{ display: 'flex' }}>
-                        <span style={{ width: 100, fontSize: 13, color: '#7A8599' }}>创建日期</span>
-                        <span style={{ fontSize: 13, color: '#1D2129' }}>{activeKB.date}</span>
-                      </div>
-                      <div style={{ display: 'flex' }}>
-                        <span style={{ width: 100, fontSize: 13, color: '#7A8599' }}>创建人</span>
-                        <span style={{ fontSize: 13, color: '#1D2129' }}>{activeKB.owner}</span>
-                      </div>
-                      <div style={{ display: 'flex' }}>
-                        <span style={{ width: 100, fontSize: 13, color: '#7A8599' }}>服务状态</span>
-                        <span>{activeKB.active ? <Tag color="success">启用</Tag> : <Tag>停用</Tag>}</span>
-                      </div>
-                    </div>
-                  </div>
-                ),
-              },
-            ]}
-          />
+          )}
         </div>
       </div>
-    );
-  };
 
-  const renderExternalDetail = () => {
-    if (!activeKB) return null;
-    return (
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#F5F7FA', overflow: 'auto' }}>
-        {/* Header */}
-        <div style={{ background: '#fff', padding: '12px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #F0F2F5' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <ArrowLeftOutlined style={{ fontSize: 16, cursor: 'pointer', color: '#5F6B7A' }} onClick={closeDetail} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: 8, background: categoryConfig.external.bg,
-                color: categoryConfig.external.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
-              }}>
-                <ApiOutlined />
-              </div>
-              <span style={{ fontSize: 16, fontWeight: 600, color: '#1D2129' }}>{activeKB.name}</span>
-              <Tag style={{ borderRadius: 4, margin: 0 }}>外部</Tag>
-            </div>
-          </div>
-          <Button type="primary" onClick={() => handleEditExternal(activeKB)}>编辑配置</Button>
-        </div>
-
-        <div style={{ flex: 1, overflow: 'auto', padding: '24px 28px 40px', maxWidth: 720, margin: '0 auto', width: '100%' }}>
-          <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #E5EAF3', overflow: 'hidden' }}>
-            {/* Basic Info */}
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid #F0F2F5' }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#1D2129', marginBottom: 16 }}>基本信息</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 32px' }}>
-                <div>
-                  <div style={{ fontSize: 12, color: '#7A8599', marginBottom: 4 }}>知识库名称</div>
-                  <div style={{ fontSize: 13, color: '#1D2129' }}>{activeKB.name}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 12, color: '#7A8599', marginBottom: 4 }}>状态</div>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#52c41a' }} />可用
-                  </span>
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <div style={{ fontSize: 12, color: '#7A8599', marginBottom: 4 }}>描述</div>
-                  <div style={{ fontSize: 13, color: '#1D2129' }}>{activeKB.desc}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* API Config */}
-            <div style={{ background: '#F8F9FB', padding: '14px 24px', borderBottom: '1px solid #F0F2F5', fontWeight: 600, fontSize: 14, color: '#1D2129' }}>API 配置</div>
-            <div style={{ padding: '20px 24px', display: 'grid', gap: 16 }}>
-              <div>
-                <div style={{ fontSize: 12, color: '#7A8599', marginBottom: 6 }}>API Endpoint</div>
-                <div style={{ background: '#F8F9FB', borderRadius: 6, border: '1px solid #E5EAF3', padding: '10px 14px', fontSize: 13, fontFamily: 'monospace', color: '#3A4556', wordBreak: 'break-all' }}>
-                  {activeKB.apiEndpoint || 'https://api.dify.ai/v1/retrieval'}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: 12, color: '#7A8599', marginBottom: 6 }}>API Key</div>
-                <div style={{ background: '#F8F9FB', borderRadius: 6, border: '1px solid #E5EAF3', padding: '10px 14px', fontSize: 13, fontFamily: 'monospace', color: '#3A4556' }}>
-                  {activeKB.apiKey ? '●'.repeat(16) + (activeKB.apiKey.slice(-4) || 'xxxx') : 'sk-********************************'}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: 12, color: '#7A8599', marginBottom: 6 }}>外部知识库 ID</div>
-                <div style={{ background: '#F8F9FB', borderRadius: 6, border: '1px solid #E5EAF3', padding: '10px 14px', fontSize: 13, fontFamily: 'monospace', color: '#3A4556' }}>
-                  {activeKB.externalKbId || '8454d87c707442279dd26f1113fa7965'}
-                </div>
-              </div>
-            </div>
-
-            {/* Recall Settings */}
-            <div style={{ background: '#F8F9FB', padding: '14px 24px', borderBottom: '1px solid #F0F2F5', fontWeight: 600, fontSize: 14, color: '#1D2129' }}>召回设置</div>
-            <div style={{ padding: '20px 24px' }}>
-              <div style={{ display: 'flex', gap: 32 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, color: '#7A8599', marginBottom: 8 }}>Top K</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <InputNumber value={activeKB.topK ?? 4} disabled style={{ width: 72 }} />
-                    <Slider value={activeKB.topK ?? 4} min={1} max={10} disabled style={{ flex: 1 }} />
-                  </div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, color: '#7A8599', marginBottom: 8 }}>Score 阈值</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <InputNumber value={activeKB.score ?? 0.5} disabled step={0.01} style={{ width: 72 }} />
-                    <Slider value={activeKB.score ?? 0.5} min={0} max={1} step={0.01} disabled style={{ flex: 1 }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // ════════════════════ Main Render ════════════════════
-  return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      {viewMode === 'list' ? renderListView() : (
-        activeKB?.category === 'external' ? renderExternalDetail() : renderEasyProDetail()
+      <TypeSelectModal open={typeModalOpen} onCancel={() => setTypeModalOpen(false)} onSelect={openCreateByType} />
+      <ProfessionalCreateDrawer open={professionalDrawerOpen} onClose={() => setProfessionalDrawerOpen(false)} onSubmit={handleProfessionalSubmit} />
+      {simpleDrawerCategory && (
+        <SimpleCreateDrawer
+          open={Boolean(simpleDrawerCategory)}
+          category={simpleDrawerCategory}
+          onClose={() => setSimpleDrawerCategory(null)}
+          onSubmit={handleSimpleSubmit}
+        />
       )}
-
-      {/* Type Select Modal */}
-      <TypeSelectModal
-        open={typeSelectOpen}
-        onSelect={handleTypeSelect}
-        onCancel={() => setTypeSelectOpen(false)}
-      />
-
-      {/* Rename Modal */}
-      <RenameModal
-        open={renameOpen}
-        currentName={renameTarget?.name || ''}
-        onOk={handleRenameOk}
-        onCancel={() => { setRenameOpen(false); setRenameTarget(null); }}
-      />
-
-      {/* Easy Create Drawer */}
-      <EasyCreateDrawer
-        open={easyDrawerOpen}
-        onClose={() => setEasyDrawerOpen(false)}
-        onSubmit={handleEasySubmit}
-      />
-
-      {/* Professional Create Drawer */}
-      <ProfessionalCreateDrawer
-        open={professionalDrawerOpen}
-        onClose={() => setProfessionalDrawerOpen(false)}
-        onSubmit={handleProfessionalSubmit}
-      />
-
-      {/* External KB Drawer */}
-      <ExternalKBDrawer
-        open={externalDrawerOpen}
-        mode={externalDrawerMode}
-        initialData={externalEditTarget}
-        onClose={() => { setExternalDrawerOpen(false); setExternalEditTarget(null); }}
-        onSubmit={handleExternalSubmit}
-      />
-    </div>
+    </>
   );
 };
 

@@ -54,14 +54,6 @@ export const devSideMenuItems: MenuProps['items'] = [
   },
   {
     type: 'group',
-    label: '资源广场',
-    children: [
-      { key: '/dev/resource-square', icon: React.createElement(ShopOutlined), label: '资源广场' },
-      { key: '/dev/my-resources', icon: React.createElement(StarOutlined), label: '我的资源' },
-    ],
-  },
-  {
-    type: 'group',
     label: '组件管理',
     children: [
       { key: '/dev/models', icon: React.createElement(CodeSandboxOutlined), label: '模型' },
@@ -71,6 +63,14 @@ export const devSideMenuItems: MenuProps['items'] = [
       { key: '/dev/skills', icon: React.createElement(BuildOutlined), label: '技能' },
       { key: '/dev/datasources', icon: React.createElement(DatabaseOutlined), label: '数据连接' },
       { key: '/dev/knowledge', icon: React.createElement(FolderOutlined), label: '知识库' },
+    ],
+  },
+  {
+    type: 'group',
+    label: '资源广场',
+    children: [
+      { key: '/dev/resource-square', icon: React.createElement(ShopOutlined), label: '资源广场' },
+      { key: '/dev/my-resources', icon: React.createElement(StarOutlined), label: '我的资源' },
     ],
   },
   {
