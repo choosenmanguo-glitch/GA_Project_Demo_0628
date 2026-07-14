@@ -87,13 +87,6 @@ export const devSideMenuItems: MenuProps['items'] = [
 export const opsSideMenuItems: MenuProps['items'] = [
   {
     type: 'group',
-    label: '空间管理',
-    children: [
-      { key: '/ops/space-manage', icon: React.createElement(ControlOutlined), label: '空间管理' },
-    ],
-  },
-  {
-    type: 'group',
     label: '资源监控',
     children: [
       { key: '/ops/agent-analysis', icon: React.createElement(RobotOutlined), label: '智能体分析' },
@@ -133,6 +126,9 @@ export const moduleSideMenus: Record<string, MenuProps['items']> = {
   dev: devSideMenuItems,
   ops: opsSideMenuItems,
   manage: [
+    { type: 'group', label: '空间管理', children: [
+      { key: '/manage/space-manage', icon: React.createElement(ControlOutlined), label: '空间管理' },
+    ]},
     { type: 'group', label: '系统管理', children: [
       { key: '/manage/org', icon: React.createElement(BankOutlined), label: '组织管理' },
       { key: '/manage/users', icon: React.createElement(UserOutlined), label: '用户管理' },

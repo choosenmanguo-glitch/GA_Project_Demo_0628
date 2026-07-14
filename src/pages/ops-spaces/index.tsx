@@ -20,6 +20,7 @@ import { mockSpaces, mockMembers, type SpaceItem, type SpaceMember } from '@/moc
 import MemberSelect from '@/components/MemberSelect';
 import StepDrawer from '@/components/StepDrawer';
 import ConfirmActionModal from '@/components/ConfirmActionModal';
+import IconPicker, { type IconPickerValue } from '@/components/IconPicker';
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
@@ -44,8 +45,9 @@ export default function OpsSpacesPage() {
   const [createStep, setCreateStep] = useState(0);
   const [detailTab, setDetailTab] = useState('info');
   const [editingInfo, setEditingInfo] = useState(false);
+  const [editInfoIcon, setEditInfoIcon] = useState<IconPickerValue>({ mode: 'text' });
   const [memberAddOpen, setMemberAddOpen] = useState(false);
-  const [memberAddRole, setMemberAddRole] = useState<'管理员' | '普通用户'>('普通用户');
+  const [memberAddRole, setMemberAddRole] = useState<'普通用户'>('普通用户');
   const [spaceMembers, setSpaceMembers] = useState<SpaceMember[]>(mockMembers);
   const [presetSelections, setPresetSelections] = useState<Record<string, string[]>>({});
   const [confirmState, setConfirmState] = useState<{ action: string; space: SpaceItem } | null>(null);
@@ -54,6 +56,7 @@ export default function OpsSpacesPage() {
   const [createSpaceType, setCreateSpaceType] = useState('工作空间');
   const [createSpaceOwner, setCreateSpaceOwner] = useState<string | undefined>(undefined);
   const [createMembers, setCreateMembers] = useState<SpaceMember[]>([]);
+  const [createSpaceIcon, setCreateSpaceIcon] = useState<IconPickerValue>({ mode: 'text' });
 
   // ── 创建空间：同步负责人到成员管理 ──
   useEffect(() => {
@@ -81,6 +84,13 @@ export default function OpsSpacesPage() {
       }
     }
   }, [createStep, createSpaceOwner]);
+
+  // ── 详情抽屉打开时初始化图标 ──
+  useEffect(() => {
+    if (selectedSpace) {
+      setEditInfoIcon({ mode: 'text', text: selectedSpace.name.charAt(0) });
+    }
+  }, [selectedSpace]);
 
   // ── 确认操作执行 ──
   const handleConfirm = () => {
@@ -312,15 +322,12 @@ export default function OpsSpacesPage() {
               <TextArea rows={3} placeholder="描述该空间的用途和适用范围" style={{ borderRadius: 6 }} />
             </Form.Item>
             <Form.Item label="空间图标">
-              <div style={{
-                width: 64, height: 64, borderRadius: 14,
-                background: 'linear-gradient(135deg, #1677ff, #69b1ff)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontSize: 28, fontWeight: 700,
-                border: '2px dashed #d9d9d9', cursor: 'pointer',
-              }}>
-                +
-              </div>
+              <IconPicker
+                value={createSpaceIcon}
+                onChange={setCreateSpaceIcon}
+                size={64}
+                defaultName={createSpaceName}
+              />
             </Form.Item>
             <Form.Item label="所属警种/部门">
               <Select
@@ -474,13 +481,12 @@ export default function OpsSpacesPage() {
                         value={m.role}
                         style={{ width: 100, marginRight: 8 }}
                         onChange={(val) => {
-                          setCreateMembers(prev => prev.map(p => p.id === m.id ? { ...p, role: val as '管理员' | '普通用户' } : p));
+                          setCreateMembers(prev => prev.map(p => p.id === m.id ? { ...p, role: val as '普通用户' } : p));
                         }}
                         options={[
-                          { label: '管理员', value: '管理员' },
-                          { label: '普通用户', value: '普通用户' },
-                        ]}
-                      />
+                                        { label: '普通用户', value: '普通用户' },
+                                      ]}
+                                    />
                       <Popconfirm
                         title="确认移除"
                         description={`确定将 ${m.name} 移出？`}
@@ -632,6 +638,14 @@ export default function OpsSpacesPage() {
                         <Form.Item label="空间描述">
                           <TextArea rows={3} defaultValue={selectedSpace.description || ''} placeholder="描述该空间的用途和适用范围" style={{ borderRadius: 6 }} />
                         </Form.Item>
+                        <Form.Item label="空间图标">
+                          <IconPicker
+                            value={editInfoIcon}
+                            onChange={setEditInfoIcon}
+                            size={64}
+                            defaultName={selectedSpace.name}
+                          />
+                        </Form.Item>
                         <Form.Item label="所属部门">
                           <Select
                             defaultValue={selectedSpace.dept}
@@ -652,6 +666,16 @@ export default function OpsSpacesPage() {
                       </Form>
                     ) : (
                       <>
+                        {/* 只读模式头像 */}
+                        <div style={{ marginBottom: 16 }}>
+                          <div style={{ fontSize: 13, color: '#999', marginBottom: 6 }}>空间图标</div>
+                          <IconPicker
+                            value={editInfoIcon}
+                            size={64}
+                            defaultName={selectedSpace.name}
+                            disabled
+                          />
+                        </div>
                         {[
                           { label: '空间名称', value: selectedSpace.name },
                           { label: '空间描述', value: selectedSpace.description || '暂无描述' },
@@ -734,7 +758,6 @@ export default function OpsSpacesPage() {
                               options={[
                                 { label: '全部', value: 'all' },
                                 { label: '所有者', value: '所有者' },
-                                { label: '管理员', value: '管理员' },
                                 { label: '普通用户', value: '普通用户' },
                               ]}
                             />
@@ -774,7 +797,7 @@ export default function OpsSpacesPage() {
                                   value={m.role}
                                   style={{ width: 100, marginRight: 8 }}
                                   onChange={(val) => {
-                                    setSpaceMembers(prev => prev.map(p => p.id === m.id ? { ...p, role: val as '管理员' | '普通用户' } : p));
+                                    setSpaceMembers(prev => prev.map(p => p.id === m.id ? { ...p, role: val as '普通用户' } : p));
                                     message.success(`已将 ${m.name} 的角色变更为${val}`);
                                   }}
                                   options={[
@@ -882,7 +905,6 @@ export default function OpsSpacesPage() {
               onChange={(val) => setMemberAddRole(val)}
               style={{ width: '100%', borderRadius: 6 }}
               options={[
-                { label: '管理员', value: '管理员' },
                 { label: '普通用户', value: '普通用户' },
               ]}
             />
@@ -905,8 +927,8 @@ export default function OpsSpacesPage() {
           confirmState?.action === '冻结'
             ? ['空间不可进入、不可编辑', '已发布的智能体对外服务<b>继续运行</b>', '可随时恢复启用，数据不受影响']
             : confirmState?.action === '归档'
-              ? ['空间不可进入、不可操作', '已发布的智能体对外服务<b>停止</b>', '归档前请确认空间内无已发布的智能体', '可恢复，但不轻易操作；适用于长期不活跃或使命完成的空间']
-              : ['空间及所有数据将<b>永久移除</b>，不可恢复', '仅适用于从未启用、误创建或完全无效的空间', '删除前请确认空间内无已发布的智能体']
+              ? ['空间不可进入、不可操作', '已发布的智能体对外服务<b>停止</b>', '归档前请确认空间内无已发布的智能体和已上线资源广场的资源', '可恢复，但不轻易操作；适用于长期不活跃或使命完成的空间']
+              : ['空间及所有数据将<b>永久移除</b>，不可恢复', '仅适用于从未启用、误创建或完全无效的空间', '删除前请确认空间内无已发布的智能体和已上线资源广场的资源']
         }
         requireNameInput={confirmState?.action === '删除'}
         okText={

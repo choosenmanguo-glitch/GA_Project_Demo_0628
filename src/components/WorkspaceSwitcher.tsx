@@ -30,9 +30,7 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
     if (!search.trim()) return available;
     const kw = search.trim().toLowerCase();
     return available.filter(s =>
-      s.name.toLowerCase().includes(kw) ||
-      s.dept.toLowerCase().includes(kw) ||
-      s.creator.toLowerCase().includes(kw)
+      s.name.toLowerCase().includes(kw)
     );
   }, [spaces, search]);
 
@@ -142,7 +140,7 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
         <div style={{ marginBottom: 16, flexShrink: 0 }}>
           <Input
             prefix={<SearchOutlined style={{ color: '#B0B8C8' }} />}
-            placeholder="搜索空间名称、部门或创建人"
+            placeholder="搜索空间名称"
             value={search}
             onChange={e => setSearch(e.target.value)}
             allowClear

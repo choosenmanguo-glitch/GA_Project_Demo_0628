@@ -19,6 +19,7 @@ import {
 } from '@/mock/data';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import MemberSelect from '@/components/MemberSelect';
+import IconPicker, { type IconPickerValue } from '@/components/IconPicker';
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
@@ -27,7 +28,6 @@ const { RangePicker } = DatePicker;
 // ── 角色颜色映射 ──
 const roleColorMap: Record<string, string> = {
   '所有者': 'gold',
-  '管理员': 'blue',
   '普通用户': 'default',
 };
 
@@ -37,7 +37,6 @@ const memberFilterFields: FilterField[] = [
   { type: 'select', key: 'role', placeholder: '角色筛选', width: 120, options: [
     { label: '全部角色', value: 'all' },
     { label: '所有者', value: '所有者' },
-    { label: '管理员', value: '管理员' },
     { label: '普通用户', value: '普通用户' },
   ]},
 ];
@@ -54,6 +53,7 @@ export default function SpaceManagePage() {
   const [activeTab, setActiveTab] = useState('info');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [spaceIcon, setSpaceIcon] = useState<IconPickerValue>({ mode: 'text', text: currentSpace.name.charAt(0) });
 
   // ── 基本信息表单 ──
   const [form] = Form.useForm();
@@ -61,7 +61,7 @@ export default function SpaceManagePage() {
   // ── 成员状态 ──
   const [memberFilters, setMemberFilters] = useState<Record<string, any>>({ keyword: '', role: 'all' });
   const [addMemberOpen, setAddMemberOpen] = useState(false);
-  const [newMemberRole, setNewMemberRole] = useState<'管理员' | '普通用户'>('普通用户');
+  const [newMemberRole, setNewMemberRole] = useState<'普通用户'>('普通用户');
   const [addMemberSelected, setAddMemberSelected] = useState<string[]>([]);
 
   // ── 日志状态 ──
@@ -75,7 +75,6 @@ export default function SpaceManagePage() {
       const roleFilter = memberFilters.role;
       if (roleFilter && roleFilter !== 'all') {
         if (roleFilter === '所有者' && m.role !== '所有者') return false;
-        if (roleFilter === '管理员' && m.role !== '管理员') return false;
         if (roleFilter === '普通用户' && m.role !== '普通用户') return false;
       }
       if (memberFilters.keyword) {
@@ -122,7 +121,7 @@ export default function SpaceManagePage() {
       title: '角色', dataIndex: 'role', width: 100,
       render: (r: string) => (
         <Tag color={roleColorMap[r] || 'default'} style={{ borderRadius: 4 }}>
-          {r === '所有者' ? <><CrownOutlined style={{ marginRight: 2 }} />{r}</> : r === '管理员' ? <><SafetyOutlined style={{ marginRight: 2 }} />{r}</> : <><UserOutlined style={{ marginRight: 2 }} />{r}</>}
+          {r === '所有者' ? <><CrownOutlined style={{ marginRight: 2 }} />{r}</> : <><UserOutlined style={{ marginRight: 2 }} />{r}</>}
         </Tag>
       ),
     },
@@ -141,7 +140,6 @@ export default function SpaceManagePage() {
               onChange={(val) => message.success(`已将 ${r.name} 的角色变更为 ${val}`)}
               style={{ width: 88 }}
               options={[
-                { label: '管理员', value: '管理员' },
                 { label: '普通用户', value: '普通用户' },
               ]}
               variant="borderless"
@@ -237,15 +235,13 @@ export default function SpaceManagePage() {
             </Form.Item>
 
             <Form.Item label="空间图标">
-              <div style={{
-                width: 64, height: 64, borderRadius: 14,
-                background: 'linear-gradient(135deg, #1677ff 0%, #69b1ff 100%)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontSize: 28, fontWeight: 700, cursor: 'pointer',
-                border: '2px dashed #d9d9d9',
-              }}>
-                {currentSpace.name.charAt(0)}
-              </div>
+              <IconPicker
+                value={spaceIcon}
+                onChange={setSpaceIcon}
+                size={64}
+                defaultName={currentSpace.name}
+                disabled={!editing}
+              />
             </Form.Item>
 
             <Row gutter={16}>
@@ -388,7 +384,6 @@ export default function SpaceManagePage() {
                   onChange={setNewMemberRole}
                   style={{ width: '100%', borderRadius: 6 }}
                   options={[
-                    { label: '管理员', value: '管理员' },
                     { label: '普通用户', value: '普通用户' },
                   ]}
                 />

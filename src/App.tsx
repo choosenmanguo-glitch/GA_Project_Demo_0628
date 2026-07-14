@@ -62,8 +62,7 @@ function AppRoutes() {
         <Route path="/dev/space-manage" element={<SpaceManagePage />} />
 
         {/* ===== 运维中心 ===== */}
-        <Route path="/ops" element={<Navigate to="/ops/space-manage" replace />} />
-        <Route path="/ops/space-manage" element={<OpsSpacesPage />} />
+        <Route path="/ops" element={<Navigate to="/ops/agent-analysis" replace />} />
         <Route path="/ops/agent-analysis" element={<OpsMonitorPage />} />
         <Route path="/ops/model-analysis" element={<OpsMonitorPage />} />
         <Route path="/ops/knowledge-analysis" element={<OpsMonitorPage />} />
@@ -76,7 +75,8 @@ function AppRoutes() {
         <Route path="/ops/session-log" element={<OpsSessionsPage />} />
 
         {/* ===== 管理中心 ===== */}
-        <Route path="/manage" element={<Navigate to="/manage/org" replace />} />
+        <Route path="/manage" element={<Navigate to="/manage/space-manage" replace />} />
+        <Route path="/manage/space-manage" element={<OpsSpacesPage />} />
         <Route path="/manage/org" element={<PlaceholderPage title="组织管理" description="组织架构与部门管理" />} />
         <Route path="/manage/users" element={<PlaceholderPage title="用户管理" description="平台用户账号与权限管理" />} />
         <Route path="/manage/roles" element={<PlaceholderPage title="角色管理" description="角色定义与岗位权限配置" />} />

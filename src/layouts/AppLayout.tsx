@@ -103,8 +103,8 @@ const MasterLayout: React.FC<MasterLayoutProps> = ({ children }) => {
             flexShrink: 0,
           }}
         >
-          {/* 工作空间切换器 - 运维中心不显示 */}
-          {activeModule !== 'ops' && <WorkspaceSwitcher collapsed={collapsed} />}
+          {/* 工作空间切换器 - 仅开发中心显示 */}
+          {activeModule === 'dev' && <WorkspaceSwitcher collapsed={collapsed} />}
 
           <div className={collapsed ? 'sidebar-collapsed' : undefined} style={{ flex: 1, overflow: 'auto', overflowX: 'hidden', paddingTop: 12 }}>
             <Menu

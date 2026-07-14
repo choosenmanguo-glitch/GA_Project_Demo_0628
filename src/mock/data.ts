@@ -189,30 +189,20 @@ export interface SpaceItem {
   creator: string;
   createTime: string;
   updateTime: string;
-  /** 配额 */
-  dailyTokenUsed: number;
-  dailyTokenLimit: number;
-  monthlyTokenUsed: number;
-  monthlyTokenLimit: number;
-  storageUsed: number;
-  storageLimit: number;
-  agentQuotaUsed: number;
-  agentQuotaLimit: number;
-  memberLimit: number;
 }
 
 export const mockSpaces: SpaceItem[] = [
-  { id: '0', name: '演示用户的空间', dept: '科信大队', type: '个人空间', status: '启用', memberCount: 1, agentCount: 5, knowledgeCount: 4, promptCount: 8, toolCount: 3, modelCount: 2, connectorCount: 1, creator: '演示用户', createTime: '2025-12-01', updateTime: '2026-06-25', dailyTokenUsed: 28000, dailyTokenLimit: 50000, monthlyTokenUsed: 560000, monthlyTokenLimit: 1000000, storageUsed: 1800, storageLimit: 5000, agentQuotaUsed: 5, agentQuotaLimit: 10, memberLimit: 1 },
-  { id: '1', name: '指挥中心空间', dept: '指挥中心', type: '工作空间', status: '启用', memberCount: 32, agentCount: 5, knowledgeCount: 8, promptCount: 12, toolCount: 6, modelCount: 4, connectorCount: 3, creator: '李警官', createTime: '2026-01-15', updateTime: '2026-06-20', dailyTokenUsed: 120000, dailyTokenLimit: 200000, monthlyTokenUsed: 2400000, monthlyTokenLimit: 5000000, storageUsed: 2560, storageLimit: 10000, agentQuotaUsed: 5, agentQuotaLimit: 10, memberLimit: 50 },
-  { id: '2', name: '反诈中心空间', dept: '反诈中心', type: '工作空间', status: '启用', memberCount: 18, agentCount: 3, knowledgeCount: 5, promptCount: 8, toolCount: 4, modelCount: 3, connectorCount: 2, creator: '王大队', createTime: '2026-02-01', updateTime: '2026-06-18', dailyTokenUsed: 85000, dailyTokenLimit: 150000, monthlyTokenUsed: 1800000, monthlyTokenLimit: 3000000, storageUsed: 1820, storageLimit: 5000, agentQuotaUsed: 3, agentQuotaLimit: 5, memberLimit: 30 },
-  { id: '3', name: '交警支队空间', dept: '交警支队', type: '工作空间', status: '启用', memberCount: 24, agentCount: 4, knowledgeCount: 6, promptCount: 10, toolCount: 5, modelCount: 3, connectorCount: 2, creator: '赵警官', createTime: '2026-03-10', updateTime: '2026-06-15', dailyTokenUsed: 160000, dailyTokenLimit: 200000, monthlyTokenUsed: 3600000, monthlyTokenLimit: 4000000, storageUsed: 4200, storageLimit: 8000, agentQuotaUsed: 4, agentQuotaLimit: 8, memberLimit: 40 },
-  { id: '4', name: '刑警大队空间', dept: '刑警大队', type: '工作空间', status: '启用', memberCount: 28, agentCount: 6, knowledgeCount: 10, promptCount: 15, toolCount: 7, modelCount: 5, connectorCount: 4, creator: '陈队长', createTime: '2026-01-20', updateTime: '2026-06-22', dailyTokenUsed: 220000, dailyTokenLimit: 300000, monthlyTokenUsed: 4800000, monthlyTokenLimit: 6000000, storageUsed: 6800, storageLimit: 12000, agentQuotaUsed: 6, agentQuotaLimit: 12, memberLimit: 50 },
-  { id: '5', name: '治安支队空间', dept: '治安支队', type: '工作空间', status: '冻结', memberCount: 12, agentCount: 2, knowledgeCount: 3, promptCount: 5, toolCount: 2, modelCount: 2, connectorCount: 1, creator: '张警官', createTime: '2026-04-01', updateTime: '2026-06-10', dailyTokenUsed: 32000, dailyTokenLimit: 80000, monthlyTokenUsed: 650000, monthlyTokenLimit: 1500000, storageUsed: 1200, storageLimit: 3000, agentQuotaUsed: 2, agentQuotaLimit: 5, memberLimit: 20 },
-  { id: '6', name: '法制大队空间', dept: '法制大队', type: '工作空间', status: '启用', memberCount: 16, agentCount: 3, knowledgeCount: 12, promptCount: 20, toolCount: 3, modelCount: 3, connectorCount: 2, creator: '周科长', createTime: '2026-03-01', updateTime: '2026-06-20', dailyTokenUsed: 98000, dailyTokenLimit: 150000, monthlyTokenUsed: 2100000, monthlyTokenLimit: 3500000, storageUsed: 5200, storageLimit: 8000, agentQuotaUsed: 3, agentQuotaLimit: 6, memberLimit: 25 },
-  { id: '7', name: '社区警务空间', dept: '派出所', type: '工作空间', status: '启用', memberCount: 45, agentCount: 4, knowledgeCount: 5, promptCount: 8, toolCount: 3, modelCount: 4, connectorCount: 2, creator: '管理员', createTime: '2026-01-10', updateTime: '2026-06-21', dailyTokenUsed: 280000, dailyTokenLimit: 500000, monthlyTokenUsed: 6800000, monthlyTokenLimit: 10000000, storageUsed: 7800, storageLimit: 15000, agentQuotaUsed: 4, agentQuotaLimit: 8, memberLimit: 60 },
-  { id: '8', name: '科技信息化大队', dept: '科信大队', type: '工作空间', status: '启用', memberCount: 12, agentCount: 2, knowledgeCount: 4, promptCount: 3, toolCount: 5, modelCount: 2, connectorCount: 3, creator: '技术员', createTime: '2025-12-01', updateTime: '2026-06-24', dailyTokenUsed: 45000, dailyTokenLimit: 100000, monthlyTokenUsed: 900000, monthlyTokenLimit: 2000000, storageUsed: 3000, storageLimit: 5000, agentQuotaUsed: 2, agentQuotaLimit: 5, memberLimit: 20 },
-  { id: '9', name: '电信诈骗专项小组', dept: '刑侦大队', type: '专案空间', status: '启用', memberCount: 15, agentCount: 4, knowledgeCount: 6, promptCount: 9, toolCount: 5, modelCount: 3, connectorCount: 2, creator: '陈队长', createTime: '2026-04-15', updateTime: '2026-06-26', dailyTokenUsed: 110000, dailyTokenLimit: 200000, monthlyTokenUsed: 2500000, monthlyTokenLimit: 4000000, storageUsed: 3200, storageLimit: 6000, agentQuotaUsed: 4, agentQuotaLimit: 8, memberLimit: 20 },
-  { id: '10', name: '跨境赌博专案组', dept: '治安支队', type: '专案空间', status: '启用', memberCount: 10, agentCount: 3, knowledgeCount: 5, promptCount: 7, toolCount: 3, modelCount: 2, connectorCount: 1, creator: '张警官', createTime: '2026-05-20', updateTime: '2026-06-27', dailyTokenUsed: 72000, dailyTokenLimit: 150000, monthlyTokenUsed: 1600000, monthlyTokenLimit: 3000000, storageUsed: 1800, storageLimit: 4000, agentQuotaUsed: 3, agentQuotaLimit: 6, memberLimit: 15 },
+  { id: '0', name: '演示用户的空间', dept: '科信大队', type: '个人空间', status: '启用', memberCount: 1, agentCount: 5, knowledgeCount: 4, promptCount: 8, toolCount: 3, modelCount: 2, connectorCount: 1, creator: '演示用户', createTime: '2025-12-01', updateTime: '2026-06-25' },
+  { id: '1', name: '指挥中心空间', dept: '指挥中心', type: '工作空间', status: '启用', memberCount: 32, agentCount: 5, knowledgeCount: 8, promptCount: 12, toolCount: 6, modelCount: 4, connectorCount: 3, creator: '李警官', createTime: '2026-01-15', updateTime: '2026-06-20' },
+  { id: '2', name: '反诈中心空间', dept: '反诈中心', type: '工作空间', status: '启用', memberCount: 18, agentCount: 3, knowledgeCount: 5, promptCount: 8, toolCount: 4, modelCount: 3, connectorCount: 2, creator: '王大队', createTime: '2026-02-01', updateTime: '2026-06-18' },
+  { id: '3', name: '交警支队空间', dept: '交警支队', type: '工作空间', status: '启用', memberCount: 24, agentCount: 4, knowledgeCount: 6, promptCount: 10, toolCount: 5, modelCount: 3, connectorCount: 2, creator: '赵警官', createTime: '2026-03-10', updateTime: '2026-06-15' },
+  { id: '4', name: '刑警大队空间', dept: '刑警大队', type: '工作空间', status: '启用', memberCount: 28, agentCount: 6, knowledgeCount: 10, promptCount: 15, toolCount: 7, modelCount: 5, connectorCount: 4, creator: '陈队长', createTime: '2026-01-20', updateTime: '2026-06-22' },
+  { id: '5', name: '治安支队空间', dept: '治安支队', type: '工作空间', status: '冻结', memberCount: 12, agentCount: 2, knowledgeCount: 3, promptCount: 5, toolCount: 2, modelCount: 2, connectorCount: 1, creator: '张警官', createTime: '2026-04-01', updateTime: '2026-06-10' },
+  { id: '6', name: '法制大队空间', dept: '法制大队', type: '工作空间', status: '启用', memberCount: 16, agentCount: 3, knowledgeCount: 12, promptCount: 20, toolCount: 3, modelCount: 3, connectorCount: 2, creator: '周科长', createTime: '2026-03-01', updateTime: '2026-06-20' },
+  { id: '7', name: '社区警务空间', dept: '派出所', type: '工作空间', status: '启用', memberCount: 45, agentCount: 4, knowledgeCount: 5, promptCount: 8, toolCount: 3, modelCount: 4, connectorCount: 2, creator: '管理员', createTime: '2026-01-10', updateTime: '2026-06-21' },
+  { id: '8', name: '科技信息化大队', dept: '科信大队', type: '工作空间', status: '启用', memberCount: 12, agentCount: 2, knowledgeCount: 4, promptCount: 3, toolCount: 5, modelCount: 2, connectorCount: 3, creator: '技术员', createTime: '2025-12-01', updateTime: '2026-06-24' },
+  { id: '9', name: '电信诈骗专项小组', dept: '刑侦大队', type: '专案空间', status: '启用', memberCount: 15, agentCount: 4, knowledgeCount: 6, promptCount: 9, toolCount: 5, modelCount: 3, connectorCount: 2, creator: '陈队长', createTime: '2026-04-15', updateTime: '2026-06-26' },
+  { id: '10', name: '跨境赌博专案组', dept: '治安支队', type: '专案空间', status: '启用', memberCount: 10, agentCount: 3, knowledgeCount: 5, promptCount: 7, toolCount: 3, modelCount: 2, connectorCount: 1, creator: '张警官', createTime: '2026-05-20', updateTime: '2026-06-27' },
 ];
 
 // ==================== 空间成员 ====================
@@ -221,19 +211,19 @@ export interface SpaceMember {
   name: string;
   avatar?: string;
   dept: string;
-  role: '所有者' | '管理员' | '普通用户';
+  role: '所有者' | '普通用户';
   joinTime: string;
   lastActive: string;
 }
 
 export const mockMembers: SpaceMember[] = [
   { id: '1', name: '演示用户', dept: '科信大队', role: '所有者', joinTime: '2025-12-01', lastActive: '2026-06-25 14:30' },
-  { id: '2', name: '李警官', dept: '指挥中心', role: '管理员', joinTime: '2026-01-05', lastActive: '2026-06-25 10:15' },
-  { id: '3', name: '王大队', dept: '反诈中心', role: '管理员', joinTime: '2026-02-10', lastActive: '2026-06-24 16:45' },
+  { id: '2', name: '李警官', dept: '指挥中心', role: '普通用户', joinTime: '2026-01-05', lastActive: '2026-06-25 10:15' },
+  { id: '3', name: '王大队', dept: '反诈中心', role: '普通用户', joinTime: '2026-02-10', lastActive: '2026-06-24 16:45' },
   { id: '4', name: '赵警官', dept: '交警支队', role: '普通用户', joinTime: '2026-03-15', lastActive: '2026-06-25 09:00' },
   { id: '5', name: '陈队长', dept: '刑警大队', role: '普通用户', joinTime: '2026-01-20', lastActive: '2026-06-25 11:30' },
   { id: '6', name: '张警官', dept: '治安支队', role: '普通用户', joinTime: '2026-04-01', lastActive: '2026-06-24 08:00' },
-  { id: '7', name: '周科长', dept: '法制大队', role: '管理员', joinTime: '2026-03-01', lastActive: '2026-06-25 13:00' },
+  { id: '7', name: '周科长', dept: '法制大队', role: '普通用户', joinTime: '2026-03-01', lastActive: '2026-06-25 13:00' },
   { id: '8', name: '刘队长', dept: '巡特警支队', role: '普通用户', joinTime: '2026-05-10', lastActive: '2026-06-23 17:20' },
 ];
 
