@@ -245,7 +245,7 @@ export interface OperationLog {
 export const mockOperationLogs: OperationLog[] = [
   { id: '1', time: '2026-06-25 14:30:22', operator: '演示用户', type: '发布', target: '交通事故责任认定助手', detail: '发布了智能体 v2.1 版本', spaceName: '交警支队' },
   { id: '2', time: '2026-06-25 13:15:08', operator: '李警官', type: '修改配置', target: '110接警警情分析助手', detail: '更新了提示词模板，优化接警分类逻辑', spaceName: '指挥中心' },
-  { id: '3', time: '2026-06-25 11:45:33', operator: '周科长', type: '添加成员', target: '法制大队空间', detail: '添加成员：孙法官（管理员）', spaceName: '法制大队' },
+  { id: '3', time: '2026-06-25 11:45:33', operator: '周科长', type: '添加成员', target: '法制大队空间', detail: '添加成员：孙法官（普通用户）', spaceName: '法制大队' },
   { id: '4', time: '2026-06-24 16:20:15', operator: '王大队', type: '创建', target: '涉诈APP分析助手', detail: '创建了新的自主智能体', spaceName: '反诈中心' },
   { id: '5', time: '2026-06-24 14:10:42', operator: '陈队长', type: '删除', target: '旧版案件摘要模板', detail: '删除了废弃的提示词模板', spaceName: '刑警大队' },
   { id: '6', time: '2026-06-24 09:30:18', operator: '演示用户', type: '修改设置', target: '空间基本设置', detail: '修改了空间图标和描述', spaceName: '科信大队' },

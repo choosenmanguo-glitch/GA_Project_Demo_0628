@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Modal, Tag, Typography, Avatar, Input, Form, Select, Button, message, Popconfirm, Row, Col } from 'antd';
 import {
   SearchOutlined, TeamOutlined, RobotOutlined, CheckCircleFilled,
-  BankOutlined, PlusCircleOutlined, PlusOutlined, CrownOutlined,
+  BankOutlined, PlusCircleOutlined, PlusOutlined, CrownOutlined, UserOutlined,
   RobotOutlined as RobotIcon, FileTextOutlined, ToolOutlined, ApiOutlined, BookOutlined,
 } from '@ant-design/icons';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
@@ -449,7 +449,7 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
         </div>
 
         {/* ── 底部操作区：申请新的空间 ── */}
-        <div style={{ flexShrink: 0, paddingTop: 16, marginTop: 16, borderTop: '1px solid #f0f0f0' }}>
+        <div style={{ flexShrink: 0, paddingTop: 16, marginTop: 16, borderTop: '1px solid #f0f0f0', display: 'flex', alignItems: 'center' }}>
           <div
             onClick={() => {
               setModalOpen(false);
@@ -657,17 +657,9 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
                     </Tag>
                   ) : (
                     <>
-                      <Select
-                        size="small"
-                        value={m.role}
-                        style={{ width: 100, marginRight: 8 }}
-                        onChange={(val) => {
-                          setApplyMembers(prev => prev.map(p => p.id === m.id ? { ...p, role: val as '普通用户' } : p));
-                        }}
-                        options={[
-                          { label: '普通用户', value: '普通用户' },
-                        ]}
-                      />
+                      <Tag color="blue" style={{ borderRadius: 4, marginRight: 8 }}>
+                        <UserOutlined style={{ marginRight: 2 }} />普通用户
+                      </Tag>
                       <Popconfirm
                         title="确认移除"
                         description={`确定将 ${m.name} 移出？`}

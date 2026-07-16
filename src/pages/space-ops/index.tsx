@@ -8,6 +8,7 @@ import {
   TeamOutlined, PlusOutlined, HistoryOutlined, LockOutlined,
   EditOutlined, SearchOutlined, ExportOutlined,
   InfoCircleOutlined, UserOutlined, CrownOutlined, SafetyOutlined,
+  KeyOutlined, CopyOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import PageHeader from '@/components/PageHeader';
@@ -128,30 +129,17 @@ export default function SpaceManagePage() {
     { title: '加入时间', dataIndex: 'joinTime', width: 120, render: t => <Text type="secondary">{t}</Text> },
     { title: '最近活跃', dataIndex: 'lastActive', width: 150, render: t => <Text type="secondary">{t}</Text> },
     {
-      title: '操作', width: 160,
+      title: '操作', width: 80,
       render: (_, r) => {
         const isOwner = r.role === '所有者';
         return (
-          <Space size={0}>
-            <Select
-              size="small"
-              value={r.role}
-              disabled={isOwner}
-              onChange={(val) => message.success(`已将 ${r.name} 的角色变更为 ${val}`)}
-              style={{ width: 88 }}
-              options={[
-                { label: '普通用户', value: '普通用户' },
-              ]}
-              variant="borderless"
-            />
-            <Popconfirm
-              title={isOwner ? '所有者不可被移除' : `确定移除 ${r.name}？`}
-              disabled={isOwner}
-              onConfirm={() => message.success(`已移除 ${r.name}`)}
-            >
-              <Button type="link" size="small" danger disabled={isOwner}>移除</Button>
-            </Popconfirm>
-          </Space>
+          <Popconfirm
+            title={isOwner ? '所有者不可被移除' : `确定移除 ${r.name}？`}
+            disabled={isOwner}
+            onConfirm={() => message.success(`已移除 ${r.name}`)}
+          >
+            <Button type="link" size="small" danger disabled={isOwner}>移除</Button>
+          </Popconfirm>
         );
       },
     },
@@ -379,14 +367,14 @@ export default function SpaceManagePage() {
                 />
               </Form.Item>
               <Form.Item label="初始角色">
-                <Select
-                  value={newMemberRole}
-                  onChange={setNewMemberRole}
-                  style={{ width: '100%', borderRadius: 6 }}
-                  options={[
-                    { label: '普通用户', value: '普通用户' },
-                  ]}
+                <Input
+                  disabled
+                  value="普通用户"
+                  style={{ borderRadius: 6 }}
                 />
+                <div style={{ marginTop: 6 }}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>新增成员默认为普通用户，创建后可由空间所有者调整。</Text>
+                </div>
               </Form.Item>
             </Form>
           </Modal>
@@ -443,6 +431,93 @@ export default function SpaceManagePage() {
               </div>
             )}
           </Modal>
+        </div>
+      ),
+    },
+
+    // ═══════ Tab 4: 空间 API Key ═══════
+    {
+      key: 'api-key',
+      label: <Space><KeyOutlined />空间 API Key</Space>,
+      children: (
+        <div style={{ maxWidth: 740 }}>
+          {/* 安全提示 */}
+          <div style={{
+            padding: '16px 20px', borderRadius: 10, marginBottom: 24,
+            background: '#fffbe6', border: '1px solid #ffe58f',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <SafetyOutlined style={{ color: '#d48806', fontSize: 16 }} />
+              <span style={{ fontWeight: 600, color: '#d48806', fontSize: 14 }}>安全提示</span>
+            </div>
+            <div style={{ fontSize: 13, color: '#8c6d00', lineHeight: '22px' }}>
+              API Key 是您访问组织内已授权资源的唯一鉴权凭证。请妥善保管，切勿在前端代码或公开代码库中泄露该凭证。
+            </div>
+          </div>
+
+          {/* API Key 展示 */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10, color: '#1D2129' }}>您的 API Key：</div>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '14px 20px', borderRadius: 8,
+              background: '#f5f8ff', border: '1px solid #d6e4ff',
+            }}>
+              <span style={{
+                fontSize: 15, fontWeight: 500, color: '#1677ff',
+                fontFamily: 'monospace', letterSpacing: 1,
+              }}>
+                {'••••••••••••••••••••••••••••••••'}
+              </span>
+              <Button
+                type="link"
+                size="small"
+                icon={<CopyOutlined />}
+                onClick={() => {
+                  navigator.clipboard.writeText('sk-plaza-v3-8f7d2a1c4e6b9f3d5a7c8b2e4a6d9f1c');
+                  message.success('API Key 已复制到剪贴板');
+                }}
+              >
+                复制
+              </Button>
+            </div>
+          </div>
+
+          {/* 接口调用示例 */}
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10, color: '#1D2129' }}>接口调用示例 (cURL)：</div>
+            <div style={{
+              padding: '18px 20px', borderRadius: 8,
+              background: '#1D2129', border: '1px solid #333',
+              fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+              fontSize: 13, color: '#e6e8ec', lineHeight: '22px',
+              overflow: 'auto',
+            }}>
+              <div style={{ color: '#7a8599', marginBottom: 4 }}>
+                # 使用您的 API Key 作为 Bearer Token 查询已授权的模型、API 或知识库资源
+              </div>
+              <div>
+                <span style={{ color: '#69b1ff' }}>curl</span>
+                <span style={{ color: '#e6e8ec' }}> -X POST </span>
+                <span style={{ color: '#a0d911' }}>"https://api.org-plaza.internal/v3/gateway/call"</span>
+                <span style={{ color: '#e6e8ec' }}> \</span>
+              </div>
+              <div>
+                <span style={{ color: '#e6e8ec' }}>  -H </span>
+                <span style={{ color: '#a0d911' }}>"Authorization: Bearer sk-plaza-v3-••••••••••••••••"</span>
+                <span style={{ color: '#e6e8ec' }}> \</span>
+              </div>
+              <div>
+                <span style={{ color: '#e6e8ec' }}>  -H </span>
+                <span style={{ color: '#a0d911' }}>"Content-Type: application/json"</span>
+                <span style={{ color: '#e6e8ec' }}> \</span>
+              </div>
+              <div>
+                <span style={{ color: '#e6e8ec' }}>  -d </span>
+                <span style={{ color: '#a0d911' }}>{`'{"resourceKey": "deepseek-r1-service", "prompt": "您好！"}'`}</span>
+              </div>
+            </div>
+          </div>
         </div>
       ),
     },

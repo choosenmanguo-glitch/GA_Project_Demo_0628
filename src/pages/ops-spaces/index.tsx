@@ -954,17 +954,9 @@ export default function OpsSpacesPage() {
                     </Tag>
                   ) : (
                     <>
-                      <Select
-                        size="small"
-                        value={m.role}
-                        style={{ width: 100, marginRight: 8 }}
-                        onChange={(val) => {
-                          setCreateMembers(prev => prev.map(p => p.id === m.id ? { ...p, role: val as '普通用户' } : p));
-                        }}
-                        options={[
-                          { label: '普通用户', value: '普通用户' },
-                        ]}
-                      />
+                      <Tag color="blue" style={{ borderRadius: 4, marginRight: 8 }}>
+                        <UserOutlined style={{ marginRight: 2 }} />普通用户
+                      </Tag>
                       <Popconfirm
                         title="确认移除"
                         description={`确定将 ${m.name} 移出？`}
@@ -1270,19 +1262,9 @@ export default function OpsSpacesPage() {
                               </Tag>
                             ) : (
                               <>
-                                <Select
-                                  size="small"
-                                  value={m.role}
-                                  style={{ width: 100, marginRight: 8 }}
-                                  onChange={(val) => {
-                                    setSpaceMembers(prev => prev.map(p => p.id === m.id ? { ...p, role: val as '普通用户' } : p));
-                                    message.success(`已将 ${m.name} 的角色变更为${val}`);
-                                  }}
-                                  options={[
-                                    { label: '管理员', value: '管理员' },
-                                    { label: '普通用户', value: '普通用户' },
-                                  ]}
-                                />
+                                <Tag color="blue" style={{ borderRadius: 4, marginRight: 8 }}>
+                                  <UserOutlined style={{ marginRight: 2 }} />{m.role}
+                                </Tag>
                                 <Popconfirm
                                   title="确认移除"
                                   description={`确定将 ${m.name} 移出空间？`}
@@ -1377,14 +1359,14 @@ export default function OpsSpacesPage() {
             />
           </Form.Item>
           <Form.Item label="初始角色">
-            <Select
-              value={memberAddRole}
-              onChange={(val) => setMemberAddRole(val)}
-              style={{ width: '100%', borderRadius: 6 }}
-              options={[
-                { label: '普通用户', value: '普通用户' },
-              ]}
+            <Input
+              disabled
+              value="普通用户"
+              style={{ borderRadius: 6 }}
             />
+            <div style={{ marginTop: 6 }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>新增成员默认为普通用户。</Text>
+            </div>
           </Form.Item>
         </Form>
       </Modal>
