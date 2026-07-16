@@ -212,7 +212,7 @@ export default function SpaceManagePage() {
                 <Space size={6}>
                   <Tag color="blue">{currentSpace.type}</Tag>
                   <Text type="secondary" style={{ fontSize: 12 }}>{currentSpace.dept}</Text>
-                  <Tag color={currentSpace.status === '启用' ? 'green' : currentSpace.status === '停用' ? 'orange' : 'default'}>
+                  <Tag color={currentSpace.status === '启用' ? 'green' : currentSpace.status === '冻结' ? 'orange' : 'default'}>
                     {currentSpace.status}
                   </Tag>
                 </Space>

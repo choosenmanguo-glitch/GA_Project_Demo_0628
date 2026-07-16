@@ -169,7 +169,7 @@ export const mockAgents: AgentItem[] = [
 ];
 
 // ==================== 空间运营 / 运维 ====================
-export type SpaceStatus = '启用' | '冻结' | '归档';
+export type SpaceStatus = '启用' | '冻结' | '归档' | '待审核' | '已驳回';
 
 export interface SpaceItem {
   id: string;
@@ -189,6 +189,8 @@ export interface SpaceItem {
   creator: string;
   createTime: string;
   updateTime: string;
+  approver?: string;
+  rejectionReason?: string;
 }
 
 export const mockSpaces: SpaceItem[] = [
@@ -203,6 +205,8 @@ export const mockSpaces: SpaceItem[] = [
   { id: '8', name: '科技信息化大队', dept: '科信大队', type: '工作空间', status: '启用', memberCount: 12, agentCount: 2, knowledgeCount: 4, promptCount: 3, toolCount: 5, modelCount: 2, connectorCount: 3, creator: '技术员', createTime: '2025-12-01', updateTime: '2026-06-24' },
   { id: '9', name: '电信诈骗专项小组', dept: '刑侦大队', type: '专案空间', status: '启用', memberCount: 15, agentCount: 4, knowledgeCount: 6, promptCount: 9, toolCount: 5, modelCount: 3, connectorCount: 2, creator: '陈队长', createTime: '2026-04-15', updateTime: '2026-06-26' },
   { id: '10', name: '跨境赌博专案组', dept: '治安支队', type: '专案空间', status: '启用', memberCount: 10, agentCount: 3, knowledgeCount: 5, promptCount: 7, toolCount: 3, modelCount: 2, connectorCount: 1, creator: '张警官', createTime: '2026-05-20', updateTime: '2026-06-27' },
+  { id: '11', name: '网安支队空间', dept: '网安支队', type: '工作空间', status: '待审核', memberCount: 3, agentCount: 0, knowledgeCount: 0, promptCount: 1, toolCount: 2, modelCount: 2, connectorCount: 1, creator: '赵警官', createTime: '2026-07-15 14:30:00', updateTime: '2026-07-15 14:30:00' },
+  { id: '12', name: '禁毒专项小组', dept: '刑侦大队', type: '专案空间', status: '已驳回', memberCount: 2, agentCount: 0, knowledgeCount: 2, promptCount: 3, toolCount: 4, modelCount: 3, connectorCount: 2, creator: '钱警官', createTime: '2026-07-10 11:00:00', updateTime: '2026-07-12 09:15:00', approver: '李警官', rejectionReason: '空间名称不够明确，请注明具体业务场景后再重新申请' },
 ];
 
 // ==================== 空间成员 ====================

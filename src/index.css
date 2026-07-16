@@ -25,6 +25,22 @@ html, body, #root {
   padding-left: 24px !important;
 }
 
+/* Tabs 在 flex 容器中自适应高度 */
+.ant-tabs-content-holder {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.ant-tabs-content {
+  height: 100%;
+}
+.ant-tabs-tabpane {
+  height: 100%;
+}
+.ant-tabs-tabpane-active {
+  height: 100%;
+}
+
 /* 统计卡片悬浮效果 */
 .stat-card {
   cursor: pointer;
