@@ -4,6 +4,7 @@ import zhCN from 'antd/locale/zh_CN';
 import MasterLayout from './layouts/AppLayout';
 import { TabsProvider } from './contexts/TabsContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
+import InitPersonalSpacePage from './pages/InitPersonalSpace';
 import ModelsPage from './pages/models';
 import PromptsPage from './pages/prompts';
 import ToolsPage from './pages/tools';
@@ -27,13 +28,22 @@ import ResourceSquarePage from './pages/resource-square';
 import MyResourcesPage from './pages/my-resources';
 import KnowledgeBasePage from './pages/knowledge';
 
+/** 开发中心守卫：未初始化个人空间时重定向到 /dev/init */
+function DevGuard({ children }: { children: React.ReactNode }) {
+  const initialized = localStorage.getItem('personal_space_initialized');
+  if (!initialized) {
+    return <Navigate to="/dev/init" replace />;
+  }
+  return <>{children}</>;
+}
+
 /** 通过 MasterLayout 包装的路由 */
 function AppRoutes() {
   return (
-    <TabsProvider>
     <WorkspaceProvider>
-      <MasterLayout>
-      <Routes>
+    <TabsProvider>
+    <MasterLayout>
+    <Routes>
         {/* 默认重定向到开发中心工作台 */}
         <Route path="/" element={<Navigate to="/dev/workbench" replace />} />
         <Route path="/home" element={<Navigate to="/dev/workbench" replace />} />
@@ -43,23 +53,25 @@ function AppRoutes() {
 
         {/* ===== 开发中心 ===== */}
         <Route path="/dev" element={<Navigate to="/dev/workbench" replace />} />
-        <Route path="/dev/workbench" element={<WorkbenchPage />} />
-        <Route path="/dev/agent-build" element={<AgentBuildPage />} />
-        <Route path="/dev/agent-build/template" element={<AgentTemplateMarket />} />
-        <Route path="/dev/agent-config" element={<AgentConfigPage />} />
-        <Route path="/dev/agent-manage" element={<AgentManagePage />} />
-        <Route path="/dev/agent-eval" element={<AgentEvalPage />} />
-        <Route path="/dev/resource-square" element={<ResourceSquarePage />} />
-        <Route path="/dev/my-resources" element={<MyResourcesPage />} />
-        <Route path="/dev/models" element={<ModelsPage />} />
-        <Route path="/dev/prompts" element={<PromptsPage />} />
-        <Route path="/dev/tools" element={<ToolsPage />} />
-        <Route path="/dev/connectors" element={<ConnectorsPage />} />
-        <Route path="/dev/skills" element={<PlaceholderPage title="技能管理" description="可复用技能单元管理" />} />
-        <Route path="/dev/datasources" element={<DataSourcesPage />} />
-        <Route path="/dev/knowledge" element={<KnowledgeBasePage />} />
-        <Route path="/dev/stats" element={<SpaceStatsPage />} />
-        <Route path="/dev/space-manage" element={<SpaceManagePage />} />
+        {/* 个人空间初始化页（未初始化时 DevGuard 重定向到此，无守卫） */}
+        <Route path="/dev/init" element={<InitPersonalSpacePage />} />
+        <Route path="/dev/workbench" element={<DevGuard><WorkbenchPage /></DevGuard>} />
+        <Route path="/dev/agent-build" element={<DevGuard><AgentBuildPage /></DevGuard>} />
+        <Route path="/dev/agent-build/template" element={<DevGuard><AgentTemplateMarket /></DevGuard>} />
+        <Route path="/dev/agent-config" element={<DevGuard><AgentConfigPage /></DevGuard>} />
+        <Route path="/dev/agent-manage" element={<DevGuard><AgentManagePage /></DevGuard>} />
+        <Route path="/dev/agent-eval" element={<DevGuard><AgentEvalPage /></DevGuard>} />
+        <Route path="/dev/resource-square" element={<DevGuard><ResourceSquarePage /></DevGuard>} />
+        <Route path="/dev/my-resources" element={<DevGuard><MyResourcesPage /></DevGuard>} />
+        <Route path="/dev/models" element={<DevGuard><ModelsPage /></DevGuard>} />
+        <Route path="/dev/prompts" element={<DevGuard><PromptsPage /></DevGuard>} />
+        <Route path="/dev/tools" element={<DevGuard><ToolsPage /></DevGuard>} />
+        <Route path="/dev/connectors" element={<DevGuard><ConnectorsPage /></DevGuard>} />
+        <Route path="/dev/skills" element={<DevGuard><PlaceholderPage title="技能管理" description="可复用技能单元管理" /></DevGuard>} />
+        <Route path="/dev/datasources" element={<DevGuard><DataSourcesPage /></DevGuard>} />
+        <Route path="/dev/knowledge" element={<DevGuard><KnowledgeBasePage /></DevGuard>} />
+        <Route path="/dev/stats" element={<DevGuard><SpaceStatsPage /></DevGuard>} />
+        <Route path="/dev/space-manage" element={<DevGuard><SpaceManagePage /></DevGuard>} />
 
         {/* ===== 运维中心 ===== */}
         <Route path="/ops" element={<Navigate to="/ops/agent-analysis" replace />} />
@@ -82,8 +94,8 @@ function AppRoutes() {
         <Route path="/manage/roles" element={<PlaceholderPage title="角色管理" description="角色定义与岗位权限配置" />} />
       </Routes>
     </MasterLayout>
-    </WorkspaceProvider>
     </TabsProvider>
+    </WorkspaceProvider>
   );
 }
 

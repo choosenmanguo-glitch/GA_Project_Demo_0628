@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Modal, Tag, Typography, Avatar, Input, Form, Select, Button, message, Popconfirm, Row, Col } from 'antd';
+import { Modal, Tag, Typography, Avatar, Input, Form, Select, Button, message, Popconfirm, Row, Col, Drawer } from 'antd';
 import {
   SearchOutlined, TeamOutlined, RobotOutlined, CheckCircleFilled,
   BankOutlined, PlusCircleOutlined, PlusOutlined, CrownOutlined, UserOutlined,
   RobotOutlined as RobotIcon, FileTextOutlined, ToolOutlined, ApiOutlined, BookOutlined,
 } from '@ant-design/icons';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
-import { mockSpaces, type SpaceItem, type SpaceMember } from '@/mock/data';
+import { mockSpaces, mockApprovals, type SpaceItem, type SpaceMember, type SpaceApproval } from '@/mock/data';
 import StepDrawer from '@/components/StepDrawer';
 import IconPicker, { type IconPickerValue } from '@/components/IconPicker';
 import MemberSelect from '@/components/MemberSelect';
@@ -55,6 +55,19 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
   const [applySpaceIcon, setApplySpaceIcon] = useState<IconPickerValue>({ mode: 'text' });
   const [applyMemberAddOpen, setApplyMemberAddOpen] = useState(false);
   const [applyMemberAddRole, setApplyMemberAddRole] = useState<'普通用户'>('普通用户');
+
+  // ── 我的申请状态 ──
+  const [myAppsOpen, setMyAppsOpen] = useState(false);
+
+  // ── 当前登录用户 ──
+  const currentUserName = '演示用户';
+
+  // ── 我的申请列表 ──
+  const myApplications = useMemo(() => {
+    return mockApprovals
+      .filter(a => a.applicant === currentUserName)
+      .sort((a, b) => b.applyTime.localeCompare(a.applyTime));
+  }, []);
 
   // ── 申请：同步负责人到成员管理 ──
   useEffect(() => {
@@ -119,25 +132,26 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
 
   // ── 提交申请 ──
   const handleApplySubmit = () => {
-    const newId = String(Number(mockSpaces[mockSpaces.length - 1]?.id || '0') + 1);
-    const newSpace: SpaceItem = {
+    const newId = 'A' + String(mockApprovals.length + 1).padStart(2, '0');
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    const newApproval: SpaceApproval = {
       id: newId,
-      name: applySpaceName,
+      spaceName: applySpaceName,
+      spaceType: applySpaceType as '工作空间' | '专案空间',
       dept: applySpaceDept || memberOptions.find(m => m.value === applySpaceOwner)?.dept || '未指定',
-      type: applySpaceType as '工作空间' | '专案空间',
+      applicant: currentUserName,
+      applyTime: now,
       status: '待审核',
-      memberCount: applyMembers.length || 1,
-      agentCount: 0,
-      knowledgeCount: 0,
-      promptCount: 0,
-      toolCount: 0,
-      modelCount: 0,
-      connectorCount: 0,
-      creator: applySpaceOwner ? memberOptions.find(m => m.value === applySpaceOwner)?.name || '未知' : '未知',
-      createTime: new Date().toISOString().slice(0, 10),
-      updateTime: new Date().toISOString().slice(0, 10),
+      presetResources: {
+        models: applyPresetSelections.models || [],
+        prompts: applyPresetSelections.prompts || [],
+        tools: applyPresetSelections.tools || [],
+        connectors: applyPresetSelections.connectors || [],
+        knowledge: applyPresetSelections.knowledge || [],
+      },
+      members: applyMembers.map(m => ({ name: m.name, dept: m.dept, role: m.role })),
     };
-    mockSpaces.push(newSpace);
+    mockApprovals.push(newApproval);
     message.success('空间申请已提交，请等待管理员审核');
     setApplyDrawerOpen(false);
     resetApplyForm();
@@ -448,7 +462,7 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
           )}
         </div>
 
-        {/* ── 底部操作区：申请新的空间 ── */}
+        {/* ── 底部操作区：申请新的空间 + 我的申请 ── */}
         <div style={{ flexShrink: 0, paddingTop: 16, marginTop: 16, borderTop: '1px solid #f0f0f0', display: 'flex', alignItems: 'center' }}>
           <div
             onClick={() => {
@@ -475,6 +489,28 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
           <Text style={{ fontSize: 12, color: '#B0B8C8', marginLeft: 6 }}>
             需要加入新的工作空间？
           </Text>
+          <div style={{ flex: 1 }} />
+          <div
+            onClick={() => {
+              setModalOpen(false);
+              setSearch('');
+              setMyAppsOpen(true);
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              cursor: 'pointer',
+              color: brandColor,
+              fontSize: 13,
+              userSelect: 'none',
+              flexShrink: 0,
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.8'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
+          >
+            <span>我的申请</span>
+          </div>
         </div>
       </Modal>
 
@@ -801,6 +837,105 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
           </Form.Item>
         </Form>
       </Modal>
+
+      {/* ── 我的申请 Drawer ── */}
+      <Drawer
+        title="我的申请"
+        open={myAppsOpen}
+        onClose={() => setMyAppsOpen(false)}
+        width={480}
+        destroyOnHidden
+      >
+        {myApplications.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#B0B8C8', fontSize: 13 }}>
+            暂无申请记录，点击下方"申请新的空间"发起申请
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {myApplications.map(app => {
+              const statusConfig: Record<string, { color: string; text: string }> = {
+                '待审核': { color: 'orange', text: '待审核' },
+                '已通过': { color: 'green', text: '已通过' },
+                '已驳回': { color: 'red', text: '已驳回' },
+              };
+              const cfg = statusConfig[app.status] || { color: 'default', text: app.status };
+              // 已通过的申请，查找对应的空间以支持"进入"
+              const targetSpace = app.status === '已通过'
+                ? mockSpaces.find(s => s.name === app.spaceName && s.status === '启用')
+                : null;
+              return (
+                <div
+                  key={app.id}
+                  style={{
+                    padding: '14px 16px',
+                    borderRadius: 8,
+                    border: '1px solid #E5EAF3',
+                    background: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 6,
+                      background: brandBg,
+                      color: brandColor,
+                      fontSize: 15,
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {app.spaceName.charAt(0)}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontWeight: 600, fontSize: 14, color: '#1D2129' }}>{app.spaceName}</span>
+                      <Tag color={cfg.color} style={{ borderRadius: 4, margin: 0, fontSize: 11, lineHeight: '18px' }}>
+                        {cfg.text}
+                      </Tag>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#7A8599' }}>
+                      {app.dept} · 申请于 {app.applyTime}
+                    </div>
+                    {app.status === '已驳回' && app.rejectionReason && (
+                      <div style={{
+                        marginTop: 6,
+                        padding: '6px 10px',
+                        borderRadius: 4,
+                        background: '#fff2f0',
+                        border: '1px solid #ffccc7',
+                        fontSize: 12,
+                        color: '#cf1322',
+                      }}>
+                        驳回原因：{app.rejectionReason}
+                      </div>
+                    )}
+                  </div>
+                  {targetSpace && (
+                    <Button
+                      type="primary"
+                      size="small"
+                      style={{ flexShrink: 0 }}
+                      onClick={() => {
+                        switchSpace(targetSpace.id);
+                        setMyAppsOpen(false);
+                      }}
+                    >
+                      进入
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Drawer>
     </>
   );
 };

@@ -169,7 +169,7 @@ export const mockAgents: AgentItem[] = [
 ];
 
 // ==================== 空间运营 / 运维 ====================
-export type SpaceStatus = '启用' | '冻结' | '归档' | '待审核' | '已驳回';
+export type SpaceStatus = '启用' | '冻结' | '归档';
 
 export interface SpaceItem {
   id: string;
@@ -189,8 +189,6 @@ export interface SpaceItem {
   creator: string;
   createTime: string;
   updateTime: string;
-  approver?: string;
-  rejectionReason?: string;
 }
 
 export const mockSpaces: SpaceItem[] = [
@@ -205,8 +203,74 @@ export const mockSpaces: SpaceItem[] = [
   { id: '8', name: '科技信息化大队', dept: '科信大队', type: '工作空间', status: '启用', memberCount: 12, agentCount: 2, knowledgeCount: 4, promptCount: 3, toolCount: 5, modelCount: 2, connectorCount: 3, creator: '技术员', createTime: '2025-12-01', updateTime: '2026-06-24' },
   { id: '9', name: '电信诈骗专项小组', dept: '刑侦大队', type: '专案空间', status: '启用', memberCount: 15, agentCount: 4, knowledgeCount: 6, promptCount: 9, toolCount: 5, modelCount: 3, connectorCount: 2, creator: '陈队长', createTime: '2026-04-15', updateTime: '2026-06-26' },
   { id: '10', name: '跨境赌博专案组', dept: '治安支队', type: '专案空间', status: '启用', memberCount: 10, agentCount: 3, knowledgeCount: 5, promptCount: 7, toolCount: 3, modelCount: 2, connectorCount: 1, creator: '张警官', createTime: '2026-05-20', updateTime: '2026-06-27' },
-  { id: '11', name: '网安支队空间', dept: '网安支队', type: '工作空间', status: '待审核', memberCount: 3, agentCount: 0, knowledgeCount: 0, promptCount: 1, toolCount: 2, modelCount: 2, connectorCount: 1, creator: '赵警官', createTime: '2026-07-15 14:30:00', updateTime: '2026-07-15 14:30:00' },
-  { id: '12', name: '禁毒专项小组', dept: '刑侦大队', type: '专案空间', status: '已驳回', memberCount: 2, agentCount: 0, knowledgeCount: 2, promptCount: 3, toolCount: 4, modelCount: 3, connectorCount: 2, creator: '钱警官', createTime: '2026-07-10 11:00:00', updateTime: '2026-07-12 09:15:00', approver: '李警官', rejectionReason: '空间名称不够明确，请注明具体业务场景后再重新申请' },
+];
+
+// ==================== 空间审核记录 ====================
+export interface SpaceApproval {
+  id: string;
+  spaceName: string;
+  spaceType: '工作空间' | '专案空间';
+  dept: string;
+  applicant: string;
+  applyTime: string;
+  status: '待审核' | '已通过' | '已驳回';
+  approver?: string;
+  approvalTime?: string;
+  rejectionReason?: string;
+  presetResources?: {
+    models?: string[];
+    prompts?: string[];
+    tools?: string[];
+    connectors?: string[];
+    knowledge?: string[];
+  };
+  members?: { name: string; dept: string; role: string }[];
+}
+
+export const mockApprovals: SpaceApproval[] = [
+  {
+    id: 'A01', spaceName: '网安支队空间', spaceType: '工作空间', dept: '网安支队', applicant: '赵警官',
+    applyTime: '2026-07-15 14:30:00', status: '待审核',
+    presetResources: { models: ['DeepSeek-Chat', 'Qwen-72B-Chat'], tools: ['Python执行器', 'WebSearch'] },
+    members: [{ name: '赵警官', dept: '网安支队', role: '所有者' }, { name: '技术员', dept: '网安支队', role: '普通用户' }],
+  },
+  {
+    id: 'A06', spaceName: '情报研判中心', spaceType: '工作空间', dept: '指挥中心', applicant: '孙警官',
+    applyTime: '2026-07-16 08:00:00', status: '待审核',
+    presetResources: { models: ['DeepSeek-Chat'], prompts: ['情报分析模板'], knowledge: ['法规库', '案例库'] },
+    members: [{ name: '孙警官', dept: '指挥中心', role: '所有者' }, { name: '周科长', dept: '指挥中心', role: '普通用户' }],
+  },
+  {
+    id: 'A07', spaceName: '电子取证分析', spaceType: '专案空间', dept: '刑侦大队', applicant: '陈队长',
+    applyTime: '2026-07-16 15:00:00', status: '待审核',
+    presetResources: { tools: ['Python执行器', '取证工具', '日志分析器'], models: ['DeepSeek-Chat', 'Qwen-72B-Chat'] },
+    members: [{ name: '陈队长', dept: '刑侦大队', role: '所有者' }],
+  },
+  {
+    id: 'A02', spaceName: '禁毒专项小组', spaceType: '专案空间', dept: '刑侦大队', applicant: '钱警官',
+    applyTime: '2026-07-10 11:00:00', status: '已驳回', approver: '李警官', approvalTime: '2026-07-12 09:15:00',
+    rejectionReason: '空间名称不够明确，请注明具体业务场景后再重新申请',
+    presetResources: { prompts: ['案情分析模板', '线索整理模板'], tools: ['Python执行器', '连接器A'] },
+    members: [{ name: '钱警官', dept: '刑侦大队', role: '所有者' }],
+  },
+  {
+    id: 'A03', spaceName: '科信智能化项目', spaceType: '专案空间', dept: '科信大队', applicant: '演示用户',
+    applyTime: '2026-07-16 10:30:00', status: '待审核',
+    presetResources: { prompts: ['数据分析模板', '报告生成模板'], tools: ['Python执行器'], models: ['DeepSeek-Chat'] },
+    members: [{ name: '演示用户', dept: '科信大队', role: '所有者' }],
+  },
+  {
+    id: 'A04', spaceName: '图像识别专项', spaceType: '专案空间', dept: '科信大队', applicant: '演示用户',
+    applyTime: '2026-07-08 14:00:00', status: '已驳回', approver: '王大队', approvalTime: '2026-07-10 08:00:00',
+    rejectionReason: '专案空间需提供明确案件编号及办案单位信息',
+    presetResources: { tools: ['Python执行器', '图像处理工具'], models: ['视觉大模型V2'] },
+    members: [{ name: '演示用户', dept: '科信大队', role: '所有者' }],
+  },
+  {
+    id: 'A05', spaceName: '我的工作空间', spaceType: '工作空间', dept: '科信大队', applicant: '演示用户',
+    applyTime: '2026-07-05 09:00:00', status: '已通过', approver: '李警官', approvalTime: '2026-07-08 15:00:00',
+    members: [{ name: '演示用户', dept: '科信大队', role: '所有者' }],
+  },
 ];
 
 // ==================== 空间成员 ====================
@@ -243,16 +307,35 @@ export interface OperationLog {
 }
 
 export const mockOperationLogs: OperationLog[] = [
-  { id: '1', time: '2026-06-25 14:30:22', operator: '演示用户', type: '发布', target: '交通事故责任认定助手', detail: '发布了智能体 v2.1 版本', spaceName: '交警支队' },
-  { id: '2', time: '2026-06-25 13:15:08', operator: '李警官', type: '修改配置', target: '110接警警情分析助手', detail: '更新了提示词模板，优化接警分类逻辑', spaceName: '指挥中心' },
-  { id: '3', time: '2026-06-25 11:45:33', operator: '周科长', type: '添加成员', target: '法制大队空间', detail: '添加成员：孙法官（普通用户）', spaceName: '法制大队' },
-  { id: '4', time: '2026-06-24 16:20:15', operator: '王大队', type: '创建', target: '涉诈APP分析助手', detail: '创建了新的自主智能体', spaceName: '反诈中心' },
-  { id: '5', time: '2026-06-24 14:10:42', operator: '陈队长', type: '删除', target: '旧版案件摘要模板', detail: '删除了废弃的提示词模板', spaceName: '刑警大队' },
-  { id: '6', time: '2026-06-24 09:30:18', operator: '演示用户', type: '修改设置', target: '空间基本设置', detail: '修改了空间图标和描述', spaceName: '科信大队' },
-  { id: '7', time: '2026-06-23 17:00:55', operator: '赵警官', type: '下架', target: '图像识别工具', detail: '因维护需要暂时下架图像识别工具', spaceName: '交警支队' },
-  { id: '8', time: '2026-06-23 10:25:30', operator: '张警官', type: '接口', target: 'PersonInfoAPI', detail: '接入了新的人口信息查询接口', spaceName: '治安支队' },
-  { id: '9', time: '2026-06-22 15:40:12', operator: '管理员', type: '接入模型', target: 'DeepSeek-Chat', detail: '接入了 DeepSeek 对话模型，配置公网访问', spaceName: '派出所' },
-  { id: '10', time: '2026-06-22 08:15:45', operator: '刘队长', type: '创建', target: '巡逻路线智能规划', detail: '基于案发数据创建了巡逻路线智能体', spaceName: '巡特警支队' },
+  // 指挥中心空间 — 完整生命周期
+  { id: '1', time: '2026-07-17 09:00:00', operator: '管理员', type: '创建空间', target: '指挥中心空间', detail: '通过管理中心创建了工作空间「指挥中心空间」', spaceName: '指挥中心空间' },
+  { id: '2', time: '2026-07-17 09:05:00', operator: '管理员', type: '修改空间信息', target: '指挥中心空间', detail: '补充了空间描述和部门信息', spaceName: '指挥中心空间' },
+  { id: '3', time: '2026-07-17 09:10:00', operator: '管理员', type: '添加成员', target: '指挥中心空间', detail: '添加成员：李警官（普通用户）', spaceName: '指挥中心空间' },
+  { id: '4', time: '2026-07-17 09:15:00', operator: '管理员', type: '添加成员', target: '指挥中心空间', detail: '添加成员：王警官（普通用户）', spaceName: '指挥中心空间' },
+
+  // 科技信息化大队空间 — 日常运营
+  { id: '5', time: '2026-07-15 10:00:00', operator: '演示用户', type: '申请空间', target: '科技信息化大队', detail: '提交了工作空间「科技信息化大队」的创建申请', spaceName: '科技信息化大队' },
+  { id: '6', time: '2026-07-15 14:00:00', operator: '管理员', type: '审批通过', target: '科技信息化大队', detail: '通过了「科技信息化大队」的空间申请', spaceName: '科技信息化大队' },
+  { id: '7', time: '2026-07-16 08:30:00', operator: '演示用户', type: '修改空间信息', target: '科技信息化大队', detail: '修改了空间图标和部门信息', spaceName: '科技信息化大队' },
+  { id: '8', time: '2026-07-16 09:00:00', operator: '演示用户', type: '添加成员', target: '科技信息化大队', detail: '添加成员：赵警官（普通用户）', spaceName: '科技信息化大队' },
+  { id: '9', time: '2026-07-16 15:00:00', operator: '演示用户', type: '添加成员', target: '科技信息化大队', detail: '添加成员：陈警官（普通用户）', spaceName: '科技信息化大队' },
+
+  // 治安支队空间 — 冻结与恢复
+  { id: '10', time: '2026-07-14 16:00:00', operator: '管理员', type: '创建空间', target: '治安支队空间', detail: '通过管理中心创建了工作空间「治安支队空间」', spaceName: '治安支队空间' },
+  { id: '11', time: '2026-07-14 16:10:00', operator: '管理员', type: '添加成员', target: '治安支队空间', detail: '添加成员：张警官（普通用户）', spaceName: '治安支队空间' },
+  { id: '12', time: '2026-07-15 17:00:00', operator: '管理员', type: '冻结空间', target: '治安支队空间', detail: '因人员调整暂时冻结了「治安支队空间」的访问权限', spaceName: '治安支队空间' },
+  { id: '13', time: '2026-07-17 08:00:00', operator: '管理员', type: '恢复空间', target: '治安支队空间', detail: '解冻了「治安支队空间」的访问权限', spaceName: '治安支队空间' },
+
+  // 反诈中心空间 — 成员管理
+  { id: '14', time: '2026-07-13 11:00:00', operator: '管理员', type: '创建空间', target: '反诈中心空间', detail: '通过管理中心创建了工作空间「反诈中心空间」', spaceName: '反诈中心空间' },
+  { id: '15', time: '2026-07-14 10:20:00', operator: '王大队', type: '添加成员', target: '反诈中心空间', detail: '添加成员：孙警官（普通用户）', spaceName: '反诈中心空间' },
+  { id: '16', time: '2026-07-14 11:00:00', operator: '王大队', type: '添加成员', target: '反诈中心空间', detail: '添加成员：周警官（普通用户）', spaceName: '反诈中心空间' },
+  { id: '17', time: '2026-07-16 09:15:00', operator: '王大队', type: '移除成员', target: '反诈中心空间', detail: '因人员调动移除了成员：周警官', spaceName: '反诈中心空间' },
+
+  // 跨境赌博专案组 — 归档
+  { id: '18', time: '2026-07-10 09:00:00', operator: '管理员', type: '创建空间', target: '跨境赌博专案组', detail: '通过管理中心创建了专案空间「跨境赌博专案组」', spaceName: '跨境赌博专案组' },
+  { id: '19', time: '2026-07-10 09:30:00', operator: '管理员', type: '添加成员', target: '跨境赌博专案组', detail: '添加成员：刘警官（普通用户）', spaceName: '跨境赌博专案组' },
+  { id: '20', time: '2026-07-12 16:30:00', operator: '管理员', type: '归档空间', target: '跨境赌博专案组', detail: '案件结案后归档了「跨境赌博专案组」专案空间', spaceName: '跨境赌博专案组' },
 ];
 
 // ==================== 告警监控 ====================

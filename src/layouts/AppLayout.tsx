@@ -40,6 +40,9 @@ const MasterLayout: React.FC<MasterLayoutProps> = ({ children }) => {
     return 'dev';
   }, [location.pathname]);
 
+  // 初始化页：隐藏侧边栏和页签栏
+  const isInitPage = location.pathname === '/dev/init';
+
   // 当前模块的左侧菜单项
   const sideMenuItems = moduleSideMenus[activeModule] ?? [];
 
@@ -90,7 +93,8 @@ const MasterLayout: React.FC<MasterLayoutProps> = ({ children }) => {
 
       {/* ========== 下方区域：左侧导航 + 右侧内容 ========== */}
       <div style={{ height: 'calc(100vh - 56px)', display: 'flex', overflow: 'hidden' }}>
-        {/* 左侧导航 - 可折叠 */}
+        {/* 左侧导航 - 初始化页隐藏 */}
+        {!isInitPage && (
         <div
           style={{
             width: collapsed ? 64 : 220,
@@ -142,11 +146,12 @@ const MasterLayout: React.FC<MasterLayoutProps> = ({ children }) => {
             {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           </div>
         </div>
+        )}
 
         {/* 右侧内容区 */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#f5f7fa', overflow: 'hidden', minWidth: 0 }}>
           {/* ========== 页签栏 ========== */}
-          <TabBar />
+          {!isInitPage && <TabBar />}
 
           <div
             style={{

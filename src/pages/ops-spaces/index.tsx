@@ -17,11 +17,12 @@ import PageTabs from '@/components/PageTabs';
 import FilterBar from '@/components/FilterBar';
 import StatCards from '@/components/StatCards';
 import type { FilterField } from '@/components/FilterBar';
-import { mockSpaces, mockMembers, type SpaceItem, type SpaceMember } from '@/mock/data';
+import { mockSpaces, mockMembers, type SpaceItem, type SpaceMember, mockApprovals, type SpaceApproval, mockOperationLogs } from '@/mock/data';
 import MemberSelect from '@/components/MemberSelect';
 import StepDrawer from '@/components/StepDrawer';
 import ConfirmActionModal from '@/components/ConfirmActionModal';
 import IconPicker, { type IconPickerValue } from '@/components/IconPicker';
+import { useSpaceDetailTabs } from '@/components/SpaceDetailTabs';
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
@@ -41,11 +42,57 @@ const spaceFilterFields: FilterField[] = [
 
 // ── Tab 2/3 筛选字段（无状态筛选） ──
 const approvalFilterFields: FilterField[] = [
-  { type: 'search', key: 'keyword', placeholder: '搜索空间名称', width: 220 },
+  { type: 'search', key: 'keyword', placeholder: '搜索空间名称/申请人/部门', width: 220 },
   { type: 'select', key: 'spaceType', placeholder: '空间类型', width: 120, options: [
     { label: '工作空间', value: '工作空间' }, { label: '专案空间', value: '专案空间' },
   ]},
 ];
+
+// ── 抽屉内 Tab 内容（独立组件保证 hook 生命周期） ──
+function SpaceDetailDrawerBody({ space, detailTab, onTabChange }: { space: SpaceItem; detailTab: string; onTabChange: (tab: string) => void }) {
+  const { infoContent, membersContent, logsContent } = useSpaceDetailTabs(space, true, false);
+
+  return (
+    <div>
+      {/* 头部信息 */}
+      <div style={{ padding: '20px 24px', background: '#fafafa', borderBottom: '1px solid #f0f0f0' }}>
+        <Row align="middle" gutter={16}>
+          <Col>
+            <div style={{
+              width: 48, height: 48, borderRadius: 12,
+              background: 'linear-gradient(135deg, #1677ff, #69b1ff)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', fontWeight: 700, fontSize: 20,
+            }}>
+              {space.name.charAt(0)}
+            </div>
+          </Col>
+          <Col flex={1}>
+            <div style={{ fontWeight: 600, fontSize: 16 }}>{space.name}</div>
+            <Space size={6}>
+              <Tag color={space.type === '个人空间' ? 'blue' : space.type === '专案空间' ? 'orange' : 'green'}>{space.type}</Tag>
+              <Text type="secondary" style={{ fontSize: 12 }}>{space.dept}</Text>
+              <Tag color={space.status === '启用' ? 'green' : space.status === '冻结' ? 'orange' : 'default'}>
+                {space.status}
+              </Tag>
+            </Space>
+          </Col>
+        </Row>
+      </div>
+
+      <Tabs
+        activeKey={detailTab}
+        onChange={onTabChange}
+        style={{ padding: '16px 24px 0' }}
+        items={[
+          { key: 'info', label: <Space><InfoCircleOutlined />基本信息</Space>, children: infoContent },
+          { key: 'members', label: <Space><TeamOutlined />成员管理</Space>, children: membersContent },
+          { key: 'logs', label: <Space><HistoryOutlined />操作日志</Space>, children: logsContent },
+        ]}
+      />
+    </div>
+  );
+}
 
 export default function OpsSpacesPage() {
   const [activeTab, setActiveTab] = useState('manage');
@@ -57,10 +104,10 @@ export default function OpsSpacesPage() {
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
   const [createStep, setCreateStep] = useState(0);
   const [detailTab, setDetailTab] = useState('info');
-  const [editingInfo, setEditingInfo] = useState(false);
-  const [editInfoIcon, setEditInfoIcon] = useState<IconPickerValue>({ mode: 'text' });
   const [memberAddOpen, setMemberAddOpen] = useState(false);
   const [memberAddRole, setMemberAddRole] = useState<'普通用户'>('普通用户');
+  const [localSpaces, setLocalSpaces] = useState<SpaceItem[]>(mockSpaces);
+  const [localApprovals, setLocalApprovals] = useState<SpaceApproval[]>(mockApprovals);
   const [spaceMembers, setSpaceMembers] = useState<SpaceMember[]>(mockMembers);
   const [presetSelections, setPresetSelections] = useState<Record<string, string[]>>({});
   const [confirmState, setConfirmState] = useState<{ action: string; space: SpaceItem } | null>(null);
@@ -75,7 +122,7 @@ export default function OpsSpacesPage() {
   const [pendingFilters, setPendingFilters] = useState<Record<string, any>>({ keyword: '', spaceType: undefined });
 
   // ── 审批详情抽屉 ──
-  const [pendingDetailSpace, setPendingDetailSpace] = useState<SpaceItem | null>(null);
+  const [pendingDetailSpace, setPendingDetailSpace] = useState<SpaceApproval | null>(null);
   const [pendingDetailOpen, setPendingDetailOpen] = useState(false);
 
   // ── 驳回原因 ──
@@ -114,24 +161,18 @@ export default function OpsSpacesPage() {
     }
   }, [createStep, createSpaceOwner]);
 
-  // ── 详情抽屉打开时初始化图标 ──
-  useEffect(() => {
-    if (selectedSpace) {
-      setEditInfoIcon({ mode: 'text', text: selectedSpace.name.charAt(0) });
-    }
-  }, [selectedSpace]);
-
   // ── 确认操作执行（冻结/归档/删除） ──
   const handleConfirm = () => {
     if (!confirmState) return;
     const { action, space } = confirmState;
     if (action === '冻结') {
-      space.status = '冻结';
+      setLocalSpaces(prev => prev.map(s => s.id === space.id ? { ...s, status: '冻结' as const } : s));
       message.success(`空间「${space.name}」已冻结`);
     } else if (action === '归档') {
-      space.status = '归档';
+      setLocalSpaces(prev => prev.map(s => s.id === space.id ? { ...s, status: '归档' as const } : s));
       message.success(`空间「${space.name}」已归档`);
     } else if (action === '删除') {
+      setLocalSpaces(prev => prev.filter(s => s.id !== space.id));
       message.success(`空间「${space.name}」已删除`);
     }
     setConfirmState(null);
@@ -139,22 +180,50 @@ export default function OpsSpacesPage() {
   };
 
   // ── 审批通过 ──
-  const handleApprove = (space: SpaceItem) => {
-    space.status = '启用';
+  const handleApprove = (approval: SpaceApproval) => {
+    // Update approval record
     const now = new Date();
-    space.updateTime = `${now.toISOString().slice(0, 10)} ${now.toTimeString().slice(0, 8)}`;
-    message.success(`空间申请已通过，「${space.name}」已启用`);
+    const nowStr = `${now.toISOString().slice(0, 10)} ${now.toTimeString().slice(0, 8)}`;
+    setLocalApprovals(prev => prev.map(a =>
+      a.id === approval.id
+        ? { ...a, status: '已通过' as const, approver: '演示用户', approvalTime: nowStr }
+        : a
+    ));
+    // Add new space to localSpaces
+    const newSpace: SpaceItem = {
+      id: `space-${Date.now()}`,
+      name: approval.spaceName,
+      dept: approval.dept,
+      type: approval.spaceType,
+      status: '启用',
+      memberCount: approval.members?.length ?? 0,
+      agentCount: 0,
+      knowledgeCount: approval.presetResources?.knowledge?.length ?? 0,
+      promptCount: approval.presetResources?.prompts?.length ?? 0,
+      toolCount: approval.presetResources?.tools?.length ?? 0,
+      modelCount: approval.presetResources?.models?.length ?? 0,
+      connectorCount: approval.presetResources?.connectors?.length ?? 0,
+      creator: approval.applicant,
+      createTime: nowStr,
+      updateTime: nowStr,
+    };
+    setLocalSpaces(prev => [...prev, newSpace]);
+    message.success(`空间申请已通过，「${approval.spaceName}」已启用`);
     setPendingDetailOpen(false);
     setPendingDetailSpace(null);
     triggerRefresh();
   };
 
   // ── 审批驳回 ──
-  const handleReject = (space: SpaceItem) => {
-    space.status = '已驳回';
+  const handleReject = (approval: SpaceApproval) => {
     const now = new Date();
-    space.updateTime = `${now.toISOString().slice(0, 10)} ${now.toTimeString().slice(0, 8)}`;
-    message.success(`已驳回空间申请「${space.name}」${rejectionReason ? `，原因：${rejectionReason}` : ''}`);
+    const nowStr = `${now.toISOString().slice(0, 10)} ${now.toTimeString().slice(0, 8)}`;
+    setLocalApprovals(prev => prev.map(a =>
+      a.id === approval.id
+        ? { ...a, status: '已驳回' as const, approver: '演示用户', approvalTime: nowStr, rejectionReason: rejectionReason || undefined }
+        : a
+    ));
+    message.success(`已驳回空间申请「${approval.spaceName}」${rejectionReason ? `，原因：${rejectionReason}` : ''}`);
     setRejectionReasonOpen(false);
     setRejectionReason('');
     setPendingDetailOpen(false);
@@ -179,8 +248,8 @@ export default function OpsSpacesPage() {
 
   // ── Tab 1 数据 ──
   const tab1Spaces = useMemo(() => {
-    return mockSpaces.filter(s => s.status !== '待审核' && s.status !== '已驳回');
-  }, [refreshKey]);
+    return localSpaces;
+  }, [localSpaces, refreshKey]);
 
   const filteredSpaces = useMemo(() => {
     return tab1Spaces.filter((s) => {
@@ -193,21 +262,27 @@ export default function OpsSpacesPage() {
 
   // ── Tab 2 数据 ──
   const pendingSpaces = useMemo(() => {
-    return mockSpaces.filter(s => s.status === '待审核').filter(s => {
-      if (pendingFilters.keyword && !s.name.includes(pendingFilters.keyword)) return false;
-      if (pendingFilters.spaceType && s.type !== pendingFilters.spaceType) return false;
+    return localApprovals.filter(a => a.status === '待审核').filter(a => {
+      if (pendingFilters.keyword) {
+        const kw = pendingFilters.keyword;
+        if (!a.spaceName.includes(kw) && !a.applicant.includes(kw) && !a.dept.includes(kw)) return false;
+      }
+      if (pendingFilters.spaceType && a.spaceType !== pendingFilters.spaceType) return false;
       return true;
     });
-  }, [refreshKey, pendingFilters]);
+  }, [localApprovals, pendingFilters]);
 
   // ── Tab 3 数据 ──
   const rejectedSpaces = useMemo(() => {
-    return mockSpaces.filter(s => s.status === '已驳回').filter(s => {
-      if (rejectedFilters.keyword && !s.name.includes(rejectedFilters.keyword)) return false;
-      if (rejectedFilters.spaceType && s.type !== rejectedFilters.spaceType) return false;
+    return localApprovals.filter(a => a.status !== '待审核').filter(a => {
+      if (rejectedFilters.keyword) {
+        const kw = rejectedFilters.keyword;
+        if (!a.spaceName.includes(kw) && !a.applicant.includes(kw) && !a.dept.includes(kw)) return false;
+      }
+      if (rejectedFilters.spaceType && a.spaceType !== rejectedFilters.spaceType) return false;
       return true;
     });
-  }, [refreshKey, rejectedFilters]);
+  }, [localApprovals, rejectedFilters]);
 
   const [activeStatIndex, setActiveStatIndex] = useState<number | undefined>(undefined);
 
@@ -264,9 +339,9 @@ export default function OpsSpacesPage() {
       render: (_, r) => {
         const menuItems: MenuProps['items'] = [
           ...(r.status === '归档'
-            ? [{ key: 'restore', label: '恢复', icon: <CheckCircleOutlined />, onClick: () => { r.status = '启用'; message.success(`空间「${r.name}」已恢复`); triggerRefresh(); } }]
+            ? [{ key: 'restore', label: '恢复', icon: <CheckCircleOutlined />, onClick: () => { setLocalSpaces(prev => prev.map(s => s.id === r.id ? { ...s, status: '启用' as const } : s)); message.success(`空间「${r.name}」已恢复`); triggerRefresh(); } }]
             : r.status === '冻结'
-              ? [{ key: 'enable', label: '启用', icon: <CheckCircleOutlined />, onClick: () => { r.status = '启用'; message.success(`空间「${r.name}」已启用`); triggerRefresh(); } }]
+              ? [{ key: 'enable', label: '启用', icon: <CheckCircleOutlined />, onClick: () => { setLocalSpaces(prev => prev.map(s => s.id === r.id ? { ...s, status: '启用' as const } : s)); message.success(`空间「${r.name}」已启用`); triggerRefresh(); } }]
               : [{ key: 'freeze', label: '冻结', icon: <StopOutlined />, onClick: () => setConfirmState({ action: '冻结', space: r }) }]
           ),
           ...(r.status !== '归档' ? [{ key: 'archive', label: '归档', icon: <SettingOutlined />, onClick: () => setConfirmState({ action: '归档', space: r }) }] : []),
@@ -275,7 +350,7 @@ export default function OpsSpacesPage() {
         ];
         return (
           <Space size={0} wrap>
-            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setSelectedSpace(r); setEditingInfo(true); setDetailTab('info'); setDetailDrawerOpen(true); }}>编辑</Button>
+            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setSelectedSpace(r); setDetailTab('info'); setDetailDrawerOpen(true); }}>编辑</Button>
             <Button type="link" size="small" icon={<TeamOutlined />} onClick={() => { setSelectedSpace(r); setDetailTab('members'); setDetailDrawerOpen(true); }}>成员</Button>
             <Dropdown menu={{ items: menuItems }} trigger={['click']}>
               <Button type="link" size="small" icon={<EllipsisOutlined />} />
@@ -287,10 +362,16 @@ export default function OpsSpacesPage() {
   ], []);
 
   // ── Tab 2 待审批表格列 ──
-  const pendingColumns: ColumnsType<SpaceItem> = useMemo(() => [
+  const getResourceTotal = (a: SpaceApproval) => {
+    if (!a?.presetResources) return 0;
+    const r = a.presetResources;
+    return (r.models?.length ?? 0) + (r.prompts?.length ?? 0) + (r.tools?.length ?? 0) + (r.connectors?.length ?? 0) + (r.knowledge?.length ?? 0);
+  };
+
+  const pendingColumns: ColumnsType<SpaceApproval> = useMemo(() => [
     {
-      title: '空间名称', dataIndex: 'name', width: 200,
-      render: (n, r) => (
+      title: '空间名称', dataIndex: 'spaceName', width: 200,
+      render: (n: string, r) => (
         <Space>
           <div style={{
             width: 32, height: 32, borderRadius: 8,
@@ -308,55 +389,43 @@ export default function OpsSpacesPage() {
       ),
     },
     {
-      title: '空间类型', dataIndex: 'type', width: 100,
+      title: '空间类型', dataIndex: 'spaceType', width: 100,
       render: (t: string) => {
         const typeColorMap: Record<string, string> = { '工作空间': 'green', '专案空间': 'orange' };
         return <Tag color={typeColorMap[t] || 'default'} style={{ borderRadius: 4 }}>{t}</Tag>;
       },
     },
     {
-      title: '申请人', dataIndex: 'creator', width: 90,
+      title: '申请人', dataIndex: 'applicant', width: 90,
     },
     {
       title: '所属部门', dataIndex: 'dept', width: 110,
     },
     {
-      title: '成员数', dataIndex: 'memberCount', width: 70,
+      title: '预置资源', dataIndex: 'presetResources', width: 220,
+      render: (_, r) => {
+        const pr = r.presetResources;
+        return (
+          <Space size={6} wrap style={{ fontSize: 12 }}>
+            <span><RobotOutlined style={{ color: '#1677ff', marginRight: 2 }} />{pr?.models?.length ?? 0}</span>
+            <span><FileTextOutlined style={{ color: '#722ed1', marginRight: 2 }} />{pr?.prompts?.length ?? 0}</span>
+            <span><ToolOutlined style={{ color: '#fa8c16', marginRight: 2 }} />{pr?.tools?.length ?? 0}</span>
+            <span><ApiOutlined style={{ color: '#52c41a', marginRight: 2 }} />{pr?.connectors?.length ?? 0}</span>
+            <span><BookOutlined style={{ color: '#eb2f96', marginRight: 2 }} />{pr?.knowledge?.length ?? 0}</span>
+          </Space>
+        );
+      },
     },
     {
-      title: '预置资源', dataIndex: 'modelCount', width: 220,
-      render: (_, r) => (
-        <Space size={6} wrap style={{ fontSize: 12 }}>
-          <span><RobotOutlined style={{ color: '#1677ff', marginRight: 2 }} />{r.modelCount}</span>
-          <span><FileTextOutlined style={{ color: '#722ed1', marginRight: 2 }} />{r.promptCount}</span>
-          <span><ToolOutlined style={{ color: '#fa8c16', marginRight: 2 }} />{r.toolCount}</span>
-          <span><ApiOutlined style={{ color: '#52c41a', marginRight: 2 }} />{r.connectorCount}</span>
-          <span><BookOutlined style={{ color: '#eb2f96', marginRight: 2 }} />{r.knowledgeCount}</span>
-        </Space>
-      ),
-    },
-    {
-      title: '申请时间', dataIndex: 'createTime', width: 170,
-    },
-    {
-      title: '操作', width: 100,
-      render: (_, r) => (
-        <Button
-          type="link"
-          size="small"
-          onClick={() => { setPendingDetailSpace(r); setPendingDetailOpen(true); }}
-        >
-          审批
-        </Button>
-      ),
+      title: '申请时间', dataIndex: 'applyTime', width: 170,
     },
   ], []);
 
   // ── Tab 3 审批记录表格列 ──
-  const rejectedColumns: ColumnsType<SpaceItem> = useMemo(() => [
+  const rejectedColumns: ColumnsType<SpaceApproval> = useMemo(() => [
     {
-      title: '空间名称', dataIndex: 'name', width: 200,
-      render: (n, r) => (
+      title: '空间名称', dataIndex: 'spaceName', width: 200,
+      render: (n: string, r) => (
         <Space>
           <div style={{
             width: 32, height: 32, borderRadius: 8,
@@ -374,39 +443,48 @@ export default function OpsSpacesPage() {
       ),
     },
     {
-      title: '空间类型', dataIndex: 'type', width: 100,
+      title: '空间类型', dataIndex: 'spaceType', width: 100,
       render: (t: string) => {
         const typeColorMap: Record<string, string> = { '工作空间': 'green', '专案空间': 'orange' };
         return <Tag color={typeColorMap[t] || 'default'} style={{ borderRadius: 4 }}>{t}</Tag>;
       },
     },
     {
-      title: '申请人', dataIndex: 'creator', width: 90,
+      title: '申请人', dataIndex: 'applicant', width: 90,
     },
     {
       title: '所属部门', dataIndex: 'dept', width: 110,
     },
     {
-      title: '成员数', dataIndex: 'memberCount', width: 70,
-    },
-    {
-      title: '预置资源', dataIndex: 'modelCount', width: 220,
-      render: (_, r) => (
-        <Space size={6} wrap style={{ fontSize: 12 }}>
-          <span><RobotOutlined style={{ color: '#1677ff', marginRight: 2 }} />{r.modelCount}</span>
-          <span><FileTextOutlined style={{ color: '#722ed1', marginRight: 2 }} />{r.promptCount}</span>
-          <span><ToolOutlined style={{ color: '#fa8c16', marginRight: 2 }} />{r.toolCount}</span>
-          <span><ApiOutlined style={{ color: '#52c41a', marginRight: 2 }} />{r.connectorCount}</span>
-          <span><BookOutlined style={{ color: '#eb2f96', marginRight: 2 }} />{r.knowledgeCount}</span>
-        </Space>
-      ),
+      title: '预置资源', dataIndex: 'presetResources', width: 220,
+      render: (_, r) => {
+        const pr = r.presetResources;
+        return (
+          <Space size={6} wrap style={{ fontSize: 12 }}>
+            <span><RobotOutlined style={{ color: '#1677ff', marginRight: 2 }} />{pr?.models?.length ?? 0}</span>
+            <span><FileTextOutlined style={{ color: '#722ed1', marginRight: 2 }} />{pr?.prompts?.length ?? 0}</span>
+            <span><ToolOutlined style={{ color: '#fa8c16', marginRight: 2 }} />{pr?.tools?.length ?? 0}</span>
+            <span><ApiOutlined style={{ color: '#52c41a', marginRight: 2 }} />{pr?.connectors?.length ?? 0}</span>
+            <span><BookOutlined style={{ color: '#eb2f96', marginRight: 2 }} />{pr?.knowledge?.length ?? 0}</span>
+          </Space>
+        );
+      },
     },
     {
       title: '审批人', dataIndex: 'approver', width: 90,
       render: (v) => v || '-',
     },
     {
-      title: '审批时间', dataIndex: 'updateTime', width: 170,
+      title: '审批时间', dataIndex: 'approvalTime', width: 170,
+      render: (v) => v || '-',
+    },
+    {
+      title: '审批结果', dataIndex: 'status', width: 90,
+      render: (s: string) => {
+        if (s === '已通过') return <Tag color="green">已通过</Tag>;
+        if (s === '已驳回') return <Tag color="red">已驳回</Tag>;
+        return <Tag>{s}</Tag>;
+      },
     },
     {
       title: '驳回原因', dataIndex: 'rejectionReason', width: 180,
@@ -424,11 +502,11 @@ export default function OpsSpacesPage() {
   ];
 
   // ── 待审批角标数 ──
-  const pendingCount = useMemo(() => mockSpaces.filter(s => s.status === '待审核').length, [refreshKey]);
+  const pendingCount = useMemo(() => localApprovals.filter(a => a.status === '待审核').length, [localApprovals]);
 
   // ── 打开审批详情并重置驳回原因 ──
-  const openPendingDetail = (space: SpaceItem) => {
-    setPendingDetailSpace(space);
+  const openPendingDetail = (approval: SpaceApproval) => {
+    setPendingDetailSpace(approval);
     setRejectionReason('');
     setPendingDetailOpen(true);
   };
@@ -556,9 +634,9 @@ export default function OpsSpacesPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                   <StatCards
                     items={[
-                      { title: '已驳回', value: mockSpaces.filter(s => s.status === '已驳回').length, color: '#ff4d4f' },
-                      { title: '已通过', value: mockSpaces.filter(s => s.status === '启用' && parseInt(s.id) >= 11).length, color: '#52c41a' },
-                      { title: '驳回率', value: (() => { const r = mockSpaces.filter(s => s.status === '已驳回').length; const a = mockSpaces.filter(s => s.status === '启用' && parseInt(s.id) >= 11).length; return a + r > 0 ? Math.round((r / (a + r)) * 100) + '%' : '0%'; })(), color: '#fa8c16' },
+                      { title: '已驳回', value: localApprovals.filter(a => a.status === '已驳回').length, color: '#ff4d4f' },
+                      { title: '已通过', value: localApprovals.filter(a => a.status === '已通过').length, color: '#52c41a' },
+                      { title: '驳回率', value: (() => { const r = localApprovals.filter(a => a.status === '已驳回').length; const a = localApprovals.filter(a => a.status === '已通过').length; return a + r > 0 ? Math.round((r / (a + r)) * 100) + '%' : '0%'; })(), color: '#fa8c16' },
                     ]}
                     colSpan={8}
                   />
@@ -594,7 +672,7 @@ export default function OpsSpacesPage() {
 
       {/* ── 审批详情抽屉 ── */}
       <Drawer
-        title={pendingDetailSpace ? `审批空间申请 - ${pendingDetailSpace.name}` : '审批空间申请'}
+        title={pendingDetailSpace ? `审批空间申请 - ${pendingDetailSpace.spaceName}` : '审批空间申请'}
         open={pendingDetailOpen}
         onClose={() => { setPendingDetailOpen(false); setPendingDetailSpace(null); }}
         width={640}
@@ -633,13 +711,13 @@ export default function OpsSpacesPage() {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: '#fff', fontWeight: 700, fontSize: 20,
                   }}>
-                    {pendingDetailSpace.name.charAt(0)}
+                    {pendingDetailSpace.spaceName.charAt(0)}
                   </div>
                 </Col>
                 <Col flex={1}>
-                  <div style={{ fontWeight: 600, fontSize: 16 }}>{pendingDetailSpace.name}</div>
+                  <div style={{ fontWeight: 600, fontSize: 16 }}>{pendingDetailSpace.spaceName}</div>
                   <Space size={6}>
-                    <Tag color={pendingDetailSpace.type === '专案空间' ? 'orange' : 'green'}>{pendingDetailSpace.type}</Tag>
+                    <Tag color={pendingDetailSpace.spaceType === '专案空间' ? 'orange' : 'green'}>{pendingDetailSpace.spaceType}</Tag>
                     <Text type="secondary" style={{ fontSize: 12 }}>{pendingDetailSpace.dept}</Text>
                     <Tag color="orange">待审核</Tag>
                   </Space>
@@ -652,10 +730,11 @@ export default function OpsSpacesPage() {
               <Title level={5} style={{ margin: 0 }}>基本信息</Title>
               <div style={{ marginTop: 12 }}>
                 {[
-                  { label: '空间名称', value: pendingDetailSpace.name },
-                  { label: '空间类型', value: pendingDetailSpace.type },
+                  { label: '空间名称', value: pendingDetailSpace.spaceName },
+                  { label: '空间类型', value: pendingDetailSpace.spaceType },
                   { label: '所属部门', value: pendingDetailSpace.dept },
-                  { label: '负责人', value: pendingDetailSpace.creator },
+                  { label: '申请人', value: pendingDetailSpace.applicant },
+                  { label: '申请时间', value: pendingDetailSpace.applyTime },
                 ].map(item => (
                   <div key={item.label} style={{ display: 'flex', padding: '6px 0' }}>
                     <Text type="secondary" style={{ width: 100 }}>{item.label}</Text>
@@ -670,11 +749,11 @@ export default function OpsSpacesPage() {
               <Title level={5} style={{ margin: 0 }}>预置资源清单</Title>
               <div style={{ marginTop: 12 }}>
                 {[
-                  { label: '模型', values: ['DeepSeek-Chat', 'Qwen-72B-Chat'] },
-                  { label: '提示词', values: ['案情摘要模板'] },
-                  { label: '工具', values: ['文书智能解析', '人口信息查询'] },
-                  { label: '连接器', values: ['公安数据库连接器'] },
-                  { label: '知识库', values: [] as string[] },
+                  { label: '模型', values: pendingDetailSpace.presetResources?.models ?? [] },
+                  { label: '提示词', values: pendingDetailSpace.presetResources?.prompts ?? [] },
+                  { label: '工具', values: pendingDetailSpace.presetResources?.tools ?? [] },
+                  { label: '连接器', values: pendingDetailSpace.presetResources?.connectors ?? [] },
+                  { label: '知识库', values: pendingDetailSpace.presetResources?.knowledge ?? [] },
                 ].map(item => (
                   <div key={item.label} style={{ display: 'flex', padding: '6px 0' }}>
                     <Text type="secondary" style={{ width: 100 }}>{item.label}</Text>
@@ -695,26 +774,25 @@ export default function OpsSpacesPage() {
             <div style={{ padding: '20px', borderRadius: 10, background: '#fafafa', border: '1px solid #f0f0f0', marginBottom: 16 }}>
               <Title level={5} style={{ margin: 0 }}>成员清单</Title>
               <div style={{ marginTop: 12 }}>
-                {[
-                  { name: '赵警官', dept: '网安支队', role: '所有者', isOwner: true },
-                  { name: '孙法官', dept: '法制大队', role: '普通用户', isOwner: false },
-                  { name: '刘队长', dept: '巡特警支队', role: '普通用户', isOwner: false },
-                ].map(m => (
-                  <div key={m.name} style={{ display: 'flex', alignItems: 'center', padding: '6px 0' }}>
-                    <div style={{
-                      width: 28, height: 28, borderRadius: '50%', background: '#1677ff',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#fff', fontSize: 12, marginRight: 8, flexShrink: 0,
-                    }}>
-                      {m.name.charAt(0)}
-                    </div>
-                    <span style={{ fontWeight: 500 }}>{m.name}</span>
-                    <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>{m.dept}</Text>
-                    <Tag style={{ marginLeft: 8 }} color={m.isOwner ? 'gold' : undefined}>
-                      {m.isOwner && <CrownOutlined style={{ marginRight: 2 }} />}{m.role}
-                    </Tag>
-                  </div>
-                ))}
+                {(pendingDetailSpace.members?.length ?? 0) > 0
+                  ? pendingDetailSpace.members!.map(m => (
+                      <div key={m.name} style={{ display: 'flex', alignItems: 'center', padding: '6px 0' }}>
+                        <div style={{
+                          width: 28, height: 28, borderRadius: '50%', background: '#1677ff',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: '#fff', fontSize: 12, marginRight: 8, flexShrink: 0,
+                        }}>
+                          {m.name.charAt(0)}
+                        </div>
+                        <span style={{ fontWeight: 500 }}>{m.name}</span>
+                        <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>{m.dept}</Text>
+                        <Tag style={{ marginLeft: 8 }} color={m.role === '所有者' ? 'gold' : undefined}>
+                          {m.role === '所有者' && <CrownOutlined style={{ marginRight: 2 }} />}{m.role}
+                        </Tag>
+                      </div>
+                    ))
+                  : <Text type="secondary">未添加成员</Text>
+                }
               </div>
             </div>
 
@@ -727,7 +805,7 @@ export default function OpsSpacesPage() {
               <div style={{ fontSize: 13, color: '#8c6d00', lineHeight: '22px' }}>
                 <div>通过后，该空间将立即启用，空间创建者将自动成为空间所有者。</div>
                 <div>驳回需填写驳回原因，驳回后该空间不会出现在用户切换列表中。</div>
-                <div>请确认空间名称、类型和所属部门无误后再操作。</div>
+                <div>请确认空间基本信息、资源、成员无误后再操作。</div>
               </div>
             </div>
           </div>
@@ -1062,265 +1140,18 @@ export default function OpsSpacesPage() {
       <Drawer
         title={selectedSpace ? `空间详情 - ${selectedSpace.name}` : '空间详情'}
         open={detailDrawerOpen}
-        onClose={() => { setDetailDrawerOpen(false); setEditingInfo(false); }}
-        width={640}
+        onClose={() => { setDetailDrawerOpen(false); }}
+        width={900}
         destroyOnClose
         styles={{ body: { padding: 0 } }}
       >
         {selectedSpace && (
-          <div>
-            {/* 头部信息 */}
-            <div style={{ padding: '20px 24px', background: '#fafafa', borderBottom: '1px solid #f0f0f0' }}>
-              <Row align="middle" gutter={16}>
-                <Col>
-                  <div style={{
-                    width: 48, height: 48, borderRadius: 12,
-                    background: 'linear-gradient(135deg, #1677ff, #69b1ff)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#fff', fontWeight: 700, fontSize: 20,
-                  }}>
-                    {selectedSpace.name.charAt(0)}
-                  </div>
-                </Col>
-                <Col flex={1}>
-                  <div style={{ fontWeight: 600, fontSize: 16 }}>{selectedSpace.name}</div>
-                  <Space size={6}>
-                    <Tag color={selectedSpace.type === '个人空间' ? 'blue' : selectedSpace.type === '专案空间' ? 'orange' : 'green'}>{selectedSpace.type}</Tag>
-                    <Text type="secondary" style={{ fontSize: 12 }}>{selectedSpace.dept}</Text>
-                    <Tag color={statusColorMap[selectedSpace.status]}>{selectedSpace.status}</Tag>
-                  </Space>
-                </Col>
-              </Row>
-            </div>
-
-            <Tabs activeKey={detailTab} onChange={setDetailTab} style={{ padding: '16px 24px 0' }} items={[
-              // Tab 1: 基本信息
-              {
-                key: 'info',
-                label: <Space><InfoCircleOutlined />基本信息</Space>,
-                children: (
-                  <div>
-                    {editingInfo ? (
-                      <Form layout="vertical">
-                        <Form.Item label="空间名称">
-                          <Input defaultValue={selectedSpace.name} style={{ borderRadius: 6 }} />
-                        </Form.Item>
-                        <Form.Item label="空间描述">
-                          <TextArea rows={3} defaultValue={selectedSpace.description || ''} placeholder="描述该空间的用途和适用范围" style={{ borderRadius: 6 }} />
-                        </Form.Item>
-                        <Form.Item label="空间图标">
-                          <IconPicker
-                            value={editInfoIcon}
-                            onChange={setEditInfoIcon}
-                            size={64}
-                            defaultName={selectedSpace.name}
-                          />
-                        </Form.Item>
-                        <Form.Item label="所属部门">
-                          <Select
-                            defaultValue={selectedSpace.dept}
-                            style={{ borderRadius: 6 }}
-                            options={['指挥中心', '反诈中心', '刑警大队', '交警支队', '治安支队', '法制大队', '派出所', '科信大队', '巡特警支队']
-                              .map(d => ({ label: d, value: d }))}
-                          />
-                        </Form.Item>
-                        <Form.Item label="空间类型">
-                          <Input value={selectedSpace.type} disabled style={{ borderRadius: 6 }} />
-                        </Form.Item>
-                        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-                          <Button type="primary" onClick={() => { setEditingInfo(false); message.success('空间信息已更新'); }}>
-                            保存
-                          </Button>
-                          <Button onClick={() => setEditingInfo(false)}>取消</Button>
-                        </div>
-                      </Form>
-                    ) : (
-                      <>
-                        {/* 只读模式头像 */}
-                        <div style={{ marginBottom: 16 }}>
-                          <div style={{ fontSize: 13, color: '#999', marginBottom: 6 }}>空间图标</div>
-                          <IconPicker
-                            value={editInfoIcon}
-                            size={64}
-                            defaultName={selectedSpace.name}
-                            disabled
-                          />
-                        </div>
-                        {[
-                          { label: '空间名称', value: selectedSpace.name },
-                          { label: '空间描述', value: selectedSpace.description || '暂无描述' },
-                          { label: '所属部门', value: selectedSpace.dept },
-                          { label: '空间类型', value: selectedSpace.type },
-                          { label: '创建人', value: selectedSpace.creator },
-                          { label: '创建时间', value: selectedSpace.createTime },
-                          { label: '最近更新', value: selectedSpace.updateTime },
-                        ].map(item => (
-                          <div key={item.label} style={{ display: 'flex', padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
-                            <Text type="secondary" style={{ width: 80, flexShrink: 0 }}>{item.label}</Text>
-                            <span style={{ fontWeight: 500 }}>{item.value}</span>
-                          </div>
-                        ))}
-                        <Button type="primary" style={{ marginTop: 16, borderRadius: 6 }} icon={<EditOutlined />}
-                          onClick={() => setEditingInfo(true)}>
-                          编辑
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                ),
-              },
-
-              // Tab 2: 成员管理
-              {
-                key: 'members',
-                label: <Space><TeamOutlined />成员管理</Space>,
-                children: (
-                  <div>
-                    {selectedSpace.type === '个人空间' ? (
-                      /* 个人空间：仅展示创建人，不可操作 */
-                      <div>
-                        <div style={{
-                          textAlign: 'center', padding: '32px 24px',
-                          background: '#fafafa', borderRadius: 12, border: '1px solid #f0f0f0',
-                          marginBottom: 16,
-                        }}>
-                          <div style={{
-                            width: 56, height: 56, borderRadius: '50%', margin: '0 auto 12px',
-                            background: 'linear-gradient(135deg, #1677ff 0%, #69b1ff 100%)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: '#fff', fontSize: 24, fontWeight: 700,
-                          }}>
-                            {selectedSpace.creator.charAt(0)}
-                          </div>
-                          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{selectedSpace.creator}</div>
-                          <Text type="secondary" style={{ fontSize: 12 }}>
-                            个人空间仅创建人可访问，不支持添加其他成员
-                          </Text>
-                        </div>
-                        <div style={{
-                          display: 'flex', alignItems: 'center', padding: '10px 0',
-                          borderBottom: '1px solid #f5f5f5',
-                        }}>
-                          <div style={{
-                            width: 32, height: 32, borderRadius: '50%', background: '#1677ff',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: '#fff', fontSize: 13, marginRight: 10, flexShrink: 0,
-                          }}>
-                            {selectedSpace.creator.charAt(0)}
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 500 }}>{selectedSpace.creator}</div>
-                            <Text type="secondary" style={{ fontSize: 12 }}>{selectedSpace.dept} · 创建于 {selectedSpace.createTime}</Text>
-                          </div>
-                          <Tag color="gold" style={{ borderRadius: 4 }}>
-                            <CrownOutlined style={{ marginRight: 2 }} />所有者
-                          </Tag>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                          <Space>
-                            <Select
-                              size="small"
-                              defaultValue="all"
-                              style={{ width: 110 }}
-                              options={[
-                                { label: '全部', value: 'all' },
-                                { label: '所有者', value: '所有者' },
-                                { label: '普通用户', value: '普通用户' },
-                              ]}
-                            />
-                            <Input
-                              size="small"
-                              placeholder="搜索成员"
-                              prefix={<SearchOutlined />}
-                              style={{ width: 180 }}
-                            />
-                          </Space>
-                          <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => setMemberAddOpen(true)}>添加成员</Button>
-                        </div>
-                        {spaceMembers.map((m) => (
-                          <div key={m.id} style={{
-                            display: 'flex', alignItems: 'center', padding: '10px 0',
-                            borderBottom: '1px solid #f5f5f5',
-                          }}>
-                            <div style={{
-                              width: 32, height: 32, borderRadius: '50%', background: '#1677ff',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              color: '#fff', fontSize: 13, marginRight: 10, flexShrink: 0,
-                            }}>
-                              {m.name.charAt(0)}
-                            </div>
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontWeight: 500 }}>{m.name}</div>
-                              <Text type="secondary" style={{ fontSize: 12 }}>{m.dept} · 加入于 {m.joinTime}</Text>
-                            </div>
-                            {m.role === '所有者' ? (
-                              <Tag color="gold" style={{ borderRadius: 4, marginRight: 8 }}>
-                                <CrownOutlined style={{ marginRight: 2 }} />所有者
-                              </Tag>
-                            ) : (
-                              <>
-                                <Tag color="blue" style={{ borderRadius: 4, marginRight: 8 }}>
-                                  <UserOutlined style={{ marginRight: 2 }} />{m.role}
-                                </Tag>
-                                <Popconfirm
-                                  title="确认移除"
-                                  description={`确定将 ${m.name} 移出空间？`}
-                                  onConfirm={() => {
-                                    setSpaceMembers(prev => prev.filter(p => p.id !== m.id));
-                                    message.success(`已将 ${m.name} 移出空间`);
-                                  }}
-                                  okText="确认"
-                                  cancelText="取消"
-                                >
-                                  <Button type="link" size="small" danger>移除</Button>
-                                </Popconfirm>
-                              </>
-                            )}
-                          </div>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                ),
-              },
-
-              // Tab 3: 操作日志
-              {
-                key: 'logs',
-                label: <Space><HistoryOutlined />操作日志</Space>,
-                children: (
-                  <div>
-                    {[
-                      { time: '2026-06-25 14:30', user: '演示用户', action: '修改空间设置', detail: '更新了空间图标和描述' },
-                      { time: '2026-06-24 16:20', user: '王大队', action: '创建智能体', detail: '创建了涉诈APP分析助手' },
-                      { time: '2026-06-23 11:45', user: '周科长', action: '添加成员', detail: '添加成员：孙法官' },
-                      { time: '2026-06-22 09:30', user: '管理员', action: '接入模型', detail: '接入了 DeepSeek-Chat 模型' },
-                      { time: '2026-06-21 15:10', user: '李警官', action: '修改配额', detail: '将模型调用配额提升至 150%' },
-                    ].map((log, i) => (
-                      <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ fontWeight: 500 }}>{log.user}
-                            <Tag color={
-                              log.action === '创建智能体' ? 'blue' :
-                                log.action === '添加成员' ? 'cyan' :
-                                  log.action === '修改配额' ? 'orange' : 'default'
-                            } style={{ marginLeft: 6 }}>
-                              {log.action}
-                            </Tag>
-                          </span>
-                          <Text type="secondary" style={{ fontSize: 12 }}>{log.time}</Text>
-                        </div>
-                        <Text type="secondary" style={{ fontSize: 13 }}>{log.detail}</Text>
-                      </div>
-                    ))}
-                  </div>
-                ),
-              },
-            ]} />
-          </div>
+          <SpaceDetailDrawerBody
+            key={selectedSpace.id}
+            space={selectedSpace}
+            detailTab={detailTab}
+            onTabChange={setDetailTab}
+          />
         )}
       </Drawer>
 
