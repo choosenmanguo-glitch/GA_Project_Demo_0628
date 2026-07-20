@@ -333,7 +333,7 @@ export function useSpaceDetailTabs(space: SpaceItem, showEditButton = true, show
                 添加成员
               </Button>
             }
-            style={{ padding: '12px 0' }}
+            style={{ padding: '12px 0', borderTop: 'none', marginTop: -16 }}
           />
 
           <Table
@@ -393,7 +393,7 @@ export function useSpaceDetailTabs(space: SpaceItem, showEditButton = true, show
             导出
           </Button>
         }
-        style={{ padding: '12px 0' }}
+        style={{ padding: '12px 0', borderTop: 'none', marginTop: -16 }}
       />
 
       <Table
