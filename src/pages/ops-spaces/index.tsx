@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
-  Table, Button, Space, Tag, Drawer, Form, Input, Select, Row, Col, Typography, Tabs, message, Dropdown, Modal, Popconfirm,
+  Table, Button, Space, Tag, Drawer, Form, Input, Select, Row, Col, Typography, Tabs, message, Dropdown, Modal,
 } from 'antd';
 import type { MenuProps } from 'antd';
 import {
@@ -19,9 +19,9 @@ import StatCards from '@/components/StatCards';
 import type { FilterField } from '@/components/FilterBar';
 import { mockSpaces, mockMembers, type SpaceItem, type SpaceMember, mockApprovals, type SpaceApproval, mockOperationLogs } from '@/mock/data';
 import MemberSelect from '@/components/MemberSelect';
-import StepDrawer from '@/components/StepDrawer';
+import SpaceCreateDrawer from '@/components/SpaceCreateDrawer';
+import type { SpaceCreateValues } from '@/components/SpaceCreateDrawer';
 import ConfirmActionModal from '@/components/ConfirmActionModal';
-import IconPicker, { type IconPickerValue } from '@/components/IconPicker';
 import { useSpaceDetailTabs } from '@/components/SpaceDetailTabs';
 
 const { Text, Title } = Typography;
@@ -102,21 +102,13 @@ export default function OpsSpacesPage() {
   const [selectedSpace, setSelectedSpace] = useState<SpaceItem | null>(null);
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
-  const [createStep, setCreateStep] = useState(0);
   const [detailTab, setDetailTab] = useState('info');
   const [memberAddOpen, setMemberAddOpen] = useState(false);
   const [memberAddRole, setMemberAddRole] = useState<'普通用户'>('普通用户');
   const [localSpaces, setLocalSpaces] = useState<SpaceItem[]>(mockSpaces);
   const [localApprovals, setLocalApprovals] = useState<SpaceApproval[]>(mockApprovals);
   const [spaceMembers, setSpaceMembers] = useState<SpaceMember[]>(mockMembers);
-  const [presetSelections, setPresetSelections] = useState<Record<string, string[]>>({});
   const [confirmState, setConfirmState] = useState<{ action: string; space: SpaceItem } | null>(null);
-  const [createSpaceName, setCreateSpaceName] = useState('');
-  const [createSpaceDept, setCreateSpaceDept] = useState<string | undefined>(undefined);
-  const [createSpaceType, setCreateSpaceType] = useState('工作空间');
-  const [createSpaceOwner, setCreateSpaceOwner] = useState<string | undefined>(undefined);
-  const [createMembers, setCreateMembers] = useState<SpaceMember[]>([]);
-  const [createSpaceIcon, setCreateSpaceIcon] = useState<IconPickerValue>({ mode: 'text' });
 
   // ── Tab 2 状态 ──
   const [pendingFilters, setPendingFilters] = useState<Record<string, any>>({ keyword: '', spaceType: undefined });
@@ -135,31 +127,6 @@ export default function OpsSpacesPage() {
   // ── 触发刷新（mock 数据直接操作后需要） ──
   const [refreshKey, setRefreshKey] = useState(0);
   const triggerRefresh = () => setRefreshKey(k => k + 1);
-
-  // ── 创建空间：同步负责人到成员管理 ──
-  useEffect(() => {
-    if (createStep === 2 && createSpaceOwner) {
-      const ownerInfo = memberOptions.find(m => m.value === createSpaceOwner);
-      if (ownerInfo) {
-        setCreateMembers(prev => {
-          const existingOwner = prev.find(m => m.role === '所有者');
-          if (existingOwner && existingOwner.name === ownerInfo.name) return prev;
-          const withoutOwner = prev.filter(m => m.role !== '所有者');
-          return [
-            {
-              id: `owner-${ownerInfo.value}`,
-              name: ownerInfo.name,
-              dept: ownerInfo.dept,
-              role: '所有者' as const,
-              joinTime: new Date().toISOString().slice(0, 10),
-              lastActive: '',
-            },
-            ...withoutOwner,
-          ];
-        });
-      }
-    }
-  }, [createStep, createSpaceOwner]);
 
   // ── 确认操作执行（冻结/归档/删除） ──
   const handleConfirm = () => {
@@ -302,7 +269,7 @@ export default function OpsSpacesPage() {
           </div>
           <div>
             <a onClick={() => { setSelectedSpace(r); setDetailDrawerOpen(true); }} style={{ fontWeight: 500 }}>{n}</a>
-            <div><Text type="secondary" style={{ fontSize: 12 }}>{r.dept}</Text></div>
+            <div><Text type="secondary" style={{ fontSize: 12, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150 }}>{r.description || '-'}</Text></div>
           </div>
         </Space>
       ),
@@ -493,14 +460,6 @@ export default function OpsSpacesPage() {
     },
   ], []);
 
-  // ── 创建步骤 ──
-  const createSteps = [
-    { title: '基本信息' },
-    { title: '预置资源' },
-    { title: '成员管理' },
-    { title: '确认创建' },
-  ];
-
   // ── 待审批角标数 ──
   const pendingCount = useMemo(() => localApprovals.filter(a => a.status === '待审核').length, [localApprovals]);
 
@@ -514,6 +473,13 @@ export default function OpsSpacesPage() {
   // ── 从抽屉发起驳回 ──
   const handleRejectFromDrawer = () => {
     setRejectionReasonOpen(true);
+  };
+
+  // ── 创建空间提交 ──
+  const handleCreateSubmit = (_values: SpaceCreateValues) => {
+    message.success('空间创建成功');
+    setCreateDrawerOpen(false);
+    triggerRefresh();
   };
 
   return (
@@ -549,7 +515,7 @@ export default function OpsSpacesPage() {
                     onFilterChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
                     onSearch={() => {}}
                     onReset={() => { setFilters({ keyword: '', status: undefined, spaceType: undefined }); setActiveStatIndex(undefined); }}
-                    onCreate={() => { setCreateStep(0); setCreateDrawerOpen(true); }}
+                    onCreate={() => { setCreateDrawerOpen(true); }}
                     createText="创建空间"
                   />
                   <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px' }}>
@@ -661,6 +627,10 @@ export default function OpsSpacesPage() {
                           showTotal: (t) => `共 ${t} 条记录`,
                         }}
                         locale={{ emptyText: '暂无审批记录' }}
+                        onRow={(record) => ({
+                          style: { cursor: 'pointer' },
+                          onClick: () => openPendingDetail(record),
+                        })}
                       />
                     </div>
                   </div>
@@ -679,24 +649,26 @@ export default function OpsSpacesPage() {
         destroyOnClose
         styles={{ body: { padding: 0 } }}
         footer={
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-            <Button
-              danger
-              icon={<CloseCircleOutlined />}
-              onClick={handleRejectFromDrawer}
-            >
-              驳回（填写原因）
-            </Button>
-            <Button
-              type="primary"
-              icon={<CheckCircleOutlined />}
-              onClick={() => {
-                if (pendingDetailSpace) handleApprove(pendingDetailSpace);
-              }}
-            >
-              确认通过
-            </Button>
-          </div>
+          pendingDetailSpace?.status === '待审核' ? (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <Button
+                danger
+                icon={<CloseCircleOutlined />}
+                onClick={handleRejectFromDrawer}
+              >
+                驳回（填写原因）
+              </Button>
+              <Button
+                type="primary"
+                icon={<CheckCircleOutlined />}
+                onClick={() => {
+                  if (pendingDetailSpace) handleApprove(pendingDetailSpace);
+                }}
+              >
+                确认通过
+              </Button>
+            </div>
+          ) : undefined
         }
       >
         {pendingDetailSpace && (
@@ -719,7 +691,9 @@ export default function OpsSpacesPage() {
                   <Space size={6}>
                     <Tag color={pendingDetailSpace.spaceType === '专案空间' ? 'orange' : 'green'}>{pendingDetailSpace.spaceType}</Tag>
                     <Text type="secondary" style={{ fontSize: 12 }}>{pendingDetailSpace.dept}</Text>
-                    <Tag color="orange">待审核</Tag>
+                    <Tag color={pendingDetailSpace.status === '已通过' ? 'green' : pendingDetailSpace.status === '已驳回' ? 'red' : 'orange'}>
+                      {pendingDetailSpace.status}
+                    </Tag>
                   </Space>
                 </Col>
               </Row>
@@ -796,18 +770,32 @@ export default function OpsSpacesPage() {
               </div>
             </div>
 
-            {/* 审批提示 */}
-            <div style={{
-              padding: '16px 20px', borderRadius: 10, background: '#fffbe6',
-              border: '1px solid #ffe58f',
-            }}>
-              <Title level={5} style={{ margin: 0, marginBottom: 8, color: '#d48806' }}>审批须知</Title>
-              <div style={{ fontSize: 13, color: '#8c6d00', lineHeight: '22px' }}>
-                <div>通过后，该空间将立即启用，空间创建者将自动成为空间所有者。</div>
-                <div>驳回需填写驳回原因，驳回后该空间不会出现在用户切换列表中。</div>
-                <div>请确认空间基本信息、资源、成员无误后再操作。</div>
+            {pendingDetailSpace.status === '已驳回' && (
+              <div style={{
+                padding: '20px', borderRadius: 10, background: '#fff1f0',
+                border: '1px solid #ffccc7',
+              }}>
+                <Title level={5} style={{ margin: 0, marginBottom: 8, color: '#ff4d4f' }}>驳回原因</Title>
+                <div style={{ fontSize: 14, color: '#d93026', lineHeight: '22px', whiteSpace: 'pre-wrap' }}>
+                  {pendingDetailSpace.rejectionReason || '未填写驳回原因'}
+                </div>
               </div>
-            </div>
+            )}
+
+            {pendingDetailSpace.status === '待审核' && (
+              /* 审批提示 */
+              <div style={{
+                padding: '16px 20px', borderRadius: 10, background: '#fffbe6',
+                border: '1px solid #ffe58f',
+              }}>
+                <Title level={5} style={{ margin: 0, marginBottom: 8, color: '#d48806' }}>审批须知</Title>
+                <div style={{ fontSize: 13, color: '#8c6d00', lineHeight: '22px' }}>
+                  <div>通过后，该空间将立即启用，空间创建者将自动成为空间所有者。</div>
+                  <div>驳回需填写驳回原因，驳回后该空间不会出现在用户切换列表中。</div>
+                  <div>请确认空间基本信息、资源、成员无误后再操作。</div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Drawer>
@@ -843,298 +831,12 @@ export default function OpsSpacesPage() {
       </Modal>
 
       {/* ── 创建空间抽屉 ── */}
-      <StepDrawer
-        title="创建空间"
+      <SpaceCreateDrawer
+        mode="create"
         open={createDrawerOpen}
-        onClose={() => { setCreateDrawerOpen(false); setCreateSpaceName(''); setCreateSpaceDept(undefined); setCreateSpaceType('工作空间'); setCreateSpaceOwner(undefined); setCreateMembers([]); setPresetSelections({}); }}
-        steps={createSteps}
-        current={createStep}
-        totalSteps={createSteps.length}
-        onCurrentChange={setCreateStep}
-        onFinish={() => {
-          message.success('空间创建成功');
-          setCreateDrawerOpen(false);
-          setCreateSpaceName('');
-          setCreateSpaceDept(undefined);
-          setCreateSpaceType('工作空间');
-          setCreateSpaceOwner(undefined);
-          setCreateMembers([]);
-          setPresetSelections({});
-          triggerRefresh();
-        }}
-      >
-        {/* 第一步：基本信息 */}
-        {createStep === 0 && (
-          <Form layout="vertical">
-            <Form.Item label="空间名称" required rules={[{ required: true }]}>
-              <Input
-                placeholder="请输入空间名称"
-                style={{ borderRadius: 6 }}
-                value={createSpaceName}
-                onChange={(e) => setCreateSpaceName(e.target.value)}
-              />
-            </Form.Item>
-            <Form.Item label="空间描述">
-              <TextArea rows={3} placeholder="描述该空间的用途和适用范围" style={{ borderRadius: 6 }} />
-            </Form.Item>
-            <Form.Item label="空间图标">
-              <IconPicker
-                value={createSpaceIcon}
-                onChange={setCreateSpaceIcon}
-                size={64}
-                defaultName={createSpaceName}
-              />
-            </Form.Item>
-            <Form.Item label="所属警种/部门">
-              <Select
-                placeholder="从组织架构中选择（选填）"
-                style={{ borderRadius: 6 }}
-                value={createSpaceDept}
-                onChange={setCreateSpaceDept}
-                allowClear
-                options={[
-                  '指挥中心', '反诈中心', '刑警大队', '交警支队', '治安支队',
-                  '法制大队', '派出所', '科信大队', '巡特警支队',
-                ].map(d => ({ label: d, value: d }))}
-              />
-            </Form.Item>
-            <Form.Item label="负责人" required rules={[{ required: true, message: '请选择空间负责人' }]}>
-              <Select
-                placeholder="请选择空间负责人"
-                style={{ borderRadius: 6 }}
-                value={createSpaceOwner}
-                onChange={setCreateSpaceOwner}
-                options={memberOptions.map(m => ({ label: `${m.name} (${m.dept})`, value: m.value }))}
-                showSearch
-                filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                }
-              />
-            </Form.Item>
-            <Form.Item label="空间类型" required>
-              <Select
-                value={createSpaceType}
-                onChange={setCreateSpaceType}
-                style={{ borderRadius: 6 }}
-                options={[
-                  { label: '工作空间', value: '工作空间' },
-                  { label: '专案空间', value: '专案空间' },
-                ]}
-              />
-              <div style={{ marginTop: 6 }}>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  个人空间为平台默认开启，无需手动创建。
-                </Text>
-              </div>
-            </Form.Item>
-          </Form>
-        )}
-
-        {/* 第二步：预置资源 */}
-        {createStep === 1 && (
-          <div>
-            <Text type="secondary" style={{ display: 'block', marginBottom: 16, fontSize: 13 }}>
-              从平台组件管理已登记的资源中选择预置到该空间，创建后可继续添加。
-            </Text>
-            {[
-              { label: '模型', icon: <RobotOutlined />, placeholder: '搜索并选择模型', options: [
-                { label: 'DeepSeek-Chat', value: 'deepseek-chat' },
-                { label: 'DeepSeek-Reasoner', value: 'deepseek-reasoner' },
-                { label: 'Qwen-72B-Chat', value: 'qwen-72b' },
-                { label: 'GPT-4o', value: 'gpt-4o' },
-                { label: 'Claude-3.5-Sonnet', value: 'claude-3.5' },
-                { label: 'Hunyuan-Pro', value: 'hunyuan-pro' },
-              ]},
-              { label: '提示词', icon: <FileTextOutlined />, placeholder: '搜索并选择提示词', options: [
-                { label: '案情摘要模板', value: 'case-summary' },
-                { label: '违章分析模板', value: 'violation-analysis' },
-                { label: '接警分析模板', value: 'alarm-analysis' },
-                { label: '证件审核模板', value: 'id-review' },
-              ]},
-              { label: '工具', icon: <ToolOutlined />, placeholder: '搜索并选择工具', options: [
-                { label: '文书智能解析', value: 'doc-parser' },
-                { label: '人口信息查询', value: 'population-query' },
-                { label: '车辆轨迹查询', value: 'vehicle-track' },
-                { label: '图像识别', value: 'image-recognition' },
-              ]},
-              { label: '连接器', icon: <ApiOutlined />, placeholder: '搜索并选择连接器', options: [
-                { label: '公安数据库连接器', value: 'police-db-mcp' },
-                { label: '交管数据连接器', value: 'traffic-mcp' },
-                { label: '政务云连接器', value: 'gov-cloud-mcp' },
-              ]},
-              { label: '知识库', icon: <BookOutlined />, placeholder: '搜索并选择知识库', options: [
-                { label: '公安法规库', value: 'legal-db' },
-                { label: '警情案例库', value: 'case-db' },
-                { label: '标准文书库', value: 'template-db' },
-              ]},
-            ].map(group => {
-              const selectedCount = (presetSelections[group.label] || []).length;
-              return (
-                <div key={group.label} style={{ marginBottom: 20 }}>
-                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6, color: '#333' }}>
-                    {group.icon}
-                    {group.label}
-                    {selectedCount > 0 && (
-                      <Tag style={{ marginLeft: 4, fontSize: 12, lineHeight: '18px' }} color="blue">已选 {selectedCount} 个</Tag>
-                    )}
-                  </div>
-                  <Select
-                    mode="multiple"
-                    placeholder={group.placeholder}
-                    style={{ width: '100%', borderRadius: 6 }}
-                    maxTagCount={5}
-                    value={presetSelections[group.label] || []}
-                    onChange={(vals) => setPresetSelections(prev => ({ ...prev, [group.label]: vals }))}
-                    options={group.options}
-                    filterOption={(input, option) =>
-                      (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                    }
-                  />
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* 第三步：成员管理 */}
-        {createStep === 2 && (
-          <div>
-            <Text type="secondary" style={{ display: 'block', marginBottom: 16, fontSize: 13 }}>
-              为空间添加成员并设置初始角色，创建后可继续在空间详情中管理。
-            </Text>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => setMemberAddOpen(true)}>添加成员</Button>
-            </div>
-            {createMembers.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
-                <Text type="secondary">暂未添加成员，可跳过此步骤</Text>
-              </div>
-            ) : (
-              createMembers.map((m) => (
-                <div key={m.id} style={{
-                  display: 'flex', alignItems: 'center', padding: '10px 0',
-                  borderBottom: '1px solid #f5f5f5',
-                }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: '50%', background: '#1677ff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#fff', fontSize: 13, marginRight: 10, flexShrink: 0,
-                  }}>
-                    {m.name.charAt(0)}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 500 }}>{m.name}</div>
-                    <Text type="secondary" style={{ fontSize: 12 }}>{m.dept}</Text>
-                  </div>
-                  {m.role === '所有者' ? (
-                    <Tag color="gold" style={{ borderRadius: 4, marginRight: 8 }}>
-                      <CrownOutlined style={{ marginRight: 2 }} />所有者
-                    </Tag>
-                  ) : (
-                    <>
-                      <Tag color="blue" style={{ borderRadius: 4, marginRight: 8 }}>
-                        <UserOutlined style={{ marginRight: 2 }} />普通用户
-                      </Tag>
-                      <Popconfirm
-                        title="确认移除"
-                        description={`确定将 ${m.name} 移出？`}
-                        onConfirm={() => {
-                          setCreateMembers(prev => prev.filter(p => p.id !== m.id));
-                        }}
-                        okText="确认"
-                        cancelText="取消"
-                      >
-                        <Button type="link" size="small" danger>移除</Button>
-                      </Popconfirm>
-                    </>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        )}
-
-        {/* 第四步：确认创建 */}
-        {createStep === 3 && (
-          <div>
-            <div style={{
-              padding: '20px', borderRadius: 10, background: '#f5f8ff',
-              border: '1px solid #d6e4ff', marginBottom: 16,
-            }}>
-              <Title level={5} style={{ margin: 0 }}>基本信息</Title>
-              <div style={{ marginTop: 12 }}>
-                {[
-                  { label: '空间名称', value: createSpaceName || '未填写' },
-                  { label: '空间类型', value: createSpaceType },
-                  { label: '所属部门', value: createSpaceDept || '未选择' },
-                  { label: '负责人', value: createSpaceOwner ? memberOptions.find(m => m.value === createSpaceOwner)?.name || createSpaceOwner : '未选择' },
-                ].map(item => (
-                  <div key={item.label} style={{ display: 'flex', padding: '6px 0' }}>
-                    <Text type="secondary" style={{ width: 100 }}>{item.label}</Text>
-                    <span style={{ fontWeight: 500 }}>{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div style={{
-              padding: '20px', borderRadius: 10, background: '#fafafa',
-              border: '1px solid #f0f0f0', marginBottom: 16,
-            }}>
-              <Title level={5} style={{ margin: 0 }}>预置资源清单</Title>
-              <div style={{ marginTop: 12 }}>
-                {[
-                  { label: '模型', key: '模型' },
-                  { label: '提示词', key: '提示词' },
-                  { label: '工具', key: '工具' },
-                  { label: '连接器', key: '连接器' },
-                  { label: '知识库', key: '知识库' },
-                ].map(item => {
-                  const selected = presetSelections[item.key] || [];
-                  return (
-                    <div key={item.label} style={{ display: 'flex', padding: '6px 0' }}>
-                      <Text type="secondary" style={{ width: 100 }}>{item.label}</Text>
-                      <span>
-                        {selected.length > 0
-                          ? selected.map(v => (
-                              <Tag key={v} style={{ marginBottom: 4 }}>{v}</Tag>
-                            ))
-                          : <Text type="secondary">未选择</Text>
-                        }
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div style={{
-              padding: '20px', borderRadius: 10, background: '#fafafa',
-              border: '1px solid #f0f0f0',
-            }}>
-              <Title level={5} style={{ margin: 0 }}>成员清单</Title>
-              <div style={{ marginTop: 12 }}>
-                {createMembers.length > 0 ? (
-                  createMembers.map(m => (
-                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', padding: '6px 0' }}>
-                      <div style={{
-                        width: 28, height: 28, borderRadius: '50%', background: '#1677ff',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: '#fff', fontSize: 12, marginRight: 8, flexShrink: 0,
-                      }}>
-                        {m.name.charAt(0)}
-                      </div>
-                      <span style={{ fontWeight: 500 }}>{m.name}</span>
-                      <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>{m.dept}</Text>
-                      <Tag style={{ marginLeft: 8 }}>{m.role}</Tag>
-                    </div>
-                  ))
-                ) : (
-                  <Text type="secondary">未添加成员</Text>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </StepDrawer>
+        onClose={() => setCreateDrawerOpen(false)}
+        onSubmit={handleCreateSubmit}
+      />
 
       {/* ── 空间详情抽屉 ── */}
       <Drawer
@@ -1172,11 +874,7 @@ export default function OpsSpacesPage() {
             joinTime: new Date().toISOString().slice(0, 10),
             lastActive: '',
           };
-          if (createDrawerOpen) {
-            setCreateMembers(prev => [...prev, newMember]);
-          } else {
-            setSpaceMembers(prev => [...prev, newMember]);
-          }
+          setSpaceMembers(prev => [...prev, newMember]);
           message.success(`已添加成员 ${name}（${memberAddRole}）`);
         }}
         okText="确认添加"
@@ -1223,9 +921,9 @@ export default function OpsSpacesPage() {
         }
         description={
           confirmState?.action === '冻结'
-            ? ['空间不可进入、不可编辑', '已发布的智能体对外服务<b>继续运行</b>', '可随时恢复启用，数据不受影响']
+            ? ['空间不可进入', '已发布的智能体对外服务继续运行', '可随时恢复启用，数据不受影响']
             : confirmState?.action === '归档'
-              ? ['空间不可进入、不可操作', '已发布的智能体对外服务<b>停止</b>', '归档前请确认空间内无已发布的智能体和已上线资源广场的资源', '可恢复，但不轻易操作；适用于长期不活跃或使命完成的空间']
+              ? ['空间不可进入', '归档前请确认空间内无已发布的智能体和已上线资源广场的资源', '可恢复，但不轻易操作；适用于长期不活跃或使命完成的空间']
               : ['空间及所有数据将<b>永久移除</b>，不可恢复', '仅适用于从未启用、误创建或完全无效的空间', '删除前请确认空间内无已发布的智能体和已上线资源广场的资源']
         }
         requireNameInput={confirmState?.action === '删除'}
