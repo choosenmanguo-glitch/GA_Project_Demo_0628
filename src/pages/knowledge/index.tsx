@@ -1,7 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import {
-  Alert,
-  Badge,
   Button,
   Card,
   Descriptions,
@@ -27,18 +25,16 @@ import {
   ArrowLeftOutlined,
   BlockOutlined,
   CheckCircleOutlined,
-  CloudSyncOutlined,
-  CodeSandboxOutlined,
   DatabaseOutlined,
-  DeleteOutlined,
+  EditOutlined,
   EllipsisOutlined,
   ExclamationCircleOutlined,
+  ExperimentOutlined,
   FileTextOutlined,
-  LinkOutlined,
   LoadingOutlined,
   PlusOutlined,
   QuestionCircleOutlined,
-  ReloadOutlined,
+  SettingOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
@@ -86,7 +82,6 @@ interface KnowledgeBase {
   apiEndpoint?: string;
   externalKbId?: string;
   avatar?: IconPickerValue;
-  embeddingModelId?: string;
   llmModelId?: string;
   topK?: number;
   scoreThreshold?: number;
@@ -131,6 +126,15 @@ const syncConfig: Record<RagflowSyncStatus, { label: string; color: string; icon
   synced: { label: '已就绪', color: 'success', icon: <CheckCircleOutlined /> },
   failed: { label: '创建失败', color: 'error', icon: <ExclamationCircleOutlined /> },
 };
+
+type KBNavKey = 'data' | 'test' | 'logs' | 'config';
+
+const kbNavItems: { key: KBNavKey; label: string; icon: React.ReactNode }[] = [
+  { key: 'data', label: '数据', icon: <DatabaseOutlined /> },
+  { key: 'test', label: '测试', icon: <ExperimentOutlined /> },
+  { key: 'logs', label: '日志', icon: <FileTextOutlined /> },
+  { key: 'config', label: '配置', icon: <SettingOutlined /> },
+];
 
 const defaultEmbeddingModel = {
   id: 'model-bge-m3',
@@ -677,232 +681,230 @@ const EditDrawer: React.FC<{
   );
 };
 
-const RagflowEmbeddedPreview: React.FC<{ kb: KnowledgeBase }> = ({ kb }) => {
-  const srcDoc = `
-    <html>
-      <head>
-        <style>
-          body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; color: #1d2129; background: #fff; }
-          .wrap { padding: 22px 24px; }
-          .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-          .tabs { display: flex; gap: 22px; border-bottom: 1px solid #edf0f5; margin-bottom: 18px; }
-          .tab { padding: 0 0 12px; font-size: 14px; color: #5f6b7a; }
-          .active { color: #1677ff; border-bottom: 2px solid #1677ff; font-weight: 600; }
-          .btn { background: #1677ff; color: #fff; border-radius: 6px; padding: 8px 14px; font-size: 13px; }
-          .grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
-          .panel { border: 1px solid #e5eaf3; border-radius: 8px; padding: 16px; min-height: 180px; }
-          table { width: 100%; border-collapse: collapse; font-size: 13px; }
-          th { text-align: left; color: #7a8599; background: #f8f9fb; padding: 10px; font-weight: 500; }
-          td { padding: 12px 10px; border-bottom: 1px solid #f0f2f5; }
-          .tag { color: #389e0d; background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 4px; padding: 2px 7px; }
-          .muted { color: #7a8599; font-size: 12px; }
-        </style>
-      </head>
-      <body>
-        <div class="wrap">
-          <div class="toolbar">
-            <div>
-              <div style="font-size:18px;font-weight:700;">${kb.name}</div>
-              <div class="muted">专业知识库编号：${getKnowledgeCode(kb)}</div>
-            </div>
-            <div class="btn">上传文档</div>
-          </div>
-          <div class="tabs">
-            <div class="tab active">文档</div>
-            <div class="tab">分段</div>
-            <div class="tab">检索测试</div>
-            <div class="tab">配置</div>
-          </div>
-          <div class="grid">
-            <div class="panel">
-              <table>
-                <thead><tr><th>名称</th><th>状态</th><th>分段数</th><th>更新时间</th></tr></thead>
-                <tbody>
-                  <tr><td>2026年Q2电信诈骗新趋势分析.pdf</td><td><span class="tag">已解析</span></td><td>356</td><td>06-20 16:22</td></tr>
-                  <tr><td>涉诈资金穿透研判报告.docx</td><td><span class="tag">已解析</span></td><td>148</td><td>06-19 10:15</td></tr>
-                  <tr><td>高发诈骗话术样本.xlsx</td><td><span class="tag">解析中</span></td><td>--</td><td>06-18 09:30</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="panel">
-              <div style="font-size:14px;font-weight:700;margin-bottom:12px;">解析配置</div>
-              <div class="muted">向量模型</div>
-              <div style="margin-bottom:12px;">${defaultEmbeddingModel.displayName}</div>
-              <div class="muted">解析方式</div>
-              <div style="margin-bottom:12px;">${kb.chunkMethod || 'General'}</div>
-              <div class="muted">切片大小</div>
-              <div>${kb.parserConfig?.chunkSize || 512}</div>
-            </div>
-          </div>
-        </div>
-      </body>
-    </html>
-  `;
-
-  return (
-    <iframe
-      title="专业知识库详情预览"
-      srcDoc={srcDoc}
-      sandbox=""
-      style={{ width: '100%', minHeight: 520, border: 0, background: '#fff', display: 'block' }}
-    />
-  );
-};
-
-const RagflowDetail: React.FC<{
-  kb: KnowledgeBase;
-  onBack: () => void;
-  onRetry: (id: string) => void;
-}> = ({ kb, onBack, onRetry }) => {
-  const sync = syncConfig[kb.ragflowSyncStatus ?? 'none'];
-  const isSynced = kb.ragflowSyncStatus === 'synced';
-
-  return (
-    <div style={{ flex: 1, background: '#F5F7FA', overflow: 'auto' }}>
-      <div style={{ background: '#fff', borderBottom: '1px solid #F0F2F5', padding: '12px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Space size={14}>
-          <ArrowLeftOutlined onClick={onBack} style={{ color: '#5F6B7A', cursor: 'pointer' }} />
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: '#f9f0ff', color: '#722ed1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <BlockOutlined />
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 16, fontWeight: 700 }}>{kb.name}</span>
-              <Tag color="purple">专业知识库</Tag>
-              <Tag color={sync.color} icon={sync.icon}>{sync.label}</Tag>
-            </div>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              文档管理 / 分段管理 / 检索测试
-            </Text>
-          </div>
-        </Space>
-        <Space>
-          <Tooltip title="模型由平台统一配置">
-            <Tag icon={<CodeSandboxOutlined />}>{defaultEmbeddingModel.displayName}</Tag>
-          </Tooltip>
-          {kb.ragflowPageUrl && (
-            <Button icon={<LinkOutlined />} onClick={() => message.info('已在当前平台内打开专业知识库详情')}>
-              打开详情
-            </Button>
-          )}
-          {kb.ragflowSyncStatus === 'failed' && (
-            <Button type="primary" icon={<ReloadOutlined />} onClick={() => onRetry(kb.id)}>
-              重试创建
-            </Button>
-          )}
-        </Space>
+const DataPanel: React.FC<{ kb: KnowledgeBase }> = ({ kb }) => {
+  const isExternal = kb.category === 'external';
+  if (isExternal) {
+    return (
+      <div style={{ padding: 24 }}>
+        <Card title="API 连接状态" size="small" style={{ borderRadius: 8, maxWidth: 600 }}>
+          <Descriptions column={1} size="small" colon={false}>
+            <Descriptions.Item label="API Endpoint">{kb.apiEndpoint || '-'}</Descriptions.Item>
+            <Descriptions.Item label="外部知识库 ID">{kb.externalKbId || '-'}</Descriptions.Item>
+            <Descriptions.Item label="连接状态">
+              <Tag color="success" icon={<CheckCircleOutlined />}>已连接</Tag>
+            </Descriptions.Item>
+          </Descriptions>
+        </Card>
       </div>
+    );
+  }
 
-      <div style={{ padding: '18px 28px 28px' }}>
-        <Alert
-          type={isSynced ? 'success' : kb.ragflowSyncStatus === 'failed' ? 'error' : 'info'}
-          showIcon
-          style={{ marginBottom: 16 }}
-          message={isSynced ? '专业知识库已就绪' : '专业知识库尚未可用'}
-          description={
-            isSynced
-              ? '你可以在这里完成文档上传、解析管理、分段查看和检索测试等操作。'
-              : kb.syncError || '系统正在创建专业知识库，请稍后刷新。'
-          }
-        />
-
-        <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16 }}>
-          <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
-            <Card size="small" style={{ borderRadius: 8, borderColor: '#f0f0f0' }} styles={{ body: { padding: 16 } }}>
-              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>基础信息</div>
-              <Descriptions column={1} size="small" colon={false}>
-                <Descriptions.Item label="知识库编号">{getKnowledgeCode(kb)}</Descriptions.Item>
-                <Descriptions.Item label="创建人">{kb.owner}</Descriptions.Item>
-                <Descriptions.Item label="所属空间">{kb.ragflowTenantId ? '当前工作空间' : '默认空间'}</Descriptions.Item>
-                <Descriptions.Item label="解析方式">{kb.chunkMethod || '-'}</Descriptions.Item>
-              </Descriptions>
-            </Card>
-            <Card size="small" style={{ borderRadius: 8, borderColor: '#f0f0f0' }} styles={{ body: { padding: 16 } }}>
-              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>统一配置</div>
-              <Space direction="vertical" size={10} style={{ width: '100%' }}>
-                <div>
-                  <Text type="secondary" style={{ fontSize: 12 }}>平台默认向量模型</Text>
-                  <div style={{ fontWeight: 600 }}>{defaultEmbeddingModel.displayName}</div>
-                </div>
-                <div>
-                  <Text type="secondary" style={{ fontSize: 12 }}>切片大小</Text>
-                  <div>{kb.parserConfig?.chunkSize ?? 512}</div>
-                </div>
-                <div>
-                  <Text type="secondary" style={{ fontSize: 12 }}>重叠比例</Text>
-                  <div>{kb.parserConfig?.overlap ?? 0}%</div>
-                </div>
-              </Space>
-            </Card>
-          </div>
-
-          <Card style={{ borderRadius: 8, borderColor: '#f0f0f0', overflow: 'hidden' }} styles={{ body: { padding: 0 } }}>
-            <div style={{ height: 42, borderBottom: '1px solid #F0F2F5', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', background: '#fff' }}>
-              <Space>
-                <Badge status={isSynced ? 'success' : 'error'} />
-                <Text strong>专业知识库工作区</Text>
-              </Space>
-              <Text type="secondary" style={{ fontSize: 12 }}>文档、分段、检索配置统一管理</Text>
-            </div>
-            {isSynced ? (
-              <RagflowEmbeddedPreview kb={kb} />
-            ) : (
-              <div style={{ minHeight: 520, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description={kb.ragflowSyncStatus === 'failed' ? '专业知识库创建失败，重试后可进入详情' : '正在创建专业知识库'}
-                >
-                  {kb.ragflowSyncStatus === 'failed' && <Button type="primary" onClick={() => onRetry(kb.id)}>重试创建</Button>}
-                </Empty>
-              </div>
-            )}
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const NativeDetail: React.FC<{ kb: KnowledgeBase; onBack: () => void }> = ({ kb, onBack }) => {
   const columns: ColumnsType<KnowledgeFile> = [
     { title: '文件名', dataIndex: 'name', render: (name: string) => <a>{name}</a> },
     { title: '大小', dataIndex: 'size', width: 120 },
-    { title: '状态', dataIndex: 'status', width: 120, render: (status: string) => <Tag color={status === '已解析' ? 'success' : 'processing'}>{status}</Tag> },
+    { title: '状态', dataIndex: 'status', width: 120, render: (s: string) => <Tag color={s === '已解析' ? 'success' : 'processing'}>{s}</Tag> },
     { title: '更新时间', dataIndex: 'updatedAt', width: 170 },
   ];
 
   return (
-    <div style={{ flex: 1, background: '#F5F7FA', overflow: 'auto' }}>
-      <div style={{ background: '#fff', borderBottom: '1px solid #F0F2F5', padding: '12px 28px', display: 'flex', alignItems: 'center', gap: 14 }}>
-        <ArrowLeftOutlined onClick={onBack} style={{ color: '#5F6B7A', cursor: 'pointer' }} />
-        <div style={{ width: 32, height: 32, borderRadius: 8, background: categoryConfig[kb.category].bg, color: categoryConfig[kb.category].color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {categoryConfig[kb.category].icon}
-        </div>
-        <span style={{ fontSize: 16, fontWeight: 700 }}>{kb.name}</span>
-        <Tag color={categoryConfig[kb.category].color}>{categoryConfig[kb.category].label}</Tag>
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Text strong style={{ fontSize: 14 }}>知识库数据</Text>
+        <Button icon={<UploadOutlined />} type="primary" size="small">上传文档</Button>
       </div>
-      <div style={{ padding: '20px 28px' }}>
-        <Card size="small" style={{ borderRadius: 8, borderColor: '#f0f0f0', marginBottom: 16 }} styles={{ body: { padding: 16 } }}>
-          <Descriptions column={3} size="small">
-            <Descriptions.Item label="类型">{kb.typeTag}</Descriptions.Item>
-            <Descriptions.Item label="创建人">{kb.owner}</Descriptions.Item>
-            <Descriptions.Item label="创建时间">{kb.date}</Descriptions.Item>
-            <Descriptions.Item label="状态">{statusConfig[kb.status].label}</Descriptions.Item>
-            <Descriptions.Item label="文件数">{kb.fileCount ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="启用状态">{kb.active ? '启用' : '停用'}</Descriptions.Item>
+      <Table rowKey="id" columns={columns} dataSource={mockFiles} pagination={false} style={{ background: '#fff', borderRadius: 8 }} />
+    </div>
+  );
+};
+
+const TestPanel: React.FC<{ kb: KnowledgeBase }> = ({ kb }) => {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<{ id: number; content: string; score: number; source: string }[]>([]);
+  const [tested, setTested] = useState(false);
+
+  const handleTest = () => {
+    if (!query.trim()) return;
+    setTested(true);
+    setResults([
+      { id: 1, content: '根据《刑法》第二百六十六条，诈骗公私财物，数额较大的，处三年以下有期徒刑、拘役或者管制，并处或者单处罚金……', score: 0.94, source: kb.name },
+      { id: 2, content: '电信网络诈骗犯罪中，涉案金额超过50万元的属于"数额特别巨大"情形，依法应从重处罚。', score: 0.87, source: kb.name },
+      { id: 3, content: '公安机关在办理电信诈骗案件时，应重点收集资金流转记录、通讯记录和受害人陈述等证据材料。', score: 0.81, source: kb.name },
+    ]);
+  };
+
+  return (
+    <div style={{ padding: 24 }}>
+      <Text strong style={{ fontSize: 14, display: 'block', marginBottom: 16 }}>检索测试</Text>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <Input.Search
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="输入检索查询内容，测试知识库检索效果"
+          enterButton="检索"
+          onSearch={handleTest}
+          style={{ maxWidth: 600 }}
+        />
+      </div>
+      {tested && (
+        <div>
+          {results.length > 0 ? (
+            results.map(r => (
+              <Card key={r.id} size="small" style={{ marginBottom: 8, borderRadius: 8, maxWidth: 800 }}>
+                <div style={{ fontSize: 12, color: '#999', marginBottom: 6 }}>
+                  来源: {r.source} | 相似度: {(r.score * 100).toFixed(1)}%
+                </div>
+                <div style={{ fontSize: 13, lineHeight: '22px', color: '#333' }}>{r.content}</div>
+              </Card>
+            ))
+          ) : (
+            <Empty description="未检索到相关内容" />
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const LogsPanel: React.FC<{ kb: KnowledgeBase }> = () => (
+  <div style={{ padding: 24 }}>
+    <Text strong style={{ fontSize: 14, display: 'block', marginBottom: 16 }}>操作日志</Text>
+    <Table
+      rowKey="id"
+      dataSource={[
+        { id: 1, action: '知识库创建', operator: '王大队', time: '2026-07-18 09:30:00', detail: '创建专业知识库' },
+        { id: 2, action: '文档上传', operator: '王大队', time: '2026-07-18 14:22:00', detail: '上传 3 个文档' },
+        { id: 3, action: '配置更新', operator: '李警官', time: '2026-07-19 10:15:00', detail: '修改向量化模型为 BGE-Large-zh' },
+        { id: 4, action: '检索查询', operator: 'system', time: '2026-07-19 16:45:00', detail: 'API 调用 35 次' },
+      ]}
+      columns={[
+        { title: '操作', dataIndex: 'action', width: 120 },
+        { title: '操作人', dataIndex: 'operator', width: 120 },
+        { title: '时间', dataIndex: 'time', width: 200 },
+        { title: '详情', dataIndex: 'detail' },
+      ]}
+      pagination={false}
+      size="small"
+      style={{ maxWidth: 800 }}
+    />
+  </div>
+);
+
+const ConfigPanel: React.FC<{ kb: KnowledgeBase }> = ({ kb }) => {
+  const isExternal = kb.category === 'external';
+  const cat = categoryConfig[kb.category];
+
+  if (isExternal) {
+    return (
+      <div style={{ padding: 24 }}>
+        <Text strong style={{ fontSize: 14, display: 'block', marginBottom: 16 }}>外部知识库配置</Text>
+        <Card size="small" style={{ borderRadius: 8, maxWidth: 600 }}>
+          <Descriptions column={1} size="small" colon={false}>
+            <Descriptions.Item label="API Endpoint">{kb.apiEndpoint || '-'}</Descriptions.Item>
+            <Descriptions.Item label="外部知识库 ID">{kb.externalKbId || '-'}</Descriptions.Item>
+            <Descriptions.Item label="Top K">{kb.topK ?? 3}</Descriptions.Item>
+            <Descriptions.Item label="Score 阈值">{kb.scoreThreshold ?? 0.5}</Descriptions.Item>
+            <Descriptions.Item label="启用状态">
+              <Text style={{ color: kb.active ? '#52c41a' : '#999' }}>{kb.active ? '已启用' : '已停用'}</Text>
+            </Descriptions.Item>
           </Descriptions>
-          <Paragraph style={{ margin: '12px 0 0', color: '#5F6B7A' }}>{kb.desc}</Paragraph>
         </Card>
-        {kb.category === 'external' ? (
-          <Card size="small" style={{ borderRadius: 8, borderColor: '#f0f0f0' }} styles={{ body: { padding: 16 } }}>
-            <Descriptions column={1} size="small">
-              <Descriptions.Item label="API Endpoint">{kb.apiEndpoint}</Descriptions.Item>
-              <Descriptions.Item label="外部知识库 ID">{kb.externalKbId}</Descriptions.Item>
-            </Descriptions>
-          </Card>
-        ) : (
-          <Table rowKey="id" columns={columns} dataSource={mockFiles} pagination={false} style={{ background: '#fff', borderRadius: 8 }} />
-        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: 24 }}>
+      <Text strong style={{ fontSize: 14, display: 'block', marginBottom: 16 }}>知识库配置</Text>
+      <Card size="small" style={{ borderRadius: 8, maxWidth: 600 }}>
+        <Descriptions column={1} size="small" colon={false}>
+          <Descriptions.Item label="类型">{cat.label}</Descriptions.Item>
+          {kb.subType && <Descriptions.Item label="子类型">{subTypeConfig[kb.subType].label}</Descriptions.Item>}
+          <Descriptions.Item label="向量化模型">
+            {embeddingModelOptions.find(m => m.value === kb.embeddingModelId)?.label || defaultEmbeddingModel.displayName}
+          </Descriptions.Item>
+          {kb.llmModelId && (
+            <Descriptions.Item label="LLM 大模型">
+              {llmModelOptions.find(m => m.value === kb.llmModelId)?.label || kb.llmModelId}
+            </Descriptions.Item>
+          )}
+          {kb.chunkMethod && <Descriptions.Item label="解析方法">{kb.chunkMethod}</Descriptions.Item>}
+          <Descriptions.Item label="启用状态">
+            <Text style={{ color: kb.active ? '#52c41a' : '#999' }}>{kb.active ? '已启用' : '已停用'}</Text>
+          </Descriptions.Item>
+        </Descriptions>
+      </Card>
+    </div>
+  );
+};
+
+const KnowledgeBaseDetail: React.FC<{
+  kb: KnowledgeBase;
+  onBack: () => void;
+  onEdit: (kb: KnowledgeBase) => void;
+}> = ({ kb, onBack, onEdit }) => {
+  const [activeNav, setActiveNav] = useState<KBNavKey>('data');
+  const cat = categoryConfig[kb.category];
+  const DS = { navWidth: 200, blue: '#1677ff', blueLight: '#e6f4ff', white: '#ffffff', bg: '#f5f6f8', text: 'rgba(0,0,0,0.88)', textSec: 'rgba(0,0,0,0.52)', divider: '#f0f1f3', radiusXs: 6 };
+
+  const st = kb.active ? { color: '#52c41a', bg: '#f6ffed', label: '已启用' } : { color: '#999', bg: 'rgba(0,0,0,0.04)', label: '已停用' };
+
+  const renderPanel = () => {
+    switch (activeNav) {
+      case 'data': return <DataPanel kb={kb} />;
+      case 'test': return <TestPanel kb={kb} />;
+      case 'logs': return <LogsPanel kb={kb} />;
+      case 'config': return <ConfigPanel kb={kb} />;
+    }
+  };
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: DS.bg }}>
+      {/* Header Bar */}
+      <div style={{ height: 52, padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: DS.white, borderBottom: `1px solid ${DS.divider}`, flexShrink: 0 }}>
+        <Space size={12}>
+          <Button type="text" icon={<ArrowLeftOutlined />} onClick={onBack} style={{ color: DS.textSec, fontWeight: 500, fontSize: 13 }}>返回</Button>
+          <Divider type="vertical" style={{ margin: 0, borderColor: DS.divider }} />
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: cat.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: cat.color, fontSize: 15 }}>{cat.icon}</div>
+          <span style={{ fontSize: 14, fontWeight: 650, color: DS.text }}>{kb.name}</span>
+          <Tag style={{ border: 'none', borderRadius: 4, background: cat.bg, color: cat.color, fontWeight: 500, fontSize: 12, padding: '0 10px', lineHeight: '22px' }}>{cat.label}</Tag>
+          {kb.subType && (
+            <Tag style={{ border: 'none', borderRadius: 4, background: subTypeConfig[kb.subType].color + '18', color: subTypeConfig[kb.subType].color, fontWeight: 500, fontSize: 12, padding: '0 10px', lineHeight: '22px' }}>{subTypeConfig[kb.subType].label}</Tag>
+          )}
+          <Tag style={{ border: 'none', borderRadius: 4, background: st.bg, color: st.color, fontWeight: 500, fontSize: 12, padding: '0 10px', lineHeight: '22px' }}>{st.label}</Tag>
+        </Space>
+        <Button type="text" size="small" icon={<EditOutlined />} onClick={() => onEdit(kb)} style={{ color: DS.textSec, fontSize: 12 }}>编辑信息</Button>
+      </div>
+
+      {/* Body */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        {/* Sidebar */}
+        <div style={{ width: DS.navWidth, minWidth: DS.navWidth, borderRight: `1px solid ${DS.divider}`, display: 'flex', flexDirection: 'column', padding: '16px 10px', background: DS.white }}>
+          <div style={{ padding: '0 6px 16px', borderBottom: `1px solid ${DS.divider}`, marginBottom: 8 }}>
+            <Text type="secondary" style={{ fontSize: 11, display: 'block', lineHeight: '18px' }}>{kb.desc}</Text>
+          </div>
+          {kbNavItems.map(item => {
+            const active = activeNav === item.key;
+            return (
+              <div key={item.key} onClick={() => setActiveNav(item.key)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 2px', padding: '9px 12px', borderRadius: DS.radiusXs,
+                  cursor: 'pointer', userSelect: 'none', transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+                  background: active ? DS.blueLight : 'transparent', color: active ? DS.blue : DS.textSec, fontWeight: active ? 600 : 400, fontSize: 13,
+                }}
+                onMouseEnter={e => { if (!active) { e.currentTarget.style.background = DS.bg; e.currentTarget.style.color = DS.text; } }}
+                onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = DS.textSec; } }}
+              >
+                <span style={{ fontSize: 15, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
+                {item.label}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Content Area */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+          <div style={{ flex: 1, overflow: 'auto' }}>{renderPanel()}</div>
+        </div>
       </div>
     </div>
   );
@@ -1101,11 +1103,7 @@ const KnowledgeBasePage: React.FC = () => {
   };
 
   if (activeKB) {
-    return activeKB.category === 'professional' ? (
-      <RagflowDetail kb={activeKB} onBack={() => setActiveKB(null)} onRetry={handleRetrySync} />
-    ) : (
-      <NativeDetail kb={activeKB} onBack={() => setActiveKB(null)} />
-    );
+    return <KnowledgeBaseDetail kb={activeKB} onBack={() => setActiveKB(null)} onEdit={setEditingKB} />;
   }
 
   return (
