@@ -132,7 +132,6 @@ export function useSpaceDetailTabs(space: SpaceItem, showEditButton = true, show
       ),
     },
     { title: '加入时间', dataIndex: 'joinTime', width: 120, render: t => <Text type="secondary">{t}</Text> },
-    { title: '最近活跃', dataIndex: 'lastActive', width: 150, render: t => <Text type="secondary">{t}</Text> },
     {
       title: '操作', width: 80,
       render: (_, r) => {

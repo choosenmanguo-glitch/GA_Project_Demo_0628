@@ -36,7 +36,7 @@ const spaceFilterFields: FilterField[] = [
     { label: '启用', value: '启用' }, { label: '冻结', value: '冻结' }, { label: '归档', value: '归档' },
   ]},
   { type: 'select', key: 'spaceType', placeholder: '空间类型', width: 120, options: [
-    { label: '个人空间', value: '个人空间' }, { label: '工作空间', value: '工作空间' }, { label: '专案空间', value: '专案空间' },
+    { label: '工作空间', value: '工作空间' }, { label: '专案空间', value: '专案空间' },
   ]},
 ];
 
@@ -213,9 +213,9 @@ export default function OpsSpacesPage() {
     { name: '钱警官', dept: '派出所', value: 'u10' },
   ];
 
-  // ── Tab 1 数据 ──
+  // ── Tab 1 数据（不包含个人空间） ──
   const tab1Spaces = useMemo(() => {
-    return localSpaces;
+    return localSpaces.filter(s => s.type !== '个人空间');
   }, [localSpaces, refreshKey]);
 
   const filteredSpaces = useMemo(() => {
@@ -304,14 +304,22 @@ export default function OpsSpacesPage() {
     {
       title: '操作', width: 220,
       render: (_, r) => {
+        // 归档空间仅展示恢复、删除操作
+        if (r.status === '归档') {
+          return (
+            <Space size={0} wrap>
+              <Button type="link" size="small" icon={<CheckCircleOutlined />} onClick={() => { setLocalSpaces(prev => prev.map(s => s.id === r.id ? { ...s, status: '启用' as const } : s)); message.success(`空间「${r.name}」已恢复`); triggerRefresh(); }}>恢复</Button>
+              <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => setConfirmState({ action: '删除', space: r })}>删除</Button>
+            </Space>
+          );
+        }
+
         const menuItems: MenuProps['items'] = [
-          ...(r.status === '归档'
-            ? [{ key: 'restore', label: '恢复', icon: <CheckCircleOutlined />, onClick: () => { setLocalSpaces(prev => prev.map(s => s.id === r.id ? { ...s, status: '启用' as const } : s)); message.success(`空间「${r.name}」已恢复`); triggerRefresh(); } }]
-            : r.status === '冻结'
-              ? [{ key: 'enable', label: '启用', icon: <CheckCircleOutlined />, onClick: () => { setLocalSpaces(prev => prev.map(s => s.id === r.id ? { ...s, status: '启用' as const } : s)); message.success(`空间「${r.name}」已启用`); triggerRefresh(); } }]
-              : [{ key: 'freeze', label: '冻结', icon: <StopOutlined />, onClick: () => setConfirmState({ action: '冻结', space: r }) }]
+          ...(r.status === '冻结'
+            ? [{ key: 'enable', label: '启用', icon: <CheckCircleOutlined />, onClick: () => { setLocalSpaces(prev => prev.map(s => s.id === r.id ? { ...s, status: '启用' as const } : s)); message.success(`空间「${r.name}」已启用`); triggerRefresh(); } }]
+            : [{ key: 'freeze', label: '冻结', icon: <StopOutlined />, onClick: () => setConfirmState({ action: '冻结', space: r }) }]
           ),
-          ...(r.status !== '归档' ? [{ key: 'archive', label: '归档', icon: <SettingOutlined />, onClick: () => setConfirmState({ action: '归档', space: r }) }] : []),
+          { key: 'archive', label: '归档', icon: <SettingOutlined />, onClick: () => setConfirmState({ action: '归档', space: r }) },
           { type: 'divider' },
           { key: 'delete', label: '删除', icon: <DeleteOutlined />, danger: true, onClick: () => setConfirmState({ action: '删除', space: r }) },
         ];
@@ -484,7 +492,7 @@ export default function OpsSpacesPage() {
 
   return (
     <div style={{ flex: 1, padding: '16px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <PageHeader title="空间管理" hint="管理平台全部工作空间，包括创建、编辑、状态管理以及审批空间申请" />
+      <PageHeader title="空间管理" hint="管理工作空间和专案空间，包括创建、编辑、状态管理以及审批空间申请" />
 
       <PageTabs
         activeKey={activeTab}
@@ -501,9 +509,8 @@ export default function OpsSpacesPage() {
                 <StatCards
                   items={[
                     { title: '总空间数', value: tab1Spaces.length, color: '#1677ff', onClick: () => { setActiveStatIndex(0); setFilters(prev => ({ ...prev, spaceType: undefined })); } },
-                    { title: '个人空间', value: tab1Spaces.filter(s => s.type === '个人空间').length, color: '#52c41a', onClick: () => { setActiveStatIndex(1); setFilters(prev => ({ ...prev, spaceType: '个人空间' })); } },
-                    { title: '工作空间', value: tab1Spaces.filter(s => s.type === '工作空间').length, color: '#722ed1', onClick: () => { setActiveStatIndex(2); setFilters(prev => ({ ...prev, spaceType: '工作空间' })); } },
-                    { title: '专案空间', value: tab1Spaces.filter(s => s.type === '专案空间').length, color: '#fa8c16', onClick: () => { setActiveStatIndex(3); setFilters(prev => ({ ...prev, spaceType: '专案空间' })); } },
+                    { title: '工作空间', value: tab1Spaces.filter(s => s.type === '工作空间').length, color: '#722ed1', onClick: () => { setActiveStatIndex(1); setFilters(prev => ({ ...prev, spaceType: '工作空间' })); } },
+                    { title: '专案空间', value: tab1Spaces.filter(s => s.type === '专案空间').length, color: '#fa8c16', onClick: () => { setActiveStatIndex(2); setFilters(prev => ({ ...prev, spaceType: '专案空间' })); } },
                   ]}
                   activeIndex={activeStatIndex}
                   colSpan={6}
