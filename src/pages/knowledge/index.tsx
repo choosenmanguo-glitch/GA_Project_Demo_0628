@@ -1,7 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Button,
   Card,
+  Col,
   Descriptions,
   Divider,
   Drawer,
@@ -12,6 +14,7 @@ import {
   InputNumber,
   Modal,
   Pagination,
+  Row,
   Select,
   Space,
   Table,
@@ -25,22 +28,24 @@ import {
   ArrowLeftOutlined,
   BlockOutlined,
   CheckCircleOutlined,
+  CopyOutlined,
   DatabaseOutlined,
+  DeleteOutlined,
   EditOutlined,
-  EllipsisOutlined,
   ExclamationCircleOutlined,
   ExperimentOutlined,
   FileTextOutlined,
   LoadingOutlined,
+  MoreOutlined,
   PlusOutlined,
   QuestionCircleOutlined,
   SettingOutlined,
+  ShoppingOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import IconPicker, { type IconPickerValue } from '@/components/IconPicker';
 import PageHeader from '@/components/PageHeader';
-import StatCards, { type StatCardItem } from '@/components/StatCards';
 import FilterBar from '@/components/FilterBar';
 
 const { Text, Paragraph } = Typography;
@@ -911,6 +916,7 @@ const KnowledgeBaseDetail: React.FC<{
 };
 
 const KnowledgeBasePage: React.FC = () => {
+  const navigate = useNavigate();
   const [kbList, setKbList] = useState<KnowledgeBase[]>(initialKBList);
   const [activeCategory, setActiveCategory] = useState<'all' | KBCategory>('all');
   const [keyword, setKeyword] = useState('');
@@ -931,17 +937,15 @@ const KnowledgeBasePage: React.FC = () => {
   const [externalApiCreateModalOpen, setExternalApiCreateModalOpen] = useState(false);
 
   const pageSize = 8;
+  const cardPageSize = 12;
   const categoryKeys: ('all' | KBCategory)[] = ['all', 'easy', 'professional', 'external'];
 
-  const stats: StatCardItem[] = useMemo(() => {
-    const professional = kbList.filter((item) => item.category === 'professional');
-    return [
-      { title: '知识库总数', value: kbList.length, color: '#1677ff', onClick: () => { setActiveCategory('all'); setPage(1); } },
-      { title: '普通知识库', value: kbList.filter((item) => item.category === 'easy').length, color: '#1677ff', onClick: () => { setActiveCategory('easy'); setPage(1); } },
-      { title: '专业知识库', value: professional.length, color: '#722ed1', onClick: () => { setActiveCategory('professional'); setPage(1); } },
-      { title: '外部知识库', value: kbList.filter((item) => item.category === 'external').length, color: '#fa8c16', onClick: () => { setActiveCategory('external'); setPage(1); } },
-    ];
-  }, [kbList]);
+  const statCards = useMemo(() => [
+    { key: 'all', title: '知识库总数', value: kbList.length, color: '#1677ff', icon: <DatabaseOutlined />, bg: '#e6f4ff' },
+    { key: 'easy', title: '普通知识库', value: kbList.filter(d => d.category === 'easy').length, color: '#1677ff', icon: <FileTextOutlined />, bg: '#e6f4ff' },
+    { key: 'professional', title: '专业知识库', value: kbList.filter(d => d.category === 'professional').length, color: '#722ed1', icon: <BlockOutlined />, bg: '#f9f0ff' },
+    { key: 'external', title: '外部知识库', value: kbList.filter(d => d.category === 'external').length, color: '#fa8c16', icon: <ApiOutlined />, bg: '#fff7e6' },
+  ], [kbList]);
 
   const activeStatIndex = categoryKeys.indexOf(activeCategory);
 
@@ -954,7 +958,9 @@ const KnowledgeBasePage: React.FC = () => {
     });
   }, [activeCategory, kbList, keyword, statusFilter]);
 
-  const pagedList = filteredList.slice((page - 1) * pageSize, page * pageSize);
+  const pagedList = viewMode === 'card'
+    ? filteredList.slice((page - 1) * cardPageSize, page * cardPageSize)
+    : filteredList.slice((page - 1) * pageSize, page * pageSize);
 
   const openCreateByType = (category: KBCategory, subType?: KBSubType) => {
     setTypeModalOpen(false);
@@ -1111,23 +1117,61 @@ const KnowledgeBasePage: React.FC = () => {
       <div style={{ flex: 1, padding: '16px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <PageHeader
           title="知识库"
-          hint="平台统一管理普通知识库、专业知识库和外部知识库。专业知识库适合复杂资料解析、分段治理和高质量检索场景。"
+          hint="管理平台知识库，支持普通知识库、专业知识库和外部知识库，为智能体提供领域知识检索与增强生成能力"
         />
 
-        <StatCards
-          items={stats}
-          activeIndex={activeStatIndex}
-        />
+        <Row gutter={16} style={{ padding: '0 0 12px' }}>
+          {statCards.map((item, idx) => {
+            const isActive = activeStatIndex === idx;
+            const handleClick = () => {
+              setActiveCategory(item.key as 'all' | KBCategory);
+              setPage(1);
+            };
+            return (
+              <Col span={6} key={item.key}>
+                <Card
+                  size="small"
+                  onClick={handleClick}
+                  style={{
+                    borderRadius: 10,
+                    borderColor: isActive ? item.color : '#f0f0f0',
+                    cursor: 'pointer',
+                    background: isActive ? item.bg : '#fff',
+                    boxShadow: isActive ? `0 2px 8px ${item.color}18` : 'none',
+                    transition: 'all .2s',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                      background: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: item.color, fontSize: 20,
+                    }}>
+                      {item.icon}
+                    </div>
+                    <div>
+                      <Text type="secondary" style={{ fontSize: 12 }}>{item.title}</Text>
+                      <div style={{ fontSize: 26, fontWeight: 700, color: item.color, lineHeight: '32px' }}>
+                        {item.value}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </Col>
+            );
+          })}
+        </Row>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 8, overflow: 'hidden' }}>
           <FilterBar
             filterValues={filterValues}
             onFilterChange={(key, value) => {
               setFilterValues((prev) => ({ ...prev, [key]: value }));
-              if (key === 'keyword') setKeyword(value);
+              if (key === 'keyword') { setKeyword(value); setPage(1); }
               if (key === 'status') {
                 setStatusFilter(value === 'true' ? true : value === 'false' ? false : undefined);
                 setPage(1);
+                setActiveCategory('all');
               }
             }}
             placeholder="搜索知识库名称或描述"
@@ -1139,6 +1183,11 @@ const KnowledgeBasePage: React.FC = () => {
             onReset={handleReset}
             onCreate={() => setTypeModalOpen(true)}
             createText="创建知识库"
+            extra={
+              <Button icon={<ShoppingOutlined />} onClick={() => navigate('/dev/resource-square?tab=knowledge')}>
+                从广场获取
+              </Button>
+            }
             viewMode={viewMode}
             onViewModeChange={setViewMode}
           />
@@ -1167,7 +1216,7 @@ const KnowledgeBasePage: React.FC = () => {
                             display: 'flex', flexDirection: 'column', gap: 12,
                             position: 'relative', overflow: 'hidden',
                           }}
-                          onClick={() => setActiveKB(kb)}
+                          onClick={() => setEditingKB(kb)}
                           onMouseEnter={(e) => {
                             const el = e.currentTarget;
                             el.style.borderColor = '#1677ff';
@@ -1216,8 +1265,8 @@ const KnowledgeBasePage: React.FC = () => {
                             </Tag>
                           </div>
 
-                          {/* 描述文本（最多两行） */}
-                          <Text type="secondary" style={{ fontSize: 13, lineHeight: '20px' }} className="line-clamp-2">
+                          {/* 描述文本（最多两行固定高度截断） */}
+                          <Text type="secondary" style={{ fontSize: 13, lineHeight: '20px', height: 40, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                             {kb.desc}
                           </Text>
 
@@ -1227,9 +1276,9 @@ const KnowledgeBasePage: React.FC = () => {
                             <Dropdown
                               menu={{
                                 items: [
-                                  { key: 'edit', label: '编辑', onClick: ({ domEvent }) => { domEvent.stopPropagation(); setEditingKB(kb); } },
-                                  { key: 'toggle', label: kb.active ? '停用' : '启用', onClick: ({ domEvent }) => { domEvent.stopPropagation(); handleToggleActive(kb); } },
-                                  { key: 'delete', label: '删除', danger: true, onClick: ({ domEvent }) => { domEvent.stopPropagation(); handleDelete(kb); } },
+                                  { key: 'edit', icon: <EditOutlined />, label: '编辑', onClick: ({ domEvent }) => { domEvent.stopPropagation(); setEditingKB(kb); } },
+                                  { key: 'copy', icon: <CopyOutlined />, label: '复制', onClick: ({ domEvent }) => { domEvent.stopPropagation(); message.success('已复制'); } },
+                                  { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, onClick: ({ domEvent }) => { domEvent.stopPropagation(); handleDelete(kb); } },
                                 ],
                               }}
                               trigger={['click']}
@@ -1238,7 +1287,7 @@ const KnowledgeBasePage: React.FC = () => {
                               <Button
                                 type="text"
                                 size="small"
-                                icon={<EllipsisOutlined />}
+                                icon={<MoreOutlined />}
                                 style={{ borderRadius: 6, fontSize: 12 }}
                                 onClick={(event) => event.stopPropagation()}
                               />
@@ -1251,9 +1300,11 @@ const KnowledgeBasePage: React.FC = () => {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
                     <Pagination
                       current={page}
-                      pageSize={pageSize}
+                      pageSize={cardPageSize}
                       total={filteredList.length}
+                      showSizeChanger
                       showTotal={(total) => `共 ${total} 个知识库`}
+                      pageSizeOptions={['8', '12', '16', '24']}
                       onChange={setPage}
                     />
                   </div>

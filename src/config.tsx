@@ -20,19 +20,18 @@ import {
   ControlOutlined,
   TeamOutlined,
   DesktopOutlined,
-  ThunderboltOutlined,
   AlertOutlined,
   FileSearchOutlined,
   UserOutlined,
   BankOutlined,
+  AuditOutlined,
+  CloudServerOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import React from 'react';
 
 /** 一级导航模块定义 */
 export const topNavModules = [
-  { key: 'home', label: '首页', icon: React.createElement(HomeOutlined), path: '/home' },
-  { key: 'app-center', label: '应用中心', icon: React.createElement(AppstoreOutlined), path: '/app-center' },
   { key: 'dev', label: '开发中心', icon: React.createElement(CodeOutlined), path: '/dev' },
   { key: 'ops', label: '运维中心', icon: React.createElement(DashboardOutlined), path: '/ops' },
   { key: 'manage', label: '管理中心', icon: React.createElement(SettingOutlined), path: '/manage' },
@@ -57,12 +56,11 @@ export const devSideMenuItems: MenuProps['items'] = [
     label: '组件管理',
     children: [
       { key: '/dev/models', icon: React.createElement(CodeSandboxOutlined), label: '模型' },
-      { key: '/dev/prompts', icon: React.createElement(FileTextOutlined), label: '提示词' },
       { key: '/dev/tools', icon: React.createElement(ToolOutlined), label: '工具' },
       { key: '/dev/connectors', icon: React.createElement(ApiOutlined), label: '连接器' },
-      { key: '/dev/skills', icon: React.createElement(BuildOutlined), label: '技能' },
       { key: '/dev/datasources', icon: React.createElement(DatabaseOutlined), label: '数据连接' },
       { key: '/dev/knowledge', icon: React.createElement(FolderOutlined), label: '知识库' },
+      { key: '/dev/filestore', icon: React.createElement(CloudServerOutlined), label: '文件库' },
     ],
   },
   {
@@ -117,17 +115,15 @@ export const opsSideMenuItems: MenuProps['items'] = [
 
 /** 各模块对应的左侧菜单 */
 export const moduleSideMenus: Record<string, MenuProps['items']> = {
-  home: [
-    { type: 'group', label: '首页', children: [{ key: '/home', icon: React.createElement(HomeOutlined), label: '首页概览' }] },
-  ],
-  'app-center': [
-    { type: 'group', label: '应用中心', children: [{ key: '/app-center', icon: React.createElement(AppstoreOutlined), label: '应用市场' }] },
-  ],
   dev: devSideMenuItems,
   ops: opsSideMenuItems,
   manage: [
     { type: 'group', label: '空间管理', children: [
       { key: '/manage/space-manage', icon: React.createElement(ControlOutlined), label: '空间管理' },
+    ]},
+    { type: 'group', label: '资源管理', children: [
+      { key: '/manage/resource-manage', icon: React.createElement(AppstoreOutlined), label: '资源管理' },
+      { key: '/manage/resource-permissions', icon: React.createElement(AuditOutlined), label: '权限管理' },
     ]},
     { type: 'group', label: '系统管理', children: [
       { key: '/manage/org', icon: React.createElement(BankOutlined), label: '组织管理' },
@@ -139,8 +135,6 @@ export const moduleSideMenus: Record<string, MenuProps['items']> = {
 
 /** 模块 key 到中文名的映射 */
 export const moduleLabelMap: Record<string, string> = {
-  home: '首页',
-  'app-center': '应用中心',
   dev: '开发中心',
   ops: '运维中心',
   manage: '管理中心',

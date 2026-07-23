@@ -1,14 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table, Button, Space, Tag, Tooltip, Drawer, Form, Input, Select, message, Row, Col, Statistic, Typography, Dropdown } from 'antd';
-import { PlusOutlined, ThunderboltOutlined, FileTextOutlined, RocketOutlined, SettingOutlined, FileDoneOutlined, EyeOutlined, EditOutlined, DeleteOutlined, CopyOutlined, SendOutlined, CheckCircleOutlined, ExclamationCircleOutlined, BarChartOutlined, MoreOutlined, ApiOutlined, DatabaseOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Tag, Tooltip, Drawer, Form, Input, Select, message, Row, Col, Typography, Dropdown, Card, Pagination } from 'antd';
+import { PlusOutlined, ThunderboltOutlined, FileTextOutlined, RocketOutlined, SettingOutlined, FileDoneOutlined, EyeOutlined, EditOutlined, DeleteOutlined, CopyOutlined, SendOutlined, CheckCircleOutlined, ExclamationCircleOutlined, BarChartOutlined, MoreOutlined, ApiOutlined, DatabaseOutlined, RobotOutlined, ApartmentOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import PageHeader from '@/components/PageHeader';
 import FilterBar from '@/components/FilterBar';
-import StatCards from '@/components/StatCards';
-import type { StatCardItem } from '@/components/StatCards';
 import type { FilterField } from '@/components/FilterBar';
-import { mockAgents, type AgentItem, type AgentType } from '@/mock/data';
+import { mockAgents, type AgentItem, type AgentType, type PublishType } from '@/mock/data';
 
 const { TextArea } = Input;
 const { Text, Title } = Typography;
@@ -20,9 +18,14 @@ const typeColorMap: Record<AgentType, string> = {
 };
 
 const statusColorMap: Record<string, string> = {
-  '草稿': 'default',
+  '未发布': 'default',
   '已发布': 'green',
-  '已下架': 'orange',
+};
+
+const publishColorMap: Record<PublishType, string> = {
+  '广场': 'blue',
+  '集成': 'purple',
+  'API': 'cyan',
 };
 
 const filterFields: FilterField[] = [
@@ -32,10 +35,11 @@ const filterFields: FilterField[] = [
     { label: '流程智能体', value: '流程智能体' },
     { label: '自主智能体', value: '自主智能体' },
   ]},
-  { type: 'select', key: 'status', placeholder: '状态', width: 100, options: [
-    { label: '已发布', value: '已发布' },
-    { label: '草稿', value: '草稿' },
-    { label: '已下架', value: '已下架' },
+  { type: 'select', key: 'status', placeholder: '发布状态', width: 110, options: [
+    { label: '未发布', value: '未发布' },
+    { label: '广场', value: '广场' },
+    { label: '集成', value: '集成' },
+    { label: 'API', value: 'API' },
   ]},
 ];
 
@@ -44,7 +48,9 @@ export default function AgentManagePage() {
   const [data, setData] = useState<AgentItem[]>(mockAgents);
   const [filters, setFilters] = useState<Record<string, any>>({ keyword: '', type: undefined, status: undefined });
   const [activeStat, setActiveStat] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'card'>('card');
+  const [cardPage, setCardPage] = useState(1);
+  const [cardPageSize, setCardPageSize] = useState(12);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<AgentItem | null>(null);
   const [activePane, setActivePane] = useState<'create' | 'config'>('create');
@@ -53,53 +59,59 @@ export default function AgentManagePage() {
   const [createMethod, setCreateMethod] = useState<'blank' | 'template' | 'import' | null>(null);
   const [form] = Form.useForm();
 
-  const activeStatIndex = activeStat === 'all' ? 0 : activeStat === '已发布' ? 1 : activeStat === '草稿' ? 2 : activeStat === '已下架' ? 3 : -1;
+  const activeStatIndex = activeStat === 'all' ? 0 : activeStat === '标准智能体' ? 1 : activeStat === '流程智能体' ? 2 : activeStat === '自主智能体' ? 3 : -1;
 
   const filteredData = useMemo(() => {
     return data.filter((item) => {
       if (filters.keyword && !item.name.includes(filters.keyword) && !item.description.includes(filters.keyword)) return false;
       if (filters.type && item.type !== filters.type) return false;
-      if (filters.status && item.status !== filters.status) return false;
+      if (filters.status) {
+        if (filters.status === '未发布') {
+          if (item.publishTypes.length > 0) return false;
+        } else {
+          if (!item.publishTypes.includes(filters.status)) return false;
+        }
+      }
       return true;
     });
   }, [data, filters]);
 
-  const statItems: StatCardItem[] = [
-    { title: '智能体总数', value: data.length, color: '#1677ff',
-      onClick: () => { setFilters(prev => ({ ...prev, status: undefined })); setActiveStat('all'); } },
-    { title: '已发布', value: data.filter(d => d.status === '已发布').length, color: '#52c41a',
-      onClick: () => { setFilters(prev => ({ ...prev, status: '已发布' })); setActiveStat('已发布'); } },
-    { title: '草稿', value: data.filter(d => d.status === '草稿').length, color: '#faad14',
-      onClick: () => { setFilters(prev => ({ ...prev, status: '草稿' })); setActiveStat('草稿'); } },
-    { title: '已下架', value: data.filter(d => d.status === '已下架').length, color: '#bfbfbf',
-      onClick: () => { setFilters(prev => ({ ...prev, status: '已下架' })); setActiveStat('已下架'); } },
+  const statCards = [
+    { key: 'all', title: '智能体总数', value: data.length, color: '#1677ff', icon: <RobotOutlined />, bg: '#e6f4ff' },
+    { key: '标准智能体', title: '标准智能体', value: data.filter(d => d.type === '标准智能体').length, color: '#1677ff', icon: <FileTextOutlined />, bg: '#e6f4ff' },
+    { key: '流程智能体', title: '流程智能体', value: data.filter(d => d.type === '流程智能体').length, color: '#722ed1', icon: <ApartmentOutlined />, bg: '#f9f0ff' },
+    { key: '自主智能体', title: '自主智能体', value: data.filter(d => d.type === '自主智能体').length, color: '#2f54eb', icon: <ThunderboltOutlined />, bg: '#f0f5ff' },
   ];
 
   const tableColumns: ColumnsType<AgentItem> = useMemo(() => [
-    { title: '智能体名称', dataIndex: 'name', width: 200, render: (name, r) => (
+    { title: '智能体名称', dataIndex: 'name', width: 180, render: (name) => (
       <Space>
         <div style={{ width: 32, height: 32, borderRadius: 8, background: `linear-gradient(135deg, #1677ff, #69b1ff)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14 }}>{name.charAt(0)}</div>
-        <div>
-          <div style={{ fontWeight: 500, marginBottom: 2 }}>{name}</div>
-          <Text type="secondary" style={{ fontSize: 12 }}>{r.description.slice(0, 24)}{r.description.length > 24 ? '…' : ''}</Text>
-        </div>
+        <span style={{ fontWeight: 500 }}>{name}</span>
       </Space>
     )},
-    { title: '类型', dataIndex: 'type', width: 120, render: (t: AgentType) => <Tag color={typeColorMap[t]}>{t}</Tag> },
+    { title: '描述', dataIndex: 'description', ellipsis: true, width: 200 },
+    { title: '类型', width: 160, render: (_: unknown, r: AgentItem) => <Tag color={typeColorMap[r.type]}>{r.type}{r.subType !== r.type ? `-${r.subType}` : ''}</Tag> },
     { title: '绑定模型', dataIndex: 'modelName', width: 140 },
-    { title: '状态', dataIndex: 'status', width: 90, render: (s: string) => <Tag color={statusColorMap[s]}>{s}</Tag> },
-    { title: '调用次数', dataIndex: 'callCount', width: 100, render: (n: number) => n.toLocaleString(), sorter: (a, b) => a.callCount - b.callCount },
-    { title: '成功率', dataIndex: 'successRate', width: 90, render: (n: number) => <span style={{ color: n >= 95 ? '#52c41a' : n >= 85 ? '#faad14' : '#ff4d4f' }}>{n}%</span>, sorter: (a, b) => a.successRate - b.successRate },
+    { title: '发布状态', width: 200, render: (_: unknown, r: AgentItem) => {
+      if (r.status === '未发布') return <Tag color="default">未发布</Tag>;
+      return (
+        <Space size={4} wrap>
+          {r.publishTypes.map((pt) => (
+            <Tag key={pt} color={publishColorMap[pt]} style={{ margin: 0, borderRadius: 4 }}>{pt}</Tag>
+          ))}
+        </Space>
+      );
+    }},
     { title: '创建人', dataIndex: 'creator', width: 100 },
     { title: '更新时间', dataIndex: 'updateTime', width: 110 },
     { title: '操作', width: 220, render: (_, r) => {
       const moreItems = [
-        { key: 'publish', icon: <RocketOutlined />, label: '发布', onClick: () => message.success('已发布') },
         { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, onClick: () => message.success('已删除') },
       ];
       return (
         <Space size={0}>
-          <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => setViewingAgent(r)}>查看</Button>
+          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => setViewingAgent(r)}>编辑</Button>
           <Button type="link" size="small" icon={<EditOutlined />} onClick={() => navigate('/dev/agent-config')}>配置</Button>
           <Button type="link" size="small" icon={<CopyOutlined />}>复制</Button>
           <Dropdown menu={{
@@ -127,6 +139,7 @@ export default function AgentManagePage() {
   // ──── Card Component ────
   const AgentCard: React.FC<{ agent: AgentItem; onConfig: () => void; onView: () => void }> = ({ agent, onConfig, onView }) => (
     <div
+      onClick={onConfig}
       style={{
         background: '#fff', borderRadius: 10, border: '1px solid #f0f0f0',
         padding: '20px 20px 16px', cursor: 'pointer',
@@ -163,25 +176,20 @@ export default function AgentManagePage() {
               {agent.name}
             </div>
             <Space size={4}>
-              <Tag color={typeColorMap[agent.type]} style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{agent.type}</Tag>
-              <Tag color={statusColorMap[agent.status]} style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{agent.status}</Tag>
+              <Tag color={typeColorMap[agent.type]} style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{agent.type}{agent.subType !== agent.type ? `-${agent.subType}` : ''}</Tag>
+              {agent.status === '未发布'
+                ? <Tag color="default" style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>未发布</Tag>
+                : agent.publishTypes.map((pt) => (
+                    <Tag key={pt} color={publishColorMap[pt]} style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{pt}</Tag>
+                  ))
+              }
             </Space>
           </div>
         </div>
       </div>
-      <Text type="secondary" style={{ fontSize: 13, lineHeight: '20px' }} className="line-clamp-2">
+      <Text type="secondary" style={{ fontSize: 13, lineHeight: '20px', height: 40, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
         {agent.description}
       </Text>
-      <div style={{ background: '#fafafa', borderRadius: 8, padding: '10px 14px', display: 'flex', flexWrap: 'wrap', gap: '6px 16px' }}>
-        <span style={{ fontSize: 12, color: '#999' }}><span style={{ fontWeight: 600, color: '#666' }}>模型</span> {agent.modelName}</span>
-        <span style={{ fontSize: 12, color: '#999' }}><span style={{ fontWeight: 600, color: '#666' }}>调用次数</span> {agent.callCount.toLocaleString()}</span>
-        {agent.successRate != null && (
-          <span style={{ fontSize: 12, color: agent.successRate >= 95 ? '#52c41a' : '#999' }}>
-            <span style={{ fontWeight: 600, color: '#666' }}>成功率</span> {agent.successRate}%
-          </span>
-        )}
-        <span style={{ fontSize: 12, color: '#999' }}><span style={{ fontWeight: 600, color: '#666' }}>空间</span> {agent.spaceName}</span>
-      </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
         <Text type="secondary" style={{ fontSize: 11 }}>{agent.creator} · {agent.updateTime}</Text>
         <Space size={4}>
@@ -194,15 +202,24 @@ export default function AgentManagePage() {
           >
             配置
           </Button>
-          <Button
-            type="text"
-            size="small"
-            icon={<EyeOutlined />}
-            style={{ borderRadius: 6, fontSize: 12 }}
-            onClick={(e) => { e.stopPropagation(); onView(); }}
+          <Dropdown
+            menu={{
+              items: [
+                { key: 'view', icon: <EyeOutlined />, label: '编辑', onClick: ({ domEvent }) => { domEvent.stopPropagation(); onView(); } },
+                { key: 'copy', icon: <CopyOutlined />, label: '复制', onClick: ({ domEvent }) => { domEvent.stopPropagation(); message.success('已复制'); } },
+                { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, onClick: ({ domEvent }) => { domEvent.stopPropagation(); message.success('已删除'); } },
+              ],
+            }}
+            trigger={['click']}
           >
-            查看
-          </Button>
+            <Button
+              type="text"
+              size="small"
+              icon={<MoreOutlined />}
+              style={{ borderRadius: 6, fontSize: 12 }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Dropdown>
         </Space>
       </div>
     </div>
@@ -217,34 +234,92 @@ export default function AgentManagePage() {
 
   return (
     <div style={{ flex: 1, padding: '16px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <PageHeader title="智能体管理" hint="管理已创建的智能体，查看运行状态、调用数据并进行版本管理" />
-        <StatCards items={statItems} activeIndex={activeStatIndex} />
+        <PageHeader title="智能体管理" hint="管理已创建的智能体，支持列表和卡片两种视图，可按类型和发布状态筛选" />
+        <Row gutter={16} style={{ padding: '0 0 12px' }}>
+          {statCards.map((item, idx) => {
+            const isActive = activeStatIndex === idx;
+            const handleClick = () => {
+              if (item.key === 'all') {
+                setFilters(prev => ({ ...prev, type: undefined }));
+                setActiveStat('all');
+              } else {
+                setFilters(prev => ({ ...prev, type: item.key }));
+                setActiveStat(item.key);
+              }
+            };
+            return (
+              <Col span={6} key={item.key}>
+                <Card
+                  size="small"
+                  onClick={handleClick}
+                  style={{
+                    borderRadius: 10,
+                    borderColor: isActive ? item.color : '#f0f0f0',
+                    cursor: 'pointer',
+                    background: isActive ? item.bg : '#fff',
+                    boxShadow: isActive ? `0 2px 8px ${item.color}18` : 'none',
+                    transition: 'all .2s',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                      background: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: item.color, fontSize: 20,
+                    }}>
+                      {item.icon}
+                    </div>
+                    <div>
+                      <Text type="secondary" style={{ fontSize: 12 }}>{item.title}</Text>
+                      <div style={{ fontSize: 26, fontWeight: 700, color: item.color, lineHeight: '32px' }}>
+                        {item.value}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </Col>
+            );
+          })}
+        </Row>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 8, overflow: 'hidden' }}>
           <FilterBar
             filters={filterFields}
             filterValues={filters}
-            onFilterChange={(key, value) => { setFilters((prev) => ({ ...prev, [key]: value })); if (key === 'status') setActiveStat(null); }}
+            onFilterChange={(key, value) => { setFilters((prev) => ({ ...prev, [key]: value })); setCardPage(1); if (key === 'status' || key === 'type') setActiveStat(null); }}
             onSearch={() => {}}
-            onReset={() => { setFilters({ keyword: '', type: undefined, status: undefined }); setActiveStat(null); }}
+            onReset={() => { setFilters({ keyword: '', type: undefined, status: undefined }); setActiveStat(null); setCardPage(1); }}
             viewMode={viewMode}
             onViewModeChange={(mode) => setViewMode(mode)}
             onCreate={() => navigate('/dev/agent-build')}
             createText="创建智能体"
           />
-          <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px' }}>
+          <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px', display: 'flex', flexDirection: 'column' }}>
             {viewMode === 'table' ? (
               <Table rowKey="id" columns={tableColumns} dataSource={filteredData} size="middle" pagination={{ defaultPageSize: 10, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }} style={{ marginTop: 12 }} locale={{ emptyText: '暂无智能体' }} />
             ) : (
-              <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
-                {filteredData.map((item) => (
-                  <AgentCard
-                    key={item.id}
-                    agent={item}
-                    onConfig={() => navigate('/dev/agent-config')}
-                    onView={() => setViewingAgent(item)}
+              <>
+                <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14, flex: 1, alignContent: 'start' }}>
+                  {filteredData.slice((cardPage - 1) * cardPageSize, cardPage * cardPageSize).map((item) => (
+                    <AgentCard
+                      key={item.id}
+                      agent={item}
+                      onConfig={() => navigate('/dev/agent-config')}
+                      onView={() => setViewingAgent(item)}
+                    />
+                  ))}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 0 0' }}>
+                  <Pagination
+                    current={cardPage}
+                    pageSize={cardPageSize}
+                    total={filteredData.length}
+                    showSizeChanger
+                    showTotal={(total) => `共 ${total} 条`}
+                    pageSizeOptions={['8', '12', '16', '24']}
+                    onChange={(page, size) => { setCardPage(page); setCardPageSize(size); }}
                   />
-                ))}
-              </div>
+                </div>
+              </>
             )}
           </div>
       </div>
@@ -353,7 +428,12 @@ export default function AgentManagePage() {
               <div style={{ width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg, #1677ff, #69b1ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 24, margin: '0 auto 12px' }}>{viewingAgent.name.charAt(0)}</div>
               <Title level={4} style={{ margin: 0 }}>{viewingAgent.name}</Title>
               <Tag color={typeColorMap[viewingAgent.type]} style={{ marginTop: 8 }}>{viewingAgent.type}</Tag>
-              <Tag color={statusColorMap[viewingAgent.status]}>{viewingAgent.status}</Tag>
+              {viewingAgent.status === '未发布'
+                ? <Tag color="default" style={{ marginTop: 8 }}>未发布</Tag>
+                : viewingAgent.publishTypes.map((pt) => (
+                    <Tag key={pt} color={publishColorMap[pt]} style={{ marginTop: 8 }}>{pt}</Tag>
+                  ))
+              }
             </div>
             <Text style={{ display: 'block', marginBottom: 24, textAlign: 'center' }}>{viewingAgent.description}</Text>
             <Row gutter={[16, 16]}>
@@ -365,13 +445,6 @@ export default function AgentManagePage() {
                 <Col span={12} key={item.label}><div style={{ marginBottom: 8 }}><Text type="secondary" style={{ fontSize: 12 }}>{item.label}</Text><div style={{ fontSize: 14, fontWeight: 500 }}>{item.value}</div></div></Col>
               ))}
             </Row>
-            <div style={{ marginTop: 20, padding: '16px', background: '#fafafa', borderRadius: 8 }}>
-              <Row gutter={16}>
-                <Col span={8}><Statistic title="调用次数" value={viewingAgent.callCount} formatter={v => (v as number).toLocaleString()} /></Col>
-                <Col span={8}><Statistic title="成功率" value={viewingAgent.successRate} suffix="%" valueStyle={{ color: viewingAgent.successRate >= 95 ? '#52c41a' : '#faad14' }} /></Col>
-                <Col span={8}><Statistic title="活跃用户" value={viewingAgent.activeUsers} /></Col>
-              </Row>
-            </div>
           </div>
         )}
       </Drawer>

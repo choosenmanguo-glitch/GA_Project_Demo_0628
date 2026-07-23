@@ -304,7 +304,7 @@ export default function SpaceStatsPage() {
                   <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 2 }}>{agent.name}</div>
                   <Space size={4}>
                     <Tag style={{ fontSize: 11, lineHeight: '18px' }}>{agent.type}</Tag>
-                    <Tag color={agent.status === '已发布' ? 'green' : agent.status === '草稿' ? 'default' : 'red'} style={{ fontSize: 11, lineHeight: '18px' }}>
+                    <Tag color={agent.status === '未发布' ? 'default' : 'blue'} style={{ fontSize: 11, lineHeight: '18px' }}>
                       {agent.status}
                     </Tag>
                   </Space>

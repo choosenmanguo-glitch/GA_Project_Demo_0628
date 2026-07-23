@@ -1,9 +1,11 @@
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ConfigProvider } from 'antd';
+import { App as AntdApp, ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import MasterLayout from './layouts/AppLayout';
 import { TabsProvider } from './contexts/TabsContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
+import { ResourceCenterProvider } from './features/resource-center/ResourceCenterContext';
 import InitPersonalSpacePage from './pages/InitPersonalSpace';
 import ModelsPage from './pages/models';
 import PromptsPage from './pages/prompts';
@@ -24,9 +26,18 @@ import AgentEvalPage from './pages/agent-eval';
 import AgentTemplateMarket from './pages/agent-template';
 import AgentConfigPage from './pages/agent-config';
 import PlaceholderPage from './pages/Placeholder';
-import ResourceSquarePage from './pages/resource-square';
-import MyResourcesPage from './pages/my-resources';
 import KnowledgeBasePage from './pages/knowledge';
+import FileStorePage from './pages/filestore';
+import FileStoreDetailPage from './pages/filestore-detail';
+
+const ResourceSquarePage = lazy(() => import('./pages/resource-square'));
+const MyResourcesPage = lazy(() => import('./pages/my-resources'));
+const ResourceManagePage = lazy(() => import('./pages/resource-manage'));
+const ResourcePermissionsPage = lazy(() => import('./pages/resource-permissions'));
+
+function ResourceRoute({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<div style={{ padding: 32, color: '#7a8494' }}>资源中心加载中...</div>}>{children}</Suspense>;
+}
 
 /** 开发中心守卫：未初始化个人空间时重定向到 /dev/init */
 function DevGuard({ children }: { children: React.ReactNode }) {
@@ -41,6 +52,7 @@ function DevGuard({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   return (
     <WorkspaceProvider>
+    <ResourceCenterProvider>
     <TabsProvider>
     <MasterLayout>
     <Routes>
@@ -61,8 +73,8 @@ function AppRoutes() {
         <Route path="/dev/agent-config" element={<DevGuard><AgentConfigPage /></DevGuard>} />
         <Route path="/dev/agent-manage" element={<DevGuard><AgentManagePage /></DevGuard>} />
         <Route path="/dev/agent-eval" element={<DevGuard><AgentEvalPage /></DevGuard>} />
-        <Route path="/dev/resource-square" element={<DevGuard><ResourceSquarePage /></DevGuard>} />
-        <Route path="/dev/my-resources" element={<DevGuard><MyResourcesPage /></DevGuard>} />
+        <Route path="/dev/resource-square" element={<DevGuard><ResourceRoute><ResourceSquarePage /></ResourceRoute></DevGuard>} />
+        <Route path="/dev/my-resources" element={<DevGuard><ResourceRoute><MyResourcesPage /></ResourceRoute></DevGuard>} />
         <Route path="/dev/models" element={<DevGuard><ModelsPage /></DevGuard>} />
         <Route path="/dev/prompts" element={<DevGuard><PromptsPage /></DevGuard>} />
         <Route path="/dev/tools" element={<DevGuard><ToolsPage /></DevGuard>} />
@@ -70,6 +82,8 @@ function AppRoutes() {
         <Route path="/dev/skills" element={<DevGuard><PlaceholderPage title="技能管理" description="可复用技能单元管理" /></DevGuard>} />
         <Route path="/dev/datasources" element={<DevGuard><DataSourcesPage /></DevGuard>} />
         <Route path="/dev/knowledge" element={<DevGuard><KnowledgeBasePage /></DevGuard>} />
+        <Route path="/dev/filestore/:id" element={<DevGuard><FileStoreDetailPage /></DevGuard>} />
+        <Route path="/dev/filestore" element={<DevGuard><FileStorePage /></DevGuard>} />
         <Route path="/dev/stats" element={<DevGuard><SpaceStatsPage /></DevGuard>} />
         <Route path="/dev/space-manage" element={<DevGuard><SpaceManagePage /></DevGuard>} />
 
@@ -89,12 +103,15 @@ function AppRoutes() {
         {/* ===== 管理中心 ===== */}
         <Route path="/manage" element={<Navigate to="/manage/space-manage" replace />} />
         <Route path="/manage/space-manage" element={<OpsSpacesPage />} />
+        <Route path="/manage/resource-manage" element={<ResourceRoute><ResourceManagePage /></ResourceRoute>} />
+        <Route path="/manage/resource-permissions" element={<ResourceRoute><ResourcePermissionsPage /></ResourceRoute>} />
         <Route path="/manage/org" element={<PlaceholderPage title="组织管理" description="组织架构与部门管理" />} />
         <Route path="/manage/users" element={<PlaceholderPage title="用户管理" description="平台用户账号与权限管理" />} />
         <Route path="/manage/roles" element={<PlaceholderPage title="角色管理" description="角色定义与岗位权限配置" />} />
       </Routes>
     </MasterLayout>
     </TabsProvider>
+    </ResourceCenterProvider>
     </WorkspaceProvider>
   );
 }
@@ -111,9 +128,11 @@ export default function App() {
         },
       }}
     >
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <AntdApp>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AntdApp>
     </ConfigProvider>
   );
 }

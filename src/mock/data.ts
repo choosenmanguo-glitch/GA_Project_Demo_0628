@@ -9,6 +9,8 @@ export interface ModelItem {
   supplier: string;
   deployType: '公网' | '本地' | '私有云';
   status: '启用' | '停用';
+  source: '自定义' | '广场资源';
+  creator: string;
   createTime: string;
   updateTime: string;
   description: string;
@@ -20,14 +22,36 @@ export interface ModelItem {
 }
 
 export const mockModels: ModelItem[] = [
-  { id: '1', displayName: 'DeepSeek-Chat', modelName: 'deepseek-chat', modelType: '通用大模型', supplier: 'DeepSeek', deployType: '公网', status: '启用', createTime: '2026-01-15', updateTime: '2026-06-20', description: 'DeepSeek 对话模型，支持长上下文理解与多轮对话', endpoint: 'https://api.deepseek.com/v1', maxTokens: 32768, temperature: 0.7 },
-  { id: '2', displayName: 'DeepSeek-Reasoner', modelName: 'deepseek-reasoner', modelType: '推理模型', supplier: 'DeepSeek', deployType: '公网', status: '启用', createTime: '2026-02-10', updateTime: '2026-06-18', description: 'DeepSeek 推理模型，擅长复杂逻辑推理与数学问题', endpoint: 'https://api.deepseek.com/v1', maxTokens: 32768, temperature: 0.3 },
-  { id: '3', displayName: 'Qwen-72B-Chat', modelName: 'Qwen-72B-Chat-Int4', modelType: '通用大模型', supplier: '阿里云', deployType: '本地', status: '启用', createTime: '2026-01-20', updateTime: '2026-05-30', description: '通义千问 72B 量化版，本地私有化部署，保障数据安全', maxTokens: 8192, temperature: 0.7 },
-  { id: '4', displayName: 'GPT-4o', modelName: 'gpt-4o', modelType: '多模态模型', supplier: 'OpenAI', deployType: '公网', status: '启用', createTime: '2026-03-01', updateTime: '2026-06-22', description: 'OpenAI 多模态旗舰模型，支持文本、图像、音频输入', endpoint: 'https://api.openai.com/v1', maxTokens: 128000, temperature: 0.7 },
-  { id: '5', displayName: 'BGE-M3', modelName: 'bge-m3', modelType: '向量化模型', supplier: 'BAAI', deployType: '本地', status: '启用', createTime: '2026-02-28', updateTime: '2026-04-15', description: 'BGE-M3 多语言向量化模型，用于知识库文档嵌入', maxTokens: 8192 },
-  { id: '6', displayName: 'BGE-Reranker-v2', modelName: 'bge-reranker-v2-m3', modelType: '重排序模型', supplier: 'BAAI', deployType: '本地', status: '启用', createTime: '2026-03-15', updateTime: '2026-05-10', description: 'BGE 重排序模型，用于检索结果精排', maxTokens: 8192 },
-  { id: '7', displayName: 'GLM-4-Flash', modelName: 'glm-4-flash', modelType: '通用大模型', supplier: '智谱AI', deployType: '公网', status: '停用', createTime: '2026-04-01', updateTime: '2026-06-01', description: '智谱 GLM-4 Flash 快速推理版，适合简单问答场景', endpoint: 'https://open.bigmodel.cn/api/paas/v4', maxTokens: 128000, temperature: 0.7 },
-  { id: '8', displayName: 'Whisper-Large-v3', modelName: 'whisper-large-v3', modelType: '语音识别', supplier: 'OpenAI', deployType: '本地', status: '启用', createTime: '2026-05-01', updateTime: '2026-06-10', description: 'OpenAI Whisper 语音识别模型，支持多语言语音转文字', maxTokens: 30000 },
+  { id: '1', displayName: 'DeepSeek-Chat', modelName: 'deepseek-chat', modelType: '通用大模型', supplier: 'DeepSeek', deployType: '公网', status: '启用', source: '自定义', creator: '管理员', createTime: '2026-01-15', updateTime: '2026-06-20', description: 'DeepSeek 对话模型，支持长上下文理解与多轮对话', endpoint: 'https://api.deepseek.com/v1', maxTokens: 32768, temperature: 0.7 },
+  { id: '2', displayName: 'DeepSeek-Reasoner', modelName: 'deepseek-reasoner', modelType: '通用大模型', supplier: 'DeepSeek', deployType: '公网', status: '启用', source: '自定义', creator: '管理员', createTime: '2026-02-10', updateTime: '2026-06-18', description: 'DeepSeek 推理模型，擅长复杂逻辑推理与数学问题', endpoint: 'https://api.deepseek.com/v1', maxTokens: 32768, temperature: 0.3 },
+  { id: '3', displayName: 'Qwen-72B-Chat', modelName: 'Qwen-72B-Chat-Int4', modelType: '通用大模型', supplier: '阿里云', deployType: '本地', status: '启用', source: '自定义', creator: '张警官', createTime: '2026-01-20', updateTime: '2026-05-30', description: '通义千问 72B 量化版，本地私有化部署，保障数据安全', maxTokens: 8192, temperature: 0.7 },
+  { id: '4', displayName: 'GPT-4o', modelName: 'gpt-4o', modelType: '通用大模型', supplier: 'OpenAI', deployType: '公网', status: '启用', source: '广场资源', creator: '管理员', createTime: '2026-03-01', updateTime: '2026-06-22', description: 'OpenAI 多模态旗舰模型，支持文本、图像、音频输入', endpoint: 'https://api.openai.com/v1', maxTokens: 128000, temperature: 0.7 },
+  { id: '5', displayName: 'BGE-M3', modelName: 'bge-m3', modelType: '向量化模型', supplier: 'BAAI', deployType: '本地', status: '启用', source: '广场资源', creator: '管理员', createTime: '2026-02-28', updateTime: '2026-04-15', description: 'BGE-M3 多语言向量化模型，用于知识库文档嵌入', maxTokens: 8192 },
+  { id: '6', displayName: 'BGE-Reranker-v2', modelName: 'bge-reranker-v2-m3', modelType: 'ReRank模型', supplier: 'BAAI', deployType: '本地', status: '启用', source: '广场资源', creator: '管理员', createTime: '2026-03-15', updateTime: '2026-05-10', description: 'BGE 重排序模型，用于检索结果精排', maxTokens: 8192 },
+  { id: '7', displayName: 'GLM-4-Flash', modelName: 'glm-4-flash', modelType: '通用大模型', supplier: '智谱AI', deployType: '公网', status: '停用', source: '广场资源', creator: '管理员', createTime: '2026-04-01', updateTime: '2026-06-01', description: '智谱 GLM-4 Flash 快速推理版，适合简单问答场景', endpoint: 'https://open.bigmodel.cn/api/paas/v4', maxTokens: 128000, temperature: 0.7 },
+  { id: '8', displayName: 'Whisper-Large-v3', modelName: 'whisper-large-v3', modelType: '通用大模型', supplier: 'OpenAI', deployType: '本地', status: '启用', source: '自定义', creator: '李警官', createTime: '2026-05-01', updateTime: '2026-06-10', description: 'OpenAI Whisper 语音识别模型，支持多语言语音转文字', maxTokens: 30000 },
+];
+
+// ==================== 模型源管理 ====================
+export type ModelSourceDeployType = '本地' | '公网';
+
+export interface ModelSourceItem {
+  id: string;
+  name: string;
+  deployType: ModelSourceDeployType;
+  baseUrl: string;
+  apiKey: string;
+  remark: string;
+  creator: string;
+  createTime: string;
+  updateTime: string;
+}
+
+export const mockModelSources: ModelSourceItem[] = [
+  { id: 'ms-1', name: 'DeepSeek 官方源', deployType: '公网', baseUrl: 'https://api.deepseek.com/v1', apiKey: 'sk-****abc123', remark: 'DeepSeek 官方 API 接入', creator: '管理员', createTime: '2026-01-10', updateTime: '2026-06-20' },
+  { id: 'ms-2', name: '阿里云百炼平台', deployType: '公网', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', apiKey: 'sk-****def456', remark: '阿里云模型服务平台', creator: '管理员', createTime: '2026-02-15', updateTime: '2026-06-18' },
+  { id: 'ms-3', name: '本地 GPU 集群', deployType: '本地', baseUrl: 'http://10.0.1.100:8080/v1', apiKey: 'local-****ghi789', remark: '本地 vLLM 推理服务', creator: '张警官', createTime: '2026-03-20', updateTime: '2026-06-22' },
+  { id: 'ms-4', name: '智谱 AI 开放平台', deployType: '公网', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', apiKey: 'sk-****jkl012', remark: '智谱 GLM 系列模型 API', creator: '管理员', createTime: '2026-04-01', updateTime: '2026-06-15' },
 ];
 
 // ==================== 提示词管理 ====================
@@ -54,13 +78,15 @@ export const mockPrompts: PromptTemplate[] = [
 ];
 
 // ==================== 工具管理 ====================
+export type ToolSource = '默认' | '自定义' | '广场资源';
+
 export interface ToolItem {
   id: string;
   name: string;
   type: '插件' | 'API' | '工作流';
   provider: string;
   description: string;
-  status: '启用' | '停用';
+  source: ToolSource;
   callCount: number;
   successRate: number;
   createTime: string;
@@ -69,54 +95,54 @@ export interface ToolItem {
 }
 
 export const mockTools: ToolItem[] = [
-  { id: '1', name: '人口信息查询', type: 'API', provider: '全国人口基础信息库', description: '根据身份证号、姓名等要素检索人员基本信息、户籍信息、居住证信息', status: '启用', callCount: 12580, successRate: 99.2, createTime: '2026-01-10', author: '官方插件', params: [{ name: 'idCard', type: 'string', required: true, description: '身份证号' }, { name: 'name', type: 'string', required: false, description: '姓名' }] },
-  { id: '2', name: '车辆轨迹查询', type: 'API', provider: '交警缉查布控系统', description: '基于车牌号查询辖区卡口过车记录和通行轨迹聚合分析', status: '启用', callCount: 8960, successRate: 98.5, createTime: '2026-01-15', author: '官方插件', params: [{ name: 'plateNumber', type: 'string', required: true, description: '车牌号' }, { name: 'startTime', type: 'string', required: true, description: '开始时间' }, { name: 'endTime', type: 'string', required: true, description: '结束时间' }] },
-  { id: '3', name: '人像比对', type: '插件', provider: '人像多维比对引擎', description: '集成多种人脸识别算法，提供照片比对、视频流人脸检索及身份确认服务', status: '启用', callCount: 4520, successRate: 95.8, createTime: '2026-02-01', author: '第三方接入', params: [{ name: 'imageBase64', type: 'string', required: true, description: '人脸照片Base64编码' }, { name: 'threshold', type: 'number', required: false, description: '相似度阈值(0-1)' }] },
-  { id: '4', name: '涉诈基站分析', type: '工作流', provider: '反诈中心', description: '解析电信诈骗嫌疑号码的基站漫游数据，推断作案窝点和移动轨迹', status: '启用', callCount: 2340, successRate: 94.1, createTime: '2026-03-10', author: '反诈中心', params: [{ name: 'phoneNumber', type: 'string', required: true, description: '嫌疑手机号' }, { name: 'timeRange', type: 'string', required: true, description: '查询时间范围' }] },
-  { id: '5', name: '文书智能解析', type: '插件', provider: '文书解析引擎', description: '自动解析PDF/Word格式的法律文书、报案材料，提取结构化信息', status: '启用', callCount: 7890, successRate: 97.3, createTime: '2026-01-20', author: '官方插件', params: [{ name: 'fileUrl', type: 'string', required: true, description: '文件URL或本地路径' }, { name: 'docType', type: 'string', required: false, description: '文书类型' }] },
-  { id: '6', name: '关系图谱生成', type: '插件', provider: '图谱分析引擎', description: '基于人员、通话、资金流水数据自动生成多维关系拓扑图', status: '启用', callCount: 3150, successRate: 96.7, createTime: '2026-02-15', author: '官方插件' },
-  { id: '7', name: '警情统计分析', type: '工作流', provider: '指挥中心', description: '按辖区、时段、警情类别统计发案趋势并生成可视化图表', status: '启用', callCount: 5670, successRate: 99.0, createTime: '2026-04-01', author: '指挥中心' },
-  { id: '8', name: '图像识别', type: '插件', provider: '图侦中心', description: '对监控截图和现场照片进行目标检测、行为识别和场景分类', status: '停用', callCount: 890, successRate: 88.5, createTime: '2026-03-20', author: '图侦中心' },
+  { id: '1', name: '人口信息查询', type: 'API', provider: '全国人口基础信息库', description: '根据身份证号、姓名等要素检索人员基本信息、户籍信息、居住证信息', source: '自定义', callCount: 12580, successRate: 99.2, createTime: '2026-01-10', author: '系统初始化', params: [{ name: 'idCard', type: 'string', required: true, description: '身份证号' }, { name: 'name', type: 'string', required: false, description: '姓名' }] },
+  { id: '2', name: '车辆轨迹查询', type: 'API', provider: '交警缉查布控系统', description: '基于车牌号查询辖区卡口过车记录和通行轨迹聚合分析', source: '自定义', callCount: 8960, successRate: 98.5, createTime: '2026-01-15', author: '系统初始化', params: [{ name: 'plateNumber', type: 'string', required: true, description: '车牌号' }, { name: 'startTime', type: 'string', required: true, description: '开始时间' }, { name: 'endTime', type: 'string', required: true, description: '结束时间' }] },
+  { id: '3', name: '人像比对', type: '插件', provider: '人像多维比对引擎', description: '集成多种人脸识别算法，提供照片比对、视频流人脸检索及身份确认服务', source: '自定义', callCount: 4520, successRate: 95.8, createTime: '2026-02-01', author: '张警官', params: [{ name: 'imageBase64', type: 'string', required: true, description: '人脸照片Base64编码' }, { name: 'threshold', type: 'number', required: false, description: '相似度阈值(0-1)' }] },
+  { id: '4', name: '涉诈基站分析', type: '工作流', provider: '反诈中心', description: '解析电信诈骗嫌疑号码的基站漫游数据，推断作案窝点和移动轨迹', source: '广场资源', callCount: 2340, successRate: 94.1, createTime: '2026-03-10', author: '资源广场', params: [{ name: 'phoneNumber', type: 'string', required: true, description: '嫌疑手机号' }, { name: 'timeRange', type: 'string', required: true, description: '查询时间范围' }] },
+  { id: '5', name: '文书智能解析', type: '插件', provider: '文书解析引擎', description: '自动解析PDF/Word格式的法律文书、报案材料，提取结构化信息', source: '默认', callCount: 7890, successRate: 97.3, createTime: '2026-01-20', author: '系统初始化', params: [{ name: 'fileUrl', type: 'string', required: true, description: '文件URL或本地路径' }, { name: 'docType', type: 'string', required: false, description: '文书类型' }] },
+  { id: '6', name: '关系图谱生成', type: '插件', provider: '图谱分析引擎', description: '基于人员、通话、资金流水数据自动生成多维关系拓扑图', source: '广场资源', callCount: 3150, successRate: 96.7, createTime: '2026-02-15', author: '资源广场' },
+  { id: '7', name: '警情统计分析', type: '工作流', provider: '指挥中心', description: '按辖区、时段、警情类别统计发案趋势并生成可视化图表', source: '自定义', callCount: 5670, successRate: 99.0, createTime: '2026-04-01', author: '李警官' },
+  { id: '8', name: '图像识别', type: '插件', provider: '图侦中心', description: '对监控截图和现场照片进行目标检测、行为识别和场景分类', source: '自定义', callCount: 890, successRate: 88.5, createTime: '2026-03-20', author: '王警官' },
 ];
 
-// ==================== 连接器（MCP）管理 ====================
-export type ConnectorType = 'SSE' | 'stdio';
-export type ConnectorStatus = '已连接' | '连接异常' | '离线';
+// ==================== 连接器管理 ====================
+export type ConnectorSource = '自定义' | '广场资源';
+export type ConnectorAuthStatus = '已授权' | '未授权';
 
 export interface ConnectorItem {
   id: string;
   name: string;
-  description: string;
-  type: ConnectorType;
-  status: ConnectorStatus;
-  endpoint?: string;
-  command?: string;
+  serverKey: string;
+  authStatus: ConnectorAuthStatus;
+  source: ConnectorSource;
   toolCount: number;
-  callCount: number;
-  avgLatency: number; // ms
+  description: string;
+  creator: string;
   createTime: string;
   updateTime: string;
 }
 
 export const mockConnectors: ConnectorItem[] = [
-  { id: '1', name: '公安数据研判MCP', description: '接入公安大数据平台，提供人口、车辆、案件等多维度数据检索与分析能力', type: 'SSE', status: '已连接', endpoint: 'https://mcp.police.data.server/sse', toolCount: 8, callCount: 45200, avgLatency: 320, createTime: '2026-01-10', updateTime: '2026-06-22' },
-  { id: '2', name: '市局人口库MCP', description: '内部人口基础信息查询服务，支持模糊搜索与精确匹配', type: 'SSE', status: '已连接', endpoint: 'https://mcp.internal.population.db/sse', toolCount: 4, callCount: 32100, avgLatency: 180, createTime: '2026-01-15', updateTime: '2026-06-20' },
-  { id: '3', name: '天网视频分析MCP', description: '对接天网视频监控系统，提供实时视频流分析、目标追踪与行为识别能力', type: 'SSE', status: '连接异常', endpoint: 'https://mcp.tianwang.video/sse', toolCount: 5, callCount: 8900, avgLatency: 850, createTime: '2026-02-20', updateTime: '2026-06-25' },
-  { id: '4', name: '公文处理引擎', description: '本地公文处理服务，提供文档格式化、签章验证与模板填充功能', type: 'stdio', command: 'node mcp-document-server.js', status: '已连接', toolCount: 3, callCount: 12700, avgLatency: 120, createTime: '2026-03-01', updateTime: '2026-06-18' },
-  { id: '5', name: '短信通知网关', description: '统一短信发送网关，用于告警通知、验证码发送和群发通知', type: 'SSE', status: '离线', endpoint: 'https://mcp.sms.gateway/sse', toolCount: 2, callCount: 5600, avgLatency: 450, createTime: '2026-04-10', updateTime: '2026-06-24' },
+  { id: 'cn-1', name: '公安数据研判连接器', serverKey: 'police-data-analysis-connector', authStatus: '已授权', source: '自定义', toolCount: 8, description: '接入公安大数据平台，提供人口、车辆、案件等多维度数据检索与分析能力，支持 SQL 查询与智能检索', creator: '系统初始化', createTime: '2026-01-10', updateTime: '2026-06-20' },
+  { id: 'cn-2', name: '市局人口库连接器', serverKey: 'population-query-connector', authStatus: '已授权', source: '自定义', toolCount: 4, description: '内部人口基础信息查询服务，支持模糊搜索与精确匹配，覆盖户籍、居住证、流动人口信息', creator: '系统初始化', createTime: '2026-01-15', updateTime: '2026-06-18' },
+  { id: 'cn-3', name: '天网视频分析连接器', serverKey: 'tianwang-video-connector', authStatus: '未授权', source: '广场资源', toolCount: 5, description: '对接天网视频监控系统，提供实时视频流分析、目标追踪与行为识别能力', creator: '管理员', createTime: '2026-02-20', updateTime: '2026-06-25' },
+  { id: 'cn-4', name: '公文处理连接器', serverKey: 'document-process-connector', authStatus: '已授权', source: '自定义', toolCount: 3, description: '本地公文处理服务，提供文档格式化、签章验证与模板填充功能，支持 DOCX/PDF 格式', creator: '周科长', createTime: '2026-03-01', updateTime: '2026-06-22' },
+  { id: 'cn-5', name: '短信通知网关连接器', serverKey: 'sms-gateway-connector', authStatus: '未授权', source: '广场资源', toolCount: 2, description: '统一短信发送网关，用于告警通知、验证码发送和群发通知，支持多通道切换', creator: '管理员', createTime: '2026-04-10', updateTime: '2026-06-15' },
+  { id: 'cn-6', name: '图像识别连接器', serverKey: 'image-recognition-connector', authStatus: '已授权', source: '自定义', toolCount: 4, description: '对接图侦中心图像识别引擎，支持人脸比对、车辆识别、物体检测等能力', creator: '王警官', createTime: '2026-05-12', updateTime: '2026-06-24' },
 ];
 
 // ==================== 数据连接管理 ====================
-export type DbType = 'MySQL' | 'Oracle' | 'PostgreSQL' | 'MongoDB' | 'Elasticsearch' | 'Redis';
+export type DbType = 'MySQL' | 'TiDB' | 'MinIO' | 'HighGoV9';
+export type DataType = '结构化' | '非结构化';
 
 export interface DataSourceItem {
   id: string;
   name: string;
   dbType: DbType;
+  dataType: DataType;
   host: string;
   port: number;
   dbName: string;
-  status: '已连接' | '连接异常' | '未连接';
   creator: string;
   createTime: string;
   updateTime: string;
@@ -124,23 +150,49 @@ export interface DataSourceItem {
 }
 
 export const mockDataSources: DataSourceItem[] = [
-  { id: '1', name: '核心业务主库', dbType: 'MySQL', host: '192.168.1.100', port: 3306, dbName: 'core_business', status: '已连接', creator: '张三', createTime: '2026-01-10', updateTime: '2026-06-20', description: '存储核心业务数据，包括案件信息、人员档案、执法记录等' },
-  { id: '2', name: '历史案件存档库', dbType: 'Oracle', host: '192.168.1.101', port: 1521, dbName: 'history_archive', status: '已连接', creator: '李四', createTime: '2025-11-20', updateTime: '2026-06-15', description: '历史案件数据归档库，存储5年以上的结案案件信息' },
-  { id: '3', name: '用户画像分析库', dbType: 'PostgreSQL', host: '192.168.2.50', port: 5432, dbName: 'user_profiles', status: '已连接', creator: '王五', createTime: '2026-03-05', updateTime: '2026-06-18', description: '存储用户行为数据与画像标签，支撑智能推荐和个性化分析' },
-  { id: '4', name: '日志采集库', dbType: 'Elasticsearch', host: '192.168.3.10', port: 9200, dbName: 'app-logs-2026', status: '连接异常', creator: '赵六', createTime: '2026-02-14', updateTime: '2026-06-25', description: '采集平台操作日志、API调用日志和系统运行日志，用于审计与监控' },
-  { id: '5', name: '缓存服务', dbType: 'Redis', host: '192.168.1.200', port: 6379, dbName: 'cache-0', status: '已连接', creator: '张三', createTime: '2026-01-05', updateTime: '2026-06-22', description: 'Redis 缓存集群，用于会话管理、热点数据缓存和消息队列' },
+  { id: '1', name: '核心业务主库', dbType: 'MySQL', dataType: '结构化', host: '192.168.1.100', port: 3306, dbName: 'core_business', creator: '张三', createTime: '2026-01-10', updateTime: '2026-06-20', description: '存储核心业务数据，包括案件信息、人员档案、执法记录等' },
+  { id: '2', name: '分布式业务库', dbType: 'TiDB', dataType: '结构化', host: '192.168.1.101', port: 4000, dbName: 'distributed_db', creator: '李四', createTime: '2025-11-20', updateTime: '2026-06-15', description: 'TiDB 分布式数据库，承载高并发业务查询和实时分析' },
+  { id: '3', name: '影像文件存储', dbType: 'MinIO', dataType: '非结构化', host: '192.168.2.50', port: 9000, dbName: 'media-bucket', creator: '王五', createTime: '2026-03-05', updateTime: '2026-06-18', description: 'MinIO 对象存储，存储监控视频、执法记录仪影像、文书扫描件等非结构化数据' },
+  { id: '4', name: '高可用数据库集群', dbType: 'HighGoV9', dataType: '结构化', host: '192.168.3.10', port: 5866, dbName: 'highgo_main', creator: '赵六', createTime: '2026-02-14', updateTime: '2026-06-25', description: 'HighGo V9 国产数据库，用于高可用核心业务系统的数据持久化' },
+  { id: '5', name: '文档附件库', dbType: 'MinIO', dataType: '非结构化', host: '192.168.1.200', port: 9000, dbName: 'doc-attachments', creator: '张三', createTime: '2026-01-05', updateTime: '2026-06-22', description: '存储案件卷宗附件、PDF文档、图片证据等非结构化文件' },
+];
+
+// ==================== 文件库管理 ====================
+export interface FileStoreItem {
+  id: string;
+  name: string;
+  description: string;
+  creator: string;
+  createTime: string;
+  updateTime: string;
+  /** 文件数量 */
+  fileCount: number;
+  /** 存储大小 */
+  storageSize: string;
+}
+
+export const mockFileStores: FileStoreItem[] = [
+  { id: 'fs-1', name: '案件卷宗资料库', description: '存储刑事案件侦查卷宗、起诉意见书、证据材料等电子档案', creator: '陈队长', createTime: '2026-01-10', updateTime: '2026-06-20', fileCount: 1523, storageSize: '28.6 GB' },
+  { id: 'fs-2', name: '执法记录视频库', description: '存储执法记录仪视频、监控录像、出警记录等多媒体证据文件', creator: '李警官', createTime: '2026-02-15', updateTime: '2026-06-18', fileCount: 896, storageSize: '156.3 GB' },
+  { id: 'fs-3', name: '法律法规文库', description: '存储现行法律法规、司法解释、执法规范文档及典型案例汇编', creator: '周科长', createTime: '2025-11-20', updateTime: '2026-06-15', fileCount: 2340, storageSize: '5.8 GB' },
+  { id: 'fs-4', name: '培训学习资料库', description: '存储公安业务培训课件、实战演练教材、新技术学习资料等', creator: '张警官', createTime: '2026-03-05', updateTime: '2026-06-22', fileCount: 456, storageSize: '12.4 GB' },
+  { id: 'fs-5', name: '日常工作文档库', description: '存储工作周报、会议纪要、行动方案等日常行政办公文档', creator: '赵警官', createTime: '2026-01-05', updateTime: '2026-06-25', fileCount: 678, storageSize: '3.2 GB' },
+  { id: 'fs-6', name: '图像证据资料库', description: '存储现场勘查照片、监控截图、人像比对素材等图像类证据', creator: '王五', createTime: '2026-04-10', updateTime: '2026-06-12', fileCount: 3210, storageSize: '45.7 GB' },
 ];
 
 // ==================== 智能体管理 ====================
 export type AgentType = '标准智能体' | '流程智能体' | '自主智能体';
-export type AgentStatus = '草稿' | '已发布' | '已下架';
+export type AgentStatus = '未发布' | '已发布';
+export type PublishType = '广场' | '集成' | 'API';
 
 export interface AgentItem {
   id: string;
   name: string;
   avatar?: string;
   type: AgentType;
+  subType: string;
   status: AgentStatus;
+  publishTypes: PublishType[];
   description: string;
   spaceName: string;
   modelName: string;
@@ -158,14 +210,14 @@ export interface AgentItem {
 }
 
 export const mockAgents: AgentItem[] = [
-  { id: '1', name: '110接警警情分析助手', type: '标准智能体', status: '已发布', description: '从接警通话录音中提取标准警情要素，自动分类录入接处警系统', spaceName: '指挥中心', modelName: 'DeepSeek-Chat', creator: '李警官', createTime: '2026-05-18', publishTime: '2026-06-01', updateTime: '2026-06-20', callCount: 12860, successRate: 98.7, activeUsers: 45, tokenConsumption: 2560000, knowledgeBases: ['警情分类知识库', '接处警规程库'], tools: ['文书智能解析'] },
-  { id: '2', name: '电诈资金穿透研判助手', type: '流程智能体', status: '已发布', description: '分析涉诈资金链路，识别可疑卡号集群，辅助反诈民警研判洗钱路径', spaceName: '反诈中心', modelName: 'DeepSeek-Reasoner', creator: '王大队', createTime: '2026-05-12', publishTime: '2026-06-05', updateTime: '2026-06-22', callCount: 5620, successRate: 96.1, activeUsers: 28, tokenConsumption: 4320000, knowledgeBases: ['反诈案例知识库', '洗钱模式特征库'], tools: ['关系图谱生成', '涉诈基站分析'] },
-  { id: '3', name: '交通事故责任认定助手', type: '标准智能体', status: '已发布', description: '基于事故现场信息和监控描述，分析事故原因并判定责任方', spaceName: '交警支队', modelName: 'GPT-4o', creator: '赵警官', createTime: '2026-06-01', publishTime: '2026-06-12', updateTime: '2026-06-24', callCount: 2340, successRate: 94.5, activeUsers: 18, tokenConsumption: 1890000, knowledgeBases: ['道路交通安全法规库'], tools: ['车辆轨迹查询', '图像识别'] },
-  { id: '4', name: '刑事案件案情摘要生成', type: '标准智能体', status: '已发布', description: '自动解析案件材料生成案情摘要报告，辅助刑侦民警快速梳理案情', spaceName: '刑警大队', modelName: 'Qwen-72B-Chat', creator: '陈队长', createTime: '2026-05-20', publishTime: '2026-06-08', updateTime: '2026-06-23', callCount: 8340, successRate: 97.3, activeUsers: 32, tokenConsumption: 3150000, knowledgeBases: ['案件卷宗库', '法律法规库'], tools: ['文书智能解析', '人口信息查询'] },
-  { id: '5', name: '走失人员协查通报助手', type: '自主智能体', status: '已发布', description: '根据家属报案信息自动生成标准格式协查通报和寻人提示', spaceName: '治安支队', modelName: 'DeepSeek-Chat', creator: '张警官', createTime: '2026-04-30', publishTime: '2026-05-20', updateTime: '2026-06-18', callCount: 1980, successRate: 92.8, activeUsers: 15, tokenConsumption: 980000, tools: ['图像识别'] },
-  { id: '6', name: '巡逻路线智能规划', type: '自主智能体', status: '草稿', description: '基于历史案发数据和实时警情分布，智能推荐最优巡逻路线', spaceName: '巡特警支队', modelName: 'GLM-4-Flash', creator: '刘队长', createTime: '2026-06-15', updateTime: '2026-06-24', callCount: 120, successRate: 89.0, activeUsers: 3, tokenConsumption: 45000, tools: ['警情统计分析'] },
-  { id: '7', name: '笔录文书智能校对', type: '标准智能体', status: '已发布', description: '对笔录文书进行语法纠错、格式规范和法条引用校验', spaceName: '法制大队', modelName: 'GPT-4o', creator: '周科长', createTime: '2026-03-10', publishTime: '2026-04-15', updateTime: '2026-06-20', callCount: 15200, successRate: 99.1, activeUsers: 56, tokenConsumption: 5200000, knowledgeBases: ['法律法规库', '文书规范库'], tools: ['文书智能解析'] },
-  { id: '8', name: '社区警务工作台', type: '标准智能体', status: '已发布', description: '辅助社区民警完成人员信息管理、重点人口走访记录和矛盾调解记录', spaceName: '派出所', modelName: 'Qwen-72B-Chat', creator: '管理员', createTime: '2026-04-01', publishTime: '2026-05-01', updateTime: '2026-06-21', callCount: 23400, successRate: 98.2, activeUsers: 128, tokenConsumption: 7800000, knowledgeBases: ['户籍信息库', '社区管理规范'], tools: ['人口信息查询'] },
+  { id: '1', name: '110接警警情分析助手', type: '标准智能体', subType: '普通助手', status: '已发布', publishTypes: ['广场', 'API'], description: '从接警通话录音中提取标准警情要素，自动分类录入接处警系统', spaceName: '指挥中心', modelName: 'DeepSeek-Chat', creator: '李警官', createTime: '2026-05-18', publishTime: '2026-06-01', updateTime: '2026-06-20', callCount: 12860, successRate: 98.7, activeUsers: 45, tokenConsumption: 2560000, knowledgeBases: ['警情分类知识库', '接处警规程库'], tools: ['文书智能解析'] },
+  { id: '2', name: '电诈资金穿透研判助手', type: '流程智能体', subType: '工作流', status: '已发布', publishTypes: ['广场', '集成'], description: '分析涉诈资金链路，识别可疑卡号集群，辅助反诈民警研判洗钱路径', spaceName: '反诈中心', modelName: 'DeepSeek-Reasoner', creator: '王大队', createTime: '2026-05-12', publishTime: '2026-06-05', updateTime: '2026-06-22', callCount: 5620, successRate: 96.1, activeUsers: 28, tokenConsumption: 4320000, knowledgeBases: ['反诈案例知识库', '洗钱模式特征库'], tools: ['关系图谱生成', '涉诈基站分析'] },
+  { id: '3', name: '交通事故责任认定助手', type: '标准智能体', subType: '知识库问答', status: '已发布', publishTypes: ['广场'], description: '基于事故现场信息和监控描述，分析事故原因并判定责任方', spaceName: '交警支队', modelName: 'GPT-4o', creator: '赵警官', createTime: '2026-06-01', publishTime: '2026-06-12', updateTime: '2026-06-24', callCount: 2340, successRate: 94.5, activeUsers: 18, tokenConsumption: 1890000, knowledgeBases: ['道路交通安全法规库'], tools: ['车辆轨迹查询', '图像识别'] },
+  { id: '4', name: '刑事案件案情摘要生成', type: '标准智能体', subType: '文档编写', status: '已发布', publishTypes: ['API'], description: '自动解析案件材料生成案情摘要报告，辅助刑侦民警快速梳理案情', spaceName: '刑警大队', modelName: 'Qwen-72B-Chat', creator: '陈队长', createTime: '2026-05-20', publishTime: '2026-06-08', updateTime: '2026-06-23', callCount: 8340, successRate: 97.3, activeUsers: 32, tokenConsumption: 3150000, knowledgeBases: ['案件卷宗库', '法律法规库'], tools: ['文书智能解析', '人口信息查询'] },
+  { id: '5', name: '走失人员协查通报助手', type: '自主智能体', subType: '自主智能体', status: '已发布', publishTypes: ['集成', 'API'], description: '根据家属报案信息自动生成标准格式协查通报和寻人提示', spaceName: '治安支队', modelName: 'DeepSeek-Chat', creator: '张警官', createTime: '2026-04-30', publishTime: '2026-05-20', updateTime: '2026-06-18', callCount: 1980, successRate: 92.8, activeUsers: 15, tokenConsumption: 980000, tools: ['图像识别'] },
+  { id: '6', name: '巡逻路线智能规划', type: '自主智能体', subType: '自主智能体', status: '未发布', publishTypes: [], description: '基于历史案发数据和实时警情分布，智能推荐最优巡逻路线', spaceName: '巡特警支队', modelName: 'GLM-4-Flash', creator: '刘队长', createTime: '2026-06-15', updateTime: '2026-06-24', callCount: 120, successRate: 89.0, activeUsers: 3, tokenConsumption: 45000, tools: ['警情统计分析'] },
+  { id: '7', name: '笔录文书智能校对', type: '标准智能体', subType: '文件审核', status: '已发布', publishTypes: ['广场', '集成', 'API'], description: '对笔录文书进行语法纠错、格式规范和法条引用校验', spaceName: '法制大队', modelName: 'GPT-4o', creator: '周科长', createTime: '2026-03-10', publishTime: '2026-04-15', updateTime: '2026-06-20', callCount: 15200, successRate: 99.1, activeUsers: 56, tokenConsumption: 5200000, knowledgeBases: ['法律法规库', '文书规范库'], tools: ['文书智能解析'] },
+  { id: '8', name: '社区警务工作台', type: '标准智能体', subType: '普通助手', status: '已发布', publishTypes: ['广场', '集成'], description: '辅助社区民警完成人员信息管理、重点人口走访记录和矛盾调解记录', spaceName: '派出所', modelName: 'Qwen-72B-Chat', creator: '管理员', createTime: '2026-04-01', publishTime: '2026-05-01', updateTime: '2026-06-21', callCount: 23400, successRate: 98.2, activeUsers: 128, tokenConsumption: 7800000, knowledgeBases: ['户籍信息库', '社区管理规范'], tools: ['人口信息查询'] },
 ];
 
 // ==================== 空间运营 / 运维 ====================

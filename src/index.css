@@ -19,10 +19,64 @@ html, body, #root {
   min-height: 100vh;
 }
 
-/* 侧边栏 - 菜单组标签不被压缩 */
+/* ========== 侧边栏菜单高级定制 ========== */
+/* 移除默认右侧边框，界面更干净 */
+.ant-menu-light {
+  border-inline-end: none !important;
+}
+/* 菜单项悬浮时的图标微微放大 */
+.ant-menu-item .anticon, .ant-menu-submenu-title .anticon {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.ant-menu-item:hover .anticon {
+  transform: scale(1.15);
+}
+/* 选中的菜单项：加粗、微阴影、并增加左侧高亮指示条 */
+.ant-menu-item-selected {
+  font-weight: 600 !important;
+  position: relative;
+  box-shadow: 0 2px 6px rgba(22, 119, 255, 0.1);
+}
+.ant-menu-item-selected::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 16px;
+  background-color: #1677ff;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+/* 折叠子菜单的主标题：加深颜色，加粗字体 */
+.ant-menu-submenu-title {
+  font-weight: 600 !important;
+  color: #1d2129 !important;
+  font-size: 14px !important;
+  transition: all 0.3s !important;
+}
+.ant-menu-submenu-title:hover {
+  color: #1677ff !important;
+  background-color: transparent !important;
+  transform: translateX(4px);
+}
+/* 折叠箭头样式微调 */
+.ant-menu-submenu-arrow {
+  color: #86909c !important;
+}
 .ant-menu-item-group-title {
   font-size: 12px !important;
   padding-left: 24px !important;
+}
+
+/* 普通菜单项颜色柔化（Antd 默认 rgba(0,0,0,0.88) 偏黑） */
+.ant-menu-item {
+  color: #1d2129 !important;
+  transition: all 0.3s !important;
+}
+.ant-menu-item:hover {
+  color: #1677ff !important;
 }
 
 /* Tabs 在 flex 容器中自适应高度 */

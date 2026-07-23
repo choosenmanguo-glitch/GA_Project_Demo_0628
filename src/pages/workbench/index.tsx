@@ -84,7 +84,7 @@ const recentAgents = [
   {
     name: '110接警警情分析助手',
     type: '标准智能体',
-    status: '已发布',
+    status: '广场',
     updated: '2026-06-20',
     calls: '12,860',
     next: '查看运行',
@@ -92,7 +92,7 @@ const recentAgents = [
   {
     name: '电诈资金穿透研判助手',
     type: '流程智能体',
-    status: '已发布',
+    status: '广场',
     updated: '2026-06-22',
     calls: '5,620',
     next: '配置流程',
@@ -100,7 +100,7 @@ const recentAgents = [
   {
     name: '交通事故责任认定助手',
     type: '标准智能体',
-    status: '草稿',
+    status: '未发布',
     updated: '2026-06-24',
     calls: '2,340',
     next: '继续编辑',
@@ -195,8 +195,10 @@ const quickEntries = [
 ];
 
 const statusColor = {
-  已发布: 'success',
-  草稿: 'warning',
+  未发布: 'default',
+  广场: 'blue',
+  集成: 'purple',
+  API: 'geekblue',
 } as const;
 
 const WorkbenchPage: React.FC = () => {
@@ -213,7 +215,7 @@ const WorkbenchPage: React.FC = () => {
       title: '我的智能体',
       value: '5',
       suffix: '个',
-      desc: '已发布 3 个',
+      desc: '已发布 2 / 未发布 1',
       icon: <RobotOutlined />,
       color: '#1677ff',
       path: '/dev/agent-manage',
@@ -222,7 +224,7 @@ const WorkbenchPage: React.FC = () => {
       title: '空间智能体',
       value: String(currentSpace.agentCount),
       suffix: '个',
-      desc: `已发布 ${Math.floor(currentSpace.agentCount * 0.6)} / 总数 ${currentSpace.agentCount}`,
+      desc: `广场 ${Math.floor(currentSpace.agentCount * 0.6)} / 总数 ${currentSpace.agentCount}`,
       icon: <NodeIndexOutlined />,
       color: '#52c41a',
       path: '/dev/agent-manage',

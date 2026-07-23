@@ -465,7 +465,7 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
         title="我的申请"
         open={myAppsOpen}
         onClose={() => setMyAppsOpen(false)}
-        width={480}
+        size={480}
         destroyOnHidden
       >
         {myApplications.length === 0 ? (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Input, Typography } from 'antd';
+import { Checkbox, Modal, Input, Typography } from 'antd';
 
 const { Text } = Typography;
 
@@ -27,6 +27,12 @@ export interface ConfirmActionModalProps {
   requireNameInput?: boolean;
   /** 确认按钮文案 */
   okText?: string;
+  /** 是否要求先勾选风险确认 */
+  requireAcknowledgement?: boolean;
+  /** 风险确认文案 */
+  acknowledgementText?: string;
+  /** 取消按钮文案 */
+  cancelText?: string;
 }
 
 const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
@@ -39,13 +45,17 @@ const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
   description,
   requireNameInput = false,
   okText = '确认',
+  requireAcknowledgement = false,
+  acknowledgementText = '我已知晓该操作带来的影响与风险。',
+  cancelText = '取消',
 }) => {
   const [inputValue, setInputValue] = useState('');
-  useEffect(() => { setInputValue(''); }, [open]);
+  const [acknowledged, setAcknowledged] = useState(false);
+  useEffect(() => { setInputValue(''); setAcknowledged(false); }, [open]);
 
   const style = severityConfig[severity];
   const danger = severity === 'danger';
-  const confirmDisabled = requireNameInput && inputValue !== targetName;
+  const confirmDisabled = (requireNameInput && inputValue !== targetName) || (requireAcknowledgement && !acknowledged);
 
   return (
     <Modal
@@ -54,9 +64,9 @@ const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
       onCancel={() => { onCancel(); setInputValue(''); }}
       onOk={onConfirm}
       okText={okText}
-      cancelText="取消"
+      cancelText={cancelText}
       okButtonProps={{ danger, disabled: confirmDisabled }}
-      destroyOnClose
+      destroyOnHidden
     >
       <p style={{ marginBottom: 12, fontWeight: 500, fontSize: 14 }}>
         即将{title}「{targetName}」
@@ -74,6 +84,11 @@ const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
           ))}
         </ul>
       </div>
+      {requireAcknowledgement && (
+        <Checkbox checked={acknowledged} onChange={event => setAcknowledged(event.target.checked)} style={{ marginTop: 12, lineHeight: 1.6 }}>
+          {acknowledgementText}
+        </Checkbox>
+      )}
       {requireNameInput && (
         <div style={{ marginTop: 12 }}>
           <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 6 }}>
@@ -83,6 +98,7 @@ const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
             placeholder={targetName}
+            disabled={requireAcknowledgement && !acknowledged}
             style={{ borderRadius: 6 }}
           />
         </div>

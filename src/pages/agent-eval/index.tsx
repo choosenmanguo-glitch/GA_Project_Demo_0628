@@ -90,7 +90,7 @@ const datasetTypeMap: Record<string, { label: string; color: string; icon: React
   MIXED: { label: '混合组装', color: 'geekblue', icon: <CloudOutlined /> },
 };
 
-const AGENT_OPTIONS = mockAgents.filter(a => a.status === '已发布').slice(0, 6).map(a => ({ label: a.name, value: a.name }));
+const AGENT_OPTIONS = mockAgents.filter(a => a.status !== '未发布').slice(0, 6).map(a => ({ label: a.name, value: a.name }));
 const DATASET_OPTIONS = MOCK_DATASETS.map(d => ({ label: d.name, value: d.name }));
 const EVALUATOR_OPTIONS = [
   { label: '通用准确性评估器 (LLM)', value: '通用准确性评估器 (LLM)' },

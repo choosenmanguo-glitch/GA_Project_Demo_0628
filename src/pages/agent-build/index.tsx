@@ -157,7 +157,7 @@ const styles = {
   body: {
     flex: 1,
     overflow: 'hidden',
-    padding: '14px 0 0',
+    padding: '0',
     display: 'flex',
   } as React.CSSProperties,
   panel: {

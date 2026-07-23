@@ -1,16 +1,19 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Tag, Button, Drawer, Form, Input, Select, message, Typography, Space, Row, Col, Tooltip, Pagination } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import { Table, Tag, Button, Drawer, Form, Input, Select, message, Popconfirm, Typography, Space, Row, Col, Pagination, Card, Dropdown } from 'antd';
 import {
   EditOutlined,
-  EyeOutlined,
+  DeleteOutlined,
   ApiOutlined,
-  WifiOutlined,
-  DisconnectOutlined,
+  MoreOutlined,
+  ThunderboltOutlined,
+  ExclamationCircleOutlined,
+  CheckCircleOutlined,
+  ShoppingOutlined,
 } from '@ant-design/icons';
 import PageHeader from '@/components/PageHeader';
-import StatCards from '@/components/StatCards';
 import FilterBar from '@/components/FilterBar';
-import { mockConnectors, ConnectorItem, ConnectorStatus } from '@/mock/data';
+import { mockConnectors, ConnectorItem, ConnectorAuthStatus, ConnectorSource } from '@/mock/data';
 import type { ColumnsType } from 'antd/es/table';
 import type { FilterField } from '@/components/FilterBar';
 
@@ -18,254 +21,323 @@ const { Text } = Typography;
 const { Option } = Select;
 
 const filterFields: FilterField[] = [
-  { type: 'search', key: 'keyword', placeholder: '搜索连接器名称', width: 220 },
-  { type: 'select', key: 'type', placeholder: '连接模式', width: 120, options: [
-    { label: 'SSE', value: 'SSE' },
-    { label: 'stdio', value: 'stdio' },
+  { type: 'search', key: 'keyword', placeholder: '搜索连接器名称或描述', width: 240 },
+  { type: 'select', key: 'source', placeholder: '来源', width: 120, options: [
+    { label: '自定义', value: '自定义' },
+    { label: '广场资源', value: '广场资源' },
   ]},
-  { type: 'select', key: 'status', placeholder: '连接状态', width: 120, options: [
-    { label: '已连接', value: '已连接' },
-    { label: '连接异常', value: '连接异常' },
-    { label: '离线', value: '离线' },
+  { type: 'select', key: 'authStatus', placeholder: '授权状态', width: 120, options: [
+    { label: '已授权', value: '已授权' },
+    { label: '未授权', value: '未授权' },
   ]},
 ];
 
-const statusConfig: Record<ConnectorStatus, { color: string; bg: string; label: string; icon: React.ReactNode }> = {
-  '已连接': { color: '#52c41a', bg: '#f6ffed', label: '已连接', icon: <WifiOutlined /> },
-  '连接异常': { color: '#faad14', bg: '#fffbe6', label: '连接异常', icon: <ApiOutlined /> },
-  '离线': { color: '#bfbfbf', bg: '#f5f5f5', label: '离线', icon: <DisconnectOutlined /> },
+const authStatusConfig: Record<ConnectorAuthStatus, { color: string; bg: string; icon: React.ReactNode; label: string }> = {
+  '已授权': { color: '#52c41a', bg: '#f6ffed', icon: <CheckCircleOutlined />, label: '已授权' },
+  '未授权': { color: '#bfbfbf', bg: '#f5f5f5', icon: <ExclamationCircleOutlined />, label: '未授权' },
 };
 
-const typeConfig: Record<string, { color: string; bg: string }> = {
-  'SSE': { color: '#1677ff', bg: '#e6f4ff' },
-  'stdio': { color: '#722ed1', bg: '#f9f0ff' },
+const sourceConfig: Record<ConnectorSource, { color: string; bg: string }> = {
+  '自定义': { color: '#1677ff', bg: '#e6f4ff' },
+  '广场资源': { color: '#fa8c16', bg: '#fff7e6' },
 };
 
 const ConnectorsPage: React.FC = () => {
-  const [data] = useState<ConnectorItem[]>(mockConnectors);
-  const [filters, setFilters] = useState<Record<string, any>>({ keyword: '', type: undefined, status: undefined });
+  const navigate = useNavigate();
+  const [data, setData] = useState<ConnectorItem[]>(mockConnectors);
+  const [filters, setFilters] = useState<Record<string, any>>({ keyword: '', source: undefined, authStatus: undefined });
+  const [activeStat, setActiveStat] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'card'>('card');
+  const [cardPage, setCardPage] = useState(1);
+  const [cardPageSize, setCardPageSize] = useState(12);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [viewingItem, setViewingItem] = useState<ConnectorItem | null>(null);
   const [form] = Form.useForm();
-  const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
-  const [cardPage, setCardPage] = useState(1);
-  const cardPageSize = 9;
 
   const filteredData = useMemo(() => {
     return data.filter((item) => {
-      if (filters.keyword && !item.name.includes(filters.keyword) && !item.description.includes(filters.keyword)) return false;
-      if (filters.type && item.type !== filters.type) return false;
-      if (filters.status && item.status !== filters.status) return false;
+      if (filters.keyword && !item.name.includes(filters.keyword) && !item.serverKey.includes(filters.keyword) && !item.description.includes(filters.keyword)) return false;
+      if (filters.source && item.source !== filters.source) return false;
+      if (filters.authStatus && item.authStatus !== filters.authStatus) return false;
       return true;
     });
   }, [data, filters]);
 
-  const pagedCards = useMemo(() => {
-    const start = (cardPage - 1) * cardPageSize;
-    return filteredData.slice(start, start + cardPageSize);
-  }, [filteredData, cardPage]);
+  const activeStatIndex = activeStat === 'all' ? 0 : activeStat === '已授权' ? 1 : activeStat === '未授权' ? 2 : -1;
 
-  const statItems = [
-    { title: '连接器总数', value: data.length, color: '#1677ff' },
-    { title: '已连接', value: data.filter(d => d.status === '已连接').length, color: '#52c41a' },
-    { title: '连接异常', value: data.filter(d => d.status === '连接异常').length, color: '#faad14' },
-    { title: '暴露工具', value: data.reduce((s, d) => s + d.toolCount, 0), color: '#722ed1', suffix: ' 个' },
+  const statCards = [
+    { key: 'all', title: '连接器总数', value: data.length, color: '#1677ff', icon: <ApiOutlined />, bg: '#e6f4ff' },
+    { key: '已授权', title: '已授权', value: data.filter(d => d.authStatus === '已授权').length, color: '#52c41a', icon: <CheckCircleOutlined />, bg: '#f6ffed' },
+    { key: '未授权', title: '未授权', value: data.filter(d => d.authStatus === '未授权').length, color: '#bfbfbf', icon: <ExclamationCircleOutlined />, bg: '#f5f5f5' },
   ];
 
-  const handleCreate = async () => {
-    const values = await form.validateFields();
-    message.success('连接器创建成功');
-    setDrawerOpen(false);
+  const handleGoSquare = () => {
+    navigate('/dev/resource-square?tab=连接器');
+  };
+
+  const handleOpenAdd = () => {
+    setEditingId(null);
     form.resetFields();
+    setDrawerOpen(true);
+  };
+
+  const handleEdit = (record: ConnectorItem) => {
+    setEditingId(record.id);
+    form.setFieldsValue(record);
+    setDrawerOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    setData((prev) => prev.filter((d) => d.id !== id));
+    message.success('删除成功');
+  };
+
+  const handleSubmit = async () => {
+    const values = await form.validateFields();
+    if (editingId) {
+      setData((prev) =>
+        prev.map((d) => (d.id === editingId ? { ...d, ...values, updateTime: new Date().toISOString().slice(0, 10) } : d))
+      );
+      message.success('编辑成功');
+    } else {
+      setData((prev) => [...prev, {
+        id: `cn-${Date.now()}`,
+        ...values,
+        creator: '当前用户',
+        toolCount: 0,
+        createTime: new Date().toISOString().slice(0, 10),
+        updateTime: new Date().toISOString().slice(0, 10),
+      }]);
+      message.success('创建成功');
+    }
+    setDrawerOpen(false);
   };
 
   const columns: ColumnsType<ConnectorItem> = [
-    { title: '连接器名称', dataIndex: 'name', width: 200, render: (text, record) => {
-      const sc = statusConfig[record.status];
+    { title: '名称', dataIndex: 'name', width: 200, render: (text, record) => {
+      const sc = sourceConfig[record.source];
       return (
-        <div>
-          <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ color: sc.color, fontSize: 14 }}>{sc.icon}</span>
-            {text}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+            background: sc?.bg || '#e6f4ff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: sc?.color || '#1677ff', fontSize: 14,
+          }}>
+            <ThunderboltOutlined />
           </div>
-          <Text type="secondary" style={{ fontSize: 12 }}>{record.description.slice(0, 38)}{record.description.length > 38 ? '…' : ''}</Text>
+          <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{text}</span>
         </div>
       );
     }},
-    { title: '连接模式', dataIndex: 'type', width: 90, render: (v) => {
-      const tc = typeConfig[v];
-      return <Tag style={{ borderRadius: 4, margin: 0, background: tc?.bg, color: tc?.color, border: 'none' }}>{v}</Tag>;
-    }},
-    { title: '连接状态', dataIndex: 'status', width: 100, render: (v: ConnectorStatus) => {
-      const sc = statusConfig[v];
+    { title: '服务器标识', dataIndex: 'serverKey', width: 200, render: (v: string) => (
+      <code style={{ fontSize: 12 }}>{v}</code>
+    )},
+    { title: '授权状态', dataIndex: 'authStatus', width: 110, render: (v: ConnectorAuthStatus) => {
+      const ac = authStatusConfig[v];
       return (
-        <Tag style={{ borderRadius: 4, margin: 0, background: sc.bg, color: sc.color, border: `1px solid ${sc.color}30` }}>
-          {sc.icon}<span style={{ marginLeft: 4 }}>{v}</span>
+        <Tag style={{ borderRadius: 4, margin: 0, background: ac.bg, color: ac.color, border: `1px solid ${ac.color}30` }}>
+          {ac.icon}<span style={{ marginLeft: 4 }}>{v}</span>
         </Tag>
       );
     }},
-    { title: '暴露工具', dataIndex: 'toolCount', width: 90, render: (v) => `${v} 个`, sorter: (a, b) => a.toolCount - b.toolCount },
-    { title: '调用次数', dataIndex: 'callCount', width: 100, render: (v) => v.toLocaleString(), sorter: (a, b) => a.callCount - b.callCount },
-    { title: '平均延迟', dataIndex: 'avgLatency', width: 100, render: (v) => {
-      const color = v <= 300 ? '#52c41a' : v <= 600 ? '#faad14' : '#ff4d4f';
-      return <Text style={{ color, fontWeight: 500 }}>{v} ms</Text>;
-    }, sorter: (a, b) => a.avgLatency - b.avgLatency },
-    { title: '更新时间', dataIndex: 'updateTime', width: 110 },
-    { title: '操作', key: 'action', width: 140, fixed: 'right' as const, render: (_, record) => (
+    { title: '工具数量', dataIndex: 'toolCount', width: 90, render: (v) => `${v} 个` },
+    { title: '描述', dataIndex: 'description', ellipsis: true, width: 260 },
+    { title: '创建人', dataIndex: 'creator', width: 90 },
+    { title: '日期', dataIndex: 'createTime', width: 110 },
+    { title: '操作', key: 'action', width: 120, render: (_, record) => (
       <>
-        <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => setViewingItem(record)}>详情</Button>
-        <Button type="link" size="small" icon={<EditOutlined />} onClick={() => message.info('编辑功能')}>编辑</Button>
+        <Button type="link" size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)}>编辑</Button>
+        <Popconfirm title="确定删除?" onConfirm={() => handleDelete(record.id)}>
+          <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
+        </Popconfirm>
       </>
     )},
   ];
 
-  return (
-    <>
-      <div style={{ flex: 1, padding: '16px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <PageHeader
-          title="连接器管理"
-          hint="管理 MCP（Model Context Protocol）连接器。支持 SSE 远程连接和 stdio 本地进程通信两种模式，连接后可暴露工具供智能体调用。"
-        />
-        <StatCards items={statItems} />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 8, overflow: 'hidden' }}>
-          <FilterBar
-            filters={filterFields}
-            filterValues={filters}
-            onFilterChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
-            onSearch={() => {}}
-            onReset={() => setFilters({ keyword: '', type: undefined, status: undefined })}
-            onCreate={() => { form.resetFields(); setDrawerOpen(true); }}
-            createText="添加连接器"
-            viewMode={viewMode}
-            onViewModeChange={(mode) => { setViewMode(mode); setCardPage(1); }}
-          />
-          <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px' }}>
-            {viewMode === 'table' ? (
-              <Table
-                columns={columns}
-                dataSource={filteredData}
-                rowKey="id"
-                pagination={{ defaultPageSize: 10, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }}
-                scroll={{ x: 1100 }}
-                style={{ marginTop: 12 }}
-              />
-            ) : (
-              <div style={{ marginTop: 12 }}>
-                <Row gutter={[16, 16]}>
-                  {pagedCards.map((item) => {
-                    const sc = statusConfig[item.status];
-                    const tc = typeConfig[item.type];
-                    return (
-                      <Col span={8} key={item.id}>
-                        <div
-                          style={{
-                            background: '#fff',
-                            borderRadius: 8,
-                            border: '1px solid #E5EAF3',
-                            borderTop: `3px solid ${sc.color}`,
-                            overflow: 'hidden',
-                            transition: 'all .2s',
-                            cursor: 'default',
-                            display: 'flex',
-                            flexDirection: 'column',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.boxShadow = '0 3px 12px rgba(0,0,0,0.05)';
-                            e.currentTarget.style.transform = 'translateY(-1px)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.boxShadow = 'none';
-                            e.currentTarget.style.transform = 'none';
-                          }}
-                        >
-                          {/* Card header */}
-                          <div style={{ padding: '16px 18px 0', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                            <div style={{
-                              width: 38, height: 38, borderRadius: 8, background: sc.bg, color: sc.color,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0,
-                            }}>
-                              {sc.icon}
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 14, fontWeight: 600, color: '#1D2129', lineHeight: '22px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {item.name}
-                              </div>
-                              <Space size={5} style={{ marginTop: 4 }} wrap>
-                                <Tag style={{ borderRadius: 4, margin: 0, fontSize: 11, background: tc.bg, color: tc.color, border: 'none' }}>
-                                  {item.type}
-                                </Tag>
-                                <Tag style={{ borderRadius: 4, margin: 0, fontSize: 11, background: sc.bg, color: sc.color, border: `1px solid ${sc.color}30` }}>
-                                  {sc.icon}<span style={{ marginLeft: 3 }}>{sc.label}</span>
-                                </Tag>
-                              </Space>
-                            </div>
-                          </div>
-
-                          {/* Description */}
-                          <div style={{ padding: '8px 18px 0' }}>
-                            <Text style={{ fontSize: 13, color: '#5F6B7A', lineHeight: '20px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                              {item.description}
-                            </Text>
-                          </div>
-
-                          {/* Metrics */}
-                          <div style={{ margin: '12px 18px 0', padding: '10px 14px', background: '#F7F9FC', borderRadius: 6, display: 'flex', alignItems: 'center' }}>
-                            <div style={{ flex: 1, textAlign: 'center' }}>
-                              <div style={{ fontSize: 11, color: '#7A8599', marginBottom: 2 }}>工具数</div>
-                              <div style={{ fontSize: 18, fontWeight: 700, color: '#1D2129', lineHeight: 1 }}>
-                                {item.toolCount}
-                              </div>
-                            </div>
-                            <div style={{ width: 1, height: 28, background: '#E5EAF3' }} />
-                            <div style={{ flex: 1, textAlign: 'center' }}>
-                              <div style={{ fontSize: 11, color: '#7A8599', marginBottom: 2 }}>调用次数</div>
-                              <div style={{ fontSize: 18, fontWeight: 700, color: '#1D2129', lineHeight: 1 }}>
-                                {item.callCount.toLocaleString()}
-                              </div>
-                            </div>
-                            <div style={{ width: 1, height: 28, background: '#E5EAF3' }} />
-                            <div style={{ flex: 1, textAlign: 'center' }}>
-                              <div style={{ fontSize: 11, color: '#7A8599', marginBottom: 2 }}>延迟</div>
-                              <div style={{ fontSize: 18, fontWeight: 700, color: item.avgLatency <= 300 ? '#52c41a' : item.avgLatency <= 600 ? '#faad14' : '#ff4d4f', lineHeight: 1 }}>
-                                {item.avgLatency}ms
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Footer */}
-                          <div style={{ marginTop: 'auto', padding: '10px 18px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Text style={{ fontSize: 12, color: '#7A8599' }}>
-                              {item.type === 'SSE' ? 'SSE远程' : '本地进程'} · {item.updateTime}
-                            </Text>
-                            <Space size={2}>
-                              <Tooltip title="查看详情"><Button type="text" size="small" icon={<EyeOutlined />} style={{ color: '#7A8599' }} onClick={() => setViewingItem(item)} /></Tooltip>
-                              <Tooltip title="编辑"><Button type="text" size="small" icon={<EditOutlined />} style={{ color: '#7A8599' }} onClick={() => message.info('编辑功能')} /></Tooltip>
-                            </Space>
-                          </div>
-                        </div>
-                      </Col>
-                    );
-                  })}
-                </Row>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
-                  <Pagination
-                    current={cardPage}
-                    pageSize={cardPageSize}
-                    total={filteredData.length}
-                    onChange={(p) => setCardPage(p)}
-                    showSizeChanger={false}
-                    showTotal={(total) => `共 ${total} 条`}
-                  />
-                </div>
+  // ──── Card Component ────
+  const ConnectorCard: React.FC<{ item: ConnectorItem }> = ({ item }) => {
+    const ac = authStatusConfig[item.authStatus];
+    const sc = sourceConfig[item.source];
+    return (
+      <div
+        onClick={() => setViewingItem(item)}
+        style={{
+          background: '#fff', borderRadius: 10, border: '1px solid #f0f0f0',
+          padding: '20px 20px 16px', cursor: 'pointer',
+          transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.15s',
+          display: 'flex', flexDirection: 'column', gap: 12,
+          position: 'relative', overflow: 'hidden',
+        }}
+        onMouseEnter={(e) => {
+          const el = e.currentTarget;
+          el.style.borderColor = '#1677ff';
+          el.style.boxShadow = '0 6px 20px rgba(22,119,255,0.08)';
+          el.style.transform = 'translateY(-2px)';
+        }}
+        onMouseLeave={(e) => {
+          const el = e.currentTarget;
+          el.style.borderColor = '#f0f0f0';
+          el.style.boxShadow = 'none';
+          el.style.transform = 'none';
+        }}
+      >
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 3, background: ac.color }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+              background: sc.bg,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: sc.color, fontSize: 16,
+            }}>
+              <ThunderboltOutlined />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 15, fontWeight: 650, color: 'rgba(0,0,0,0.88)', lineHeight: '22px', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {item.name}
               </div>
-            )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <code style={{ fontSize: 11, color: '#8c8c8c' }}>{item.serverKey}</code>
+                <Text type="secondary" style={{ fontSize: 11 }}>{item.toolCount} 个工具</Text>
+              </div>
+            </div>
           </div>
+          <Tag style={{ borderRadius: 4, margin: 0, fontSize: 11, flexShrink: 0, background: ac.bg, color: ac.color, border: `1px solid ${ac.color}30` }}>
+            {ac.icon}<span style={{ marginLeft: 3 }}>{ac.label}</span>
+          </Tag>
+        </div>
+        <Text type="secondary" style={{ fontSize: 13, lineHeight: '20px', height: 40, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+          {item.description}
+        </Text>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
+          <Text type="secondary" style={{ fontSize: 11 }}>{item.source} · {item.creator} · {item.createTime}</Text>
+          <Dropdown
+            menu={{
+              items: [
+                { key: 'edit', icon: <EditOutlined />, label: '编辑', onClick: ({ domEvent }) => { domEvent.stopPropagation(); handleEdit(item); } },
+                { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, onClick: ({ domEvent }) => { domEvent.stopPropagation(); handleDelete(item.id); } },
+              ],
+            }}
+            trigger={['click']}
+          >
+            <Button
+              type="text"
+              size="small"
+              icon={<MoreOutlined />}
+              style={{ borderRadius: 6, fontSize: 12 }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Dropdown>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ flex: 1, padding: '16px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <PageHeader
+        title="连接器管理"
+        hint="管理 MCP 协议连接器，接入外部服务并暴露工具供智能体调用"
+      />
+      <Row gutter={16} style={{ padding: '0 0 12px' }}>
+        {statCards.map((item, idx) => {
+          const isActive = activeStatIndex === idx;
+          const handleClick = () => {
+            if (item.key === 'all') {
+              setFilters(prev => ({ ...prev, authStatus: undefined, source: undefined }));
+              setActiveStat('all');
+            } else {
+              setFilters(prev => ({ ...prev, authStatus: item.key, source: undefined }));
+              setActiveStat(item.key);
+            }
+            setCardPage(1);
+          };
+          return (
+            <Col span={6} key={item.key}>
+              <Card
+                size="small"
+                onClick={handleClick}
+                style={{
+                  borderRadius: 10,
+                  borderColor: isActive ? item.color : '#f0f0f0',
+                  cursor: 'pointer',
+                  background: isActive ? item.bg : '#fff',
+                  boxShadow: isActive ? `0 2px 8px ${item.color}18` : 'none',
+                  transition: 'all .2s',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{
+                    width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                    background: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: item.color, fontSize: 20,
+                  }}>
+                    {item.icon}
+                  </div>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: 12 }}>{item.title}</Text>
+                    <div style={{ fontSize: 26, fontWeight: 700, color: item.color, lineHeight: '32px' }}>
+                      {item.value}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+          );
+        })}
+      </Row>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 8, overflow: 'hidden' }}>
+        <FilterBar
+          filters={filterFields}
+          filterValues={filters}
+          onFilterChange={(key, value) => { setFilters((prev) => ({ ...prev, [key]: value })); setCardPage(1); if (key === 'source' || key === 'authStatus') setActiveStat(null); }}
+          onSearch={() => {}}
+          onReset={() => { setFilters({ keyword: '', source: undefined, authStatus: undefined }); setActiveStat(null); setCardPage(1); }}
+          viewMode={viewMode}
+          onViewModeChange={(mode) => setViewMode(mode)}
+          extra={<Button icon={<ShoppingOutlined />} onClick={handleGoSquare}>从广场获取</Button>}
+          onCreate={handleOpenAdd}
+          createText="创建连接器"
+        />
+        <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px', display: 'flex', flexDirection: 'column' }}>
+          {viewMode === 'table' ? (
+            <Table
+              columns={columns}
+              dataSource={filteredData}
+              rowKey="id"
+              pagination={{ defaultPageSize: 10, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }}
+              scroll={{ x: 1150 }}
+              style={{ marginTop: 12 }}
+              locale={{ emptyText: '暂无连接器' }}
+            />
+          ) : (
+            <>
+              <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14, flex: 1, alignContent: 'start' }}>
+                {filteredData.slice((cardPage - 1) * cardPageSize, cardPage * cardPageSize).map((item) => (
+                  <ConnectorCard key={item.id} item={item} />
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 0 0' }}>
+                <Pagination
+                  current={cardPage}
+                  pageSize={cardPageSize}
+                  total={filteredData.length}
+                  showSizeChanger
+                  showTotal={(total) => `共 ${total} 条`}
+                  pageSizeOptions={['8', '12', '16', '24']}
+                  onChange={(page, size) => { setCardPage(page); setCardPageSize(size); }}
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Create Drawer */}
+      {/* 新建/编辑抽屉 */}
       <Drawer
-        title="添加连接器"
+        title={editingId ? '编辑连接器' : '新建连接器'}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         width={560}
@@ -273,96 +345,49 @@ const ConnectorsPage: React.FC = () => {
         extra={
           <Space>
             <Button onClick={() => setDrawerOpen(false)}>取消</Button>
-            <Button type="primary" onClick={handleCreate}>确定</Button>
+            <Button type="primary" onClick={handleSubmit}>确定</Button>
           </Space>
         }
         destroyOnClose
       >
         <Form form={form} layout="vertical" style={{ marginTop: 8 }}>
-          <Form.Item name="name" label="连接器名称" rules={[{ required: true }]}>
+          <Form.Item name="name" label="名称" rules={[{ required: true, message: '请输入名称' }]}>
             <Input placeholder="例如：公安数据研判连接器" />
           </Form.Item>
-          <Form.Item name="type" label="连接模式" rules={[{ required: true }]}>
-            <Select>
-              <Option value="SSE">SSE（服务器推送事件）</Option>
-              <Option value="stdio">stdio（本地进程通信）</Option>
+          <Form.Item name="serverKey" label="服务器标识" rules={[{ required: true, message: '请输入服务器标识' }]}>
+            <Input placeholder="例如：police-data-analysis-connector" />
+          </Form.Item>
+          <Form.Item name="authStatus" label="授权状态" rules={[{ required: true }]}>
+            <Select placeholder="请选择授权状态">
+              <Option value="已授权">已授权</Option>
+              <Option value="未授权">未授权</Option>
             </Select>
           </Form.Item>
-          <Form.Item noStyle shouldUpdate={(prev, cur) => prev.type !== cur.type}>
-            {({ getFieldValue }) =>
-              getFieldValue('type') === 'SSE' ? (
-                <Form.Item name="endpoint" label="SSE 端点地址" rules={[{ required: true }]}>
-                  <Input placeholder="https://connector.example.com/sse" />
-                </Form.Item>
-              ) : (
-                <Form.Item name="command" label="启动命令" rules={[{ required: true }]}>
-                  <Input placeholder="node connector-server.js" />
-                </Form.Item>
-              )
-            }
+          <Form.Item name="source" label="来源" rules={[{ required: true }]}>
+            <Select placeholder="请选择来源">
+              <Option value="自定义">自定义</Option>
+              <Option value="广场资源">广场资源</Option>
+            </Select>
           </Form.Item>
           <Form.Item name="description" label="描述">
-            <Input.TextArea rows={3} placeholder="描述连接器的用途和提供的工具/服务" />
+            <Input.TextArea rows={4} placeholder="描述连接器的用途和提供的工具/服务" />
           </Form.Item>
         </Form>
       </Drawer>
 
-      {/* Detail Drawer */}
-      <Drawer title="连接器详情" open={!!viewingItem} onClose={() => setViewingItem(null)} size={480} placement="right">
-        {viewingItem && (() => {
-          const sc = statusConfig[viewingItem.status];
-          const tc = typeConfig[viewingItem.type];
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-              <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>名称</Text>
-                <div style={{ fontSize: 16, fontWeight: 600, marginTop: 4 }}>{viewingItem.name}</div>
-              </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>连接模式</Text>
-                <div style={{ marginTop: 4 }}><Tag style={{ borderRadius: 4, background: tc.bg, color: tc.color, border: 'none' }}>{viewingItem.type}</Tag></div>
-              </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>连接状态</Text>
-                <div style={{ marginTop: 4 }}>
-                  <Tag style={{ borderRadius: 4, background: sc.bg, color: sc.color, border: `1px solid ${sc.color}30` }}>
-                    {sc.icon}<span style={{ marginLeft: 4 }}>{viewingItem.status}</span>
-                  </Tag>
-                </div>
-              </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>{viewingItem.type === 'SSE' ? '端点地址' : '启动命令'}</Text>
-                <div style={{ fontFamily: 'monospace', fontSize: 13, marginTop: 4, color: '#5F6B7A' }}>
-                  {viewingItem.endpoint || viewingItem.command || '-'}
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 24, padding: '14px 18px', borderRadius: 8, background: '#F7F9FC' }}>
-                <div>
-                  <Text style={{ fontSize: 11, color: '#7A8599' }}>暴露工具</Text>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#1677ff' }}>{viewingItem.toolCount} 个</div>
-                </div>
-                <div>
-                  <Text style={{ fontSize: 11, color: '#7A8599' }}>调用次数</Text>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#1677ff' }}>{viewingItem.callCount.toLocaleString()}</div>
-                </div>
-                <div>
-                  <Text style={{ fontSize: 11, color: '#7A8599' }}>平均延迟</Text>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: viewingItem.avgLatency <= 300 ? '#52c41a' : '#faad14' }}>{viewingItem.avgLatency} ms</div>
-                </div>
-              </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>创建 / 更新时间</Text>
-                <div style={{ marginTop: 4, fontSize: 14 }}>{viewingItem.createTime} / {viewingItem.updateTime}</div>
-              </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>描述</Text>
-                <div style={{ marginTop: 4, fontSize: 13, color: '#5F6B7A', lineHeight: '22px' }}>{viewingItem.description}</div>
-              </div>
-            </div>
-          );
-        })()}
+      {/* 查看详情抽屉 */}
+      <Drawer
+        title={viewingItem?.name}
+        open={!!viewingItem}
+        onClose={() => setViewingItem(null)}
+        width={520}
+        placement="right"
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: '#8c8c8c', fontSize: 16 }}>
+          展开 {viewingItem?.name} 工具详情页
+        </div>
       </Drawer>
-    </>
+    </div>
   );
 };
 

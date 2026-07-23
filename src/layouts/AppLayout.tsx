@@ -33,7 +33,7 @@ const MasterLayout: React.FC<MasterLayoutProps> = ({ children }) => {
   // 判断当前激活的一级模块
   const activeModule = useMemo(() => {
     const path = location.pathname;
-    if (path === '/') return 'home';
+    if (path === '/') return 'dev';
     for (const mod of topNavModules) {
       if (path.startsWith(mod.path)) return mod.key;
     }
@@ -71,7 +71,7 @@ const MasterLayout: React.FC<MasterLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* ──── Global sidebar collapsed styles ──── */}
       <style>{`
         .sidebar-collapsed .ant-menu-item-group-title {
@@ -88,11 +88,11 @@ const MasterLayout: React.FC<MasterLayoutProps> = ({ children }) => {
           margin-inline-end: 0 !important;
         }
       `}</style>
-      {/* ========== 顶栏 - 56px 固定 ========== */}
+      {/* ========== 顶栏 - 60px 固定 ========== */}
       <HeaderNav />
 
       {/* ========== 下方区域：左侧导航 + 右侧内容 ========== */}
-      <div style={{ height: 'calc(100vh - 56px)', display: 'flex', overflow: 'hidden' }}>
+      <div style={{ height: 'calc(100vh - 60px)', display: 'flex', overflow: 'hidden' }}>
         {/* 左侧导航 - 初始化页隐藏 */}
         {!isInitPage && (
         <div
