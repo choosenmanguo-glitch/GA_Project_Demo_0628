@@ -7,7 +7,7 @@ export interface ModelItem {
   modelName: string;
   modelType: string;
   supplier: string;
-  deployType: '公网' | '本地' | '私有云';
+  deployType: '公网' | '本地';
   status: '启用' | '停用';
   source: '自定义' | '广场资源';
   creator: string;
@@ -87,6 +87,7 @@ export interface ToolItem {
   provider: string;
   description: string;
   source: ToolSource;
+  toolCount?: number;
   callCount: number;
   successRate: number;
   createTime: string;
@@ -95,8 +96,8 @@ export interface ToolItem {
 }
 
 export const mockTools: ToolItem[] = [
-  { id: '1', name: '人口信息查询', type: 'API', provider: '全国人口基础信息库', description: '根据身份证号、姓名等要素检索人员基本信息、户籍信息、居住证信息', source: '自定义', callCount: 12580, successRate: 99.2, createTime: '2026-01-10', author: '系统初始化', params: [{ name: 'idCard', type: 'string', required: true, description: '身份证号' }, { name: 'name', type: 'string', required: false, description: '姓名' }] },
-  { id: '2', name: '车辆轨迹查询', type: 'API', provider: '交警缉查布控系统', description: '基于车牌号查询辖区卡口过车记录和通行轨迹聚合分析', source: '自定义', callCount: 8960, successRate: 98.5, createTime: '2026-01-15', author: '系统初始化', params: [{ name: 'plateNumber', type: 'string', required: true, description: '车牌号' }, { name: 'startTime', type: 'string', required: true, description: '开始时间' }, { name: 'endTime', type: 'string', required: true, description: '结束时间' }] },
+  { id: '1', name: '人口信息查询', type: 'API', provider: '全国人口基础信息库', description: '根据身份证号、姓名等要素检索人员基本信息、户籍信息、居住证信息', source: '自定义', toolCount: 4, callCount: 12580, successRate: 99.2, createTime: '2026-01-10', author: '系统初始化', params: [{ name: 'idCard', type: 'string', required: true, description: '身份证号' }, { name: 'name', type: 'string', required: false, description: '姓名' }] },
+  { id: '2', name: '车辆轨迹查询', type: 'API', provider: '交警缉查布控系统', description: '基于车牌号查询辖区卡口过车记录和通行轨迹聚合分析', source: '自定义', toolCount: 3, callCount: 8960, successRate: 98.5, createTime: '2026-01-15', author: '系统初始化', params: [{ name: 'plateNumber', type: 'string', required: true, description: '车牌号' }, { name: 'startTime', type: 'string', required: true, description: '开始时间' }, { name: 'endTime', type: 'string', required: true, description: '结束时间' }] },
   { id: '3', name: '人像比对', type: '插件', provider: '人像多维比对引擎', description: '集成多种人脸识别算法，提供照片比对、视频流人脸检索及身份确认服务', source: '自定义', callCount: 4520, successRate: 95.8, createTime: '2026-02-01', author: '张警官', params: [{ name: 'imageBase64', type: 'string', required: true, description: '人脸照片Base64编码' }, { name: 'threshold', type: 'number', required: false, description: '相似度阈值(0-1)' }] },
   { id: '4', name: '涉诈基站分析', type: '工作流', provider: '反诈中心', description: '解析电信诈骗嫌疑号码的基站漫游数据，推断作案窝点和移动轨迹', source: '广场资源', callCount: 2340, successRate: 94.1, createTime: '2026-03-10', author: '资源广场', params: [{ name: 'phoneNumber', type: 'string', required: true, description: '嫌疑手机号' }, { name: 'timeRange', type: 'string', required: true, description: '查询时间范围' }] },
   { id: '5', name: '文书智能解析', type: '插件', provider: '文书解析引擎', description: '自动解析PDF/Word格式的法律文书、报案材料，提取结构化信息', source: '默认', callCount: 7890, successRate: 97.3, createTime: '2026-01-20', author: '系统初始化', params: [{ name: 'fileUrl', type: 'string', required: true, description: '文件URL或本地路径' }, { name: 'docType', type: 'string', required: false, description: '文书类型' }] },

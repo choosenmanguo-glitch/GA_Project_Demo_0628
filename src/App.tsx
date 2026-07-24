@@ -77,6 +77,7 @@ function AppRoutes() {
         <Route path="/dev/my-resources" element={<DevGuard><ResourceRoute><MyResourcesPage /></ResourceRoute></DevGuard>} />
         <Route path="/dev/models" element={<DevGuard><ModelsPage /></DevGuard>} />
         <Route path="/dev/prompts" element={<DevGuard><PromptsPage /></DevGuard>} />
+        <Route path="/dev/tools/plugins" element={<DevGuard><PlaceholderPage title="插件管理" description="集成DIFY的原生插件页面" /></DevGuard>} />
         <Route path="/dev/tools" element={<DevGuard><ToolsPage /></DevGuard>} />
         <Route path="/dev/connectors" element={<DevGuard><ConnectorsPage /></DevGuard>} />
         <Route path="/dev/skills" element={<DevGuard><PlaceholderPage title="技能管理" description="可复用技能单元管理" /></DevGuard>} />

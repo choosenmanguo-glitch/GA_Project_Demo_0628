@@ -33,13 +33,14 @@ interface StatCardsProps {
   activeIndex?: number;
 }
 
-const StatCards: React.FC<StatCardsProps> = ({ items, stats, gutter = 16, colSpan = 6, style, activeIndex }) => {
+const StatCards: React.FC<StatCardsProps> = ({ items, stats, gutter = 16, colSpan, style, activeIndex }) => {
+  const resolveColSpan = (count: number) => colSpan || Math.floor(24 / Math.max(1, Math.min(count, 4)));
   // 便捷模式
   if (stats && !items) {
     return (
       <Row gutter={gutter} style={{ padding: '0 0 12px', ...style }}>
         {stats.map((item, idx) => (
-          <Col span={colSpan} key={idx}>
+          <Col span={resolveColSpan(stats.length)} key={idx}>
             <Card
               className="stat-card"
               size="small"
@@ -74,7 +75,7 @@ const StatCards: React.FC<StatCardsProps> = ({ items, stats, gutter = 16, colSpa
   return (
     <Row gutter={gutter} style={{ padding: '0 0 12px', ...style }}>
       {effectiveItems.map((item, idx) => (
-        <Col span={colSpan} key={idx}>
+        <Col span={resolveColSpan(effectiveItems.length)} key={idx}>
           <Card
             className="stat-card"
             size="small"

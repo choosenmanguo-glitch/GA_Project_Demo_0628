@@ -919,6 +919,7 @@ const KnowledgeBasePage: React.FC = () => {
   const navigate = useNavigate();
   const [kbList, setKbList] = useState<KnowledgeBase[]>(initialKBList);
   const [activeCategory, setActiveCategory] = useState<'all' | KBCategory>('all');
+  const [activeStatKey, setActiveStatKey] = useState<'all' | KBCategory | null>(null);
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState<boolean | undefined>();
   const [page, setPage] = useState(1);
@@ -928,7 +929,7 @@ const KnowledgeBasePage: React.FC = () => {
   const [defaultSubType, setDefaultSubType] = useState<KBSubType | undefined>();
   const [editingKB, setEditingKB] = useState<KnowledgeBase | null>(null);
   const [activeKB, setActiveKB] = useState<KnowledgeBase | null>(null);
-  const [filterValues, setFilterValues] = useState<Record<string, any>>({ keyword: '', status: undefined });
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({ keyword: '', category: undefined, status: undefined });
   const [viewMode, setViewMode] = useState<'table' | 'card'>('card');
   const [externalApiList, setExternalApiList] = useState<ExternalApiConfig[]>([
     { id: 'ext-api-mock-1', name: '反诈数据检索 API', endpoint: 'https://antifraud.police.cn/v1/retrieval', apiKey: 'sk-mock-********' },
@@ -943,11 +944,11 @@ const KnowledgeBasePage: React.FC = () => {
   const statCards = useMemo(() => [
     { key: 'all', title: '知识库总数', value: kbList.length, color: '#1677ff', icon: <DatabaseOutlined />, bg: '#e6f4ff' },
     { key: 'easy', title: '普通知识库', value: kbList.filter(d => d.category === 'easy').length, color: '#1677ff', icon: <FileTextOutlined />, bg: '#e6f4ff' },
-    { key: 'professional', title: '专业知识库', value: kbList.filter(d => d.category === 'professional').length, color: '#722ed1', icon: <BlockOutlined />, bg: '#f9f0ff' },
-    { key: 'external', title: '外部知识库', value: kbList.filter(d => d.category === 'external').length, color: '#fa8c16', icon: <ApiOutlined />, bg: '#fff7e6' },
+    { key: 'professional', title: '专业知识库', value: kbList.filter(d => d.category === 'professional').length, color: '#1677ff', icon: <BlockOutlined />, bg: '#e6f4ff' },
+    { key: 'external', title: '外部知识库', value: kbList.filter(d => d.category === 'external').length, color: '#1677ff', icon: <ApiOutlined />, bg: '#e6f4ff' },
   ], [kbList]);
 
-  const activeStatIndex = categoryKeys.indexOf(activeCategory);
+  const activeStatIndex = activeStatKey ? categoryKeys.indexOf(activeStatKey) : -1;
 
   const filteredList = useMemo(() => {
     return kbList.filter((item) => {
@@ -1104,8 +1105,9 @@ const KnowledgeBasePage: React.FC = () => {
     setKeyword('');
     setStatusFilter(undefined);
     setActiveCategory('all');
+    setActiveStatKey(null);
     setPage(1);
-    setFilterValues({ keyword: '', status: undefined });
+    setFilterValues({ keyword: '', category: undefined, status: undefined });
   };
 
   if (activeKB) {
@@ -1125,11 +1127,17 @@ const KnowledgeBasePage: React.FC = () => {
             const isActive = activeStatIndex === idx;
             const handleClick = () => {
               setActiveCategory(item.key as 'all' | KBCategory);
+              setActiveStatKey(item.key as 'all' | KBCategory);
+              setFilterValues((prev) => ({
+                ...prev,
+                category: item.key === 'all' ? undefined : item.key,
+              }));
               setPage(1);
             };
             return (
-              <Col span={6} key={item.key}>
+              <Col span={24 / statCards.length} key={item.key}>
                 <Card
+                  className="resource-stat-card"
                   size="small"
                   onClick={handleClick}
                   style={{
@@ -1164,21 +1172,33 @@ const KnowledgeBasePage: React.FC = () => {
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 8, overflow: 'hidden' }}>
           <FilterBar
+            filters={[
+              { type: 'search', key: 'keyword', placeholder: '搜索知识库名称或描述', width: 240 },
+              { type: 'select', key: 'category', placeholder: '知识库类型', width: 140, options: [
+                { label: '普通知识库', value: 'easy' },
+                { label: '专业知识库', value: 'professional' },
+                { label: '外部知识库', value: 'external' },
+              ]},
+              { type: 'select', key: 'status', placeholder: '状态筛选', width: 120, options: [
+                { label: '启用', value: 'true' },
+                { label: '停用', value: 'false' },
+              ]},
+            ]}
             filterValues={filterValues}
             onFilterChange={(key, value) => {
               setFilterValues((prev) => ({ ...prev, [key]: value }));
               if (key === 'keyword') { setKeyword(value); setPage(1); }
+              if (key === 'category') {
+                setActiveCategory((value || 'all') as 'all' | KBCategory);
+                setActiveStatKey(null);
+                setPage(1);
+              }
               if (key === 'status') {
                 setStatusFilter(value === 'true' ? true : value === 'false' ? false : undefined);
                 setPage(1);
-                setActiveCategory('all');
+                setActiveStatKey(null);
               }
             }}
-            placeholder="搜索知识库名称或描述"
-            statusOptions={[
-              { label: '启用', value: 'true' },
-              { label: '停用', value: 'false' },
-            ]}
             onSearch={() => setPage(1)}
             onReset={handleReset}
             onCreate={() => setTypeModalOpen(true)}
@@ -1192,15 +1212,13 @@ const KnowledgeBasePage: React.FC = () => {
             onViewModeChange={setViewMode}
           />
 
-          <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px' }}>
+          <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px', display: 'flex', flexDirection: 'column' }}>
             {pagedList.length > 0 ? (
               viewMode === 'card' ? (
                 <>
                   <div
+                    className="resource-card-grid"
                     style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(4, 1fr)',
-                      gap: 16,
                       paddingTop: 16,
                     }}
                   >
@@ -1209,6 +1227,7 @@ const KnowledgeBasePage: React.FC = () => {
                       return (
                         <div
                           key={kb.id}
+                          className="resource-card"
                           style={{
                             background: '#fff', borderRadius: 10, border: '1px solid #f0f0f0',
                             padding: '20px 20px 16px', cursor: 'pointer',
@@ -1221,17 +1240,15 @@ const KnowledgeBasePage: React.FC = () => {
                             const el = e.currentTarget;
                             el.style.borderColor = '#1677ff';
                             el.style.boxShadow = '0 6px 20px rgba(22,119,255,0.08)';
-                            el.style.transform = 'translateY(-2px)';
                           }}
                           onMouseLeave={(e) => {
                             const el = e.currentTarget;
                             el.style.borderColor = '#f0f0f0';
                             el.style.boxShadow = 'none';
-                            el.style.transform = 'none';
                           }}
                         >
                           {/* 顶部强调色条 */}
-                          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 3, background: cat.color }} />
+                          <div className="resource-card-accent" style={{ position: 'absolute', top: 0, left: 0, width: '100%' }} />
 
                           {/* 头部：头像 + 名称 + 标签 */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
@@ -1240,9 +1257,9 @@ const KnowledgeBasePage: React.FC = () => {
                               <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0,
                                 background: kb.avatar?.mode === 'image'
                                   ? `url(${kb.avatar.imageSrc}) center/cover no-repeat`
-                                  : (kb.avatar?.textBgColor || cat.color),
+                                  : '#e6f4ff',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                color: kb.avatar?.textColor || '#fff', fontWeight: 700, fontSize: 16,
+                                color: kb.avatar?.mode === 'image' ? (kb.avatar?.textColor || '#fff') : '#1677ff', fontWeight: 700, fontSize: 16,
                                 overflow: 'hidden',
                               }}>
                                 {kb.name.charAt(0)}
@@ -1253,9 +1270,9 @@ const KnowledgeBasePage: React.FC = () => {
                                   {kb.name}
                                 </div>
                                 <Space size={4}>
-                                  <Tag color={cat.color} style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{cat.label}</Tag>
+                                  <Tag className="resource-tag-primary" style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{cat.label}</Tag>
                                   {kb.subType && (
-                                    <Tag color={subTypeConfig[kb.subType].color} style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{subTypeConfig[kb.subType].label}</Tag>
+                                    <Tag className="resource-tag-neutral" style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{subTypeConfig[kb.subType].label}</Tag>
                                   )}
                                 </Space>
                               </div>
@@ -1271,7 +1288,7 @@ const KnowledgeBasePage: React.FC = () => {
                           </Text>
 
                           {/* 底部：创建人/时间 + 操作 */}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
+                          <div className="resource-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Text type="secondary" style={{ fontSize: 11 }}>{kb.owner} · {kb.date}</Text>
                             <Dropdown
                               menu={{
@@ -1297,7 +1314,7 @@ const KnowledgeBasePage: React.FC = () => {
                       );
                     })}
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
+                  <div className="resource-page-pagination">
                     <Pagination
                       current={page}
                       pageSize={cardPageSize}

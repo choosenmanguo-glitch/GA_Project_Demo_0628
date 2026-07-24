@@ -24,18 +24,23 @@ const filterFields: FilterField[] = [
   ]},
 ];
 
-const dbTypeColors: Record<DbType, string> = {
-  MySQL: '#4479A1',
-  TiDB: '#E6007A',
-  MinIO: '#C72E49',
-  HighGoV9: '#1A5276',
+const dbTypeBgColors: Record<DbType, string> = {
+  MySQL: '#e6f4ff',
+  TiDB: '#e6f4ff',
+  MinIO: '#e6f4ff',
+  HighGoV9: '#e6f4ff',
 };
 
-const dbTypeBgColors: Record<DbType, string> = {
-  MySQL: 'linear-gradient(135deg, #4479A1, #6BA3C7)',
-  TiDB: 'linear-gradient(135deg, #E6007A, #FF4DA6)',
-  MinIO: 'linear-gradient(135deg, #C72E49, #E85D6F)',
-  HighGoV9: 'linear-gradient(135deg, #1A5276, #2E86C1)',
+const dataTypeTagStyle = (dataType: DataSourceItem['dataType']): React.CSSProperties => ({
+  border: 'none',
+  background: dataType === '结构化' ? '#e6f4ff' : '#f2f3f5',
+  color: dataType === '结构化' ? '#1677ff' : '#5f6b7a',
+});
+
+const dbTypeTagStyle: React.CSSProperties = {
+  border: 'none',
+  background: '#f2f3f5',
+  color: '#5f6b7a',
 };
 
 const DataSourcesPage: React.FC = () => {
@@ -63,8 +68,8 @@ const DataSourcesPage: React.FC = () => {
 
   const statCards = [
     { key: 'all', title: '数据源总数', value: data.length, color: '#1677ff', icon: <DatabaseOutlined />, bg: '#e6f4ff' },
-    { key: '结构化', title: '结构化', value: data.filter((d) => d.dataType === '结构化').length, color: '#52c41a', icon: <TableOutlined />, bg: '#f6ffed' },
-    { key: '非结构化', title: '非结构化', value: data.filter((d) => d.dataType === '非结构化').length, color: '#722ed1', icon: <FolderOutlined />, bg: '#f9f0ff' },
+    { key: '结构化', title: '结构化', value: data.filter((d) => d.dataType === '结构化').length, color: '#1677ff', icon: <TableOutlined />, bg: '#e6f4ff' },
+    { key: '非结构化', title: '非结构化', value: data.filter((d) => d.dataType === '非结构化').length, color: '#1677ff', icon: <FolderOutlined />, bg: '#e6f4ff' },
   ];
 
   const handleOpenAdd = () => {
@@ -108,11 +113,11 @@ const DataSourcesPage: React.FC = () => {
   const columns: ColumnsType<DataSourceItem> = [
     { title: '数据源名称', dataIndex: 'name', width: 160, render: (text, record) => (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{
+        <div className="resource-icon" style={{
           width: 32, height: 32, borderRadius: 8, flexShrink: 0,
           background: dbTypeBgColors[record.dbType],
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', fontSize: 14,
+          color: '#1677ff', fontSize: 14,
         }}>
           <DatabaseOutlined />
         </div>
@@ -120,10 +125,10 @@ const DataSourcesPage: React.FC = () => {
       </div>
     )},
     { title: '数据类型', dataIndex: 'dataType', width: 100, render: (v: string) => (
-      <Tag color={v === '结构化' ? 'green' : 'purple'}>{v}</Tag>
+      <Tag style={dataTypeTagStyle(v as DataSourceItem['dataType'])}>{v}</Tag>
     )},
     { title: '数据库类型', dataIndex: 'dbType', width: 120, render: (v: DbType) => (
-      <Tag color={dbTypeColors[v]}>{v}</Tag>
+      <Tag style={dbTypeTagStyle}>{v}</Tag>
     )},
     { title: '主机地址', dataIndex: 'host', width: 150, render: (text, record) => (
       <code style={{ fontSize: 13 }}>{text}:{record.port}</code>
@@ -144,6 +149,7 @@ const DataSourcesPage: React.FC = () => {
   // ──── Card Component ────
   const DataSourceCard: React.FC<{ item: DataSourceItem }> = ({ item }) => (
     <div
+      className="resource-card"
       onClick={() => handleEdit(item)}
       style={{
         background: '#fff', borderRadius: 10, border: '1px solid #f0f0f0',
@@ -156,22 +162,20 @@ const DataSourcesPage: React.FC = () => {
         const el = e.currentTarget;
         el.style.borderColor = '#1677ff';
         el.style.boxShadow = '0 6px 20px rgba(22,119,255,0.08)';
-        el.style.transform = 'translateY(-2px)';
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget;
         el.style.borderColor = '#f0f0f0';
         el.style.boxShadow = 'none';
-        el.style.transform = 'none';
       }}
     >
-      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 3, background: dbTypeColors[item.dbType] || '#1677ff' }} />
+      <div className="resource-card-accent" style={{ position: 'absolute', top: 0, left: 0, width: '100%' }} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
+        <div className="resource-icon" style={{
           width: 40, height: 40, borderRadius: 10, flexShrink: 0,
           background: dbTypeBgColors[item.dbType],
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', fontSize: 16,
+          color: '#1677ff', fontSize: 16,
         }}>
           <DatabaseOutlined />
         </div>
@@ -184,15 +188,15 @@ const DataSourcesPage: React.FC = () => {
           </Text>
         </div>
       </div>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        <Tag style={{ ...dataTypeTagStyle(item.dataType), borderRadius: 4, margin: 0, fontSize: 11 }}>{item.dataType}</Tag>
+        <Tag style={{ ...dbTypeTagStyle, borderRadius: 4, margin: 0, fontSize: 11 }}>{item.dbType}</Tag>
+      </div>
       <Text type="secondary" style={{ fontSize: 13, lineHeight: '20px', height: 40, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
         {item.description}
       </Text>
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        <Tag color={item.dataType === '结构化' ? 'green' : 'purple'} style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{item.dataType}</Tag>
-        <Tag color={dbTypeColors[item.dbType]} style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{item.dbType}</Tag>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
-        <Text type="secondary" style={{ fontSize: 11 }}>{item.creator} · {item.updateTime}</Text>
+      <div className="resource-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text type="secondary" style={{ fontSize: 11 }}>{item.creator} · {item.createTime}</Text>
         <Dropdown
           menu={{
             items: [
@@ -220,7 +224,7 @@ const DataSourcesPage: React.FC = () => {
         title="数据连接管理"
         hint="管理数据源连接，为智能体和知识库提供结构化与非结构化数据的统一访问能力"
       />
-      <Row gutter={16} style={{ padding: '0 0 12px' }} wrap={false}>
+      <Row gutter={[16, 16]} style={{ padding: '0 0 12px' }}>
         {statCards.map((item, idx) => {
           const isActive = activeStatIndex === idx;
           const handleClick = () => {
@@ -236,10 +240,11 @@ const DataSourcesPage: React.FC = () => {
             }
           };
           return (
-            <Col key={item.key} flex="0 0 auto">
+            <Col key={item.key} span={24 / statCards.length}>
 
 
               <Card
+                className="resource-stat-card"
                 size="small"
                 onClick={handleClick}
                 style={{
@@ -297,12 +302,12 @@ const DataSourcesPage: React.FC = () => {
             />
           ) : (
             <>
-              <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14, flex: 1, alignContent: 'start' }}>
+              <div className="resource-card-grid" style={{ marginTop: 12 }}>
                 {filteredData.slice((cardPage - 1) * cardPageSize, cardPage * cardPageSize).map((item) => (
                   <DataSourceCard key={item.id} item={item} />
                 ))}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 0 0' }}>
+              <div className="resource-page-pagination">
                 <Pagination
                   current={cardPage}
                   pageSize={cardPageSize}

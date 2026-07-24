@@ -71,7 +71,6 @@ const FilterBar: React.FC<FilterBarProps> = ({
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '12px 24px',
-        borderTop: '1px solid #f0f0f0',
         borderBottom: '1px solid #f0f0f0',
         flexWrap: 'wrap',
         gap: 10,
@@ -88,7 +87,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                 placeholder={f.placeholder || '请输入关键词搜索'}
                 prefix={<SearchOutlined />}
                 allowClear
-                style={{ width: f.width || 200 }}
+                style={{ width: f.width || 240 }}
                 value={filterValues?.[f.key]}
                 onChange={(e) => onFilterChange?.(f.key, e.target.value)}
                 onPressEnter={() => {
@@ -104,7 +103,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                 key={f.key}
                 placeholder={f.placeholder || '请选择'}
                 allowClear
-                style={{ width: f.width || 130 }}
+                style={{ width: f.width || 120 }}
                 value={filterValues?.[f.key]}
                 onChange={(v) => {
                   onFilterChange?.(f.key, v);

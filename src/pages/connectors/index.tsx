@@ -1,11 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table, Tag, Button, Drawer, Form, Input, Select, message, Popconfirm, Typography, Space, Row, Col, Pagination, Card, Dropdown } from 'antd';
+import { Table, Tag, Button, Drawer, Form, Input, Select, message, Popconfirm, Typography, Space, Row, Col, Pagination, Card } from 'antd';
 import {
   EditOutlined,
   DeleteOutlined,
   ApiOutlined,
-  MoreOutlined,
   ThunderboltOutlined,
   ExclamationCircleOutlined,
   CheckCircleOutlined,
@@ -39,7 +38,7 @@ const authStatusConfig: Record<ConnectorAuthStatus, { color: string; bg: string;
 
 const sourceConfig: Record<ConnectorSource, { color: string; bg: string }> = {
   '自定义': { color: '#1677ff', bg: '#e6f4ff' },
-  '广场资源': { color: '#fa8c16', bg: '#fff7e6' },
+  '广场资源': { color: '#1677ff', bg: '#e6f4ff' },
 };
 
 const ConnectorsPage: React.FC = () => {
@@ -68,8 +67,8 @@ const ConnectorsPage: React.FC = () => {
 
   const statCards = [
     { key: 'all', title: '连接器总数', value: data.length, color: '#1677ff', icon: <ApiOutlined />, bg: '#e6f4ff' },
-    { key: '已授权', title: '已授权', value: data.filter(d => d.authStatus === '已授权').length, color: '#52c41a', icon: <CheckCircleOutlined />, bg: '#f6ffed' },
-    { key: '未授权', title: '未授权', value: data.filter(d => d.authStatus === '未授权').length, color: '#bfbfbf', icon: <ExclamationCircleOutlined />, bg: '#f5f5f5' },
+    { key: '已授权', title: '已授权', value: data.filter(d => d.authStatus === '已授权').length, color: '#1677ff', icon: <CheckCircleOutlined />, bg: '#e6f4ff' },
+    { key: '未授权', title: '未授权', value: data.filter(d => d.authStatus === '未授权').length, color: '#1677ff', icon: <ExclamationCircleOutlined />, bg: '#e6f4ff' },
   ];
 
   const handleGoSquare = () => {
@@ -119,7 +118,7 @@ const ConnectorsPage: React.FC = () => {
       const sc = sourceConfig[record.source];
       return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
+          <div className="resource-icon" style={{
             width: 32, height: 32, borderRadius: 8, flexShrink: 0,
             background: sc?.bg || '#e6f4ff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -162,6 +161,7 @@ const ConnectorsPage: React.FC = () => {
     const sc = sourceConfig[item.source];
     return (
       <div
+        className="resource-card"
         onClick={() => setViewingItem(item)}
         style={{
           background: '#fff', borderRadius: 10, border: '1px solid #f0f0f0',
@@ -174,19 +174,17 @@ const ConnectorsPage: React.FC = () => {
           const el = e.currentTarget;
           el.style.borderColor = '#1677ff';
           el.style.boxShadow = '0 6px 20px rgba(22,119,255,0.08)';
-          el.style.transform = 'translateY(-2px)';
         }}
         onMouseLeave={(e) => {
           const el = e.currentTarget;
           el.style.borderColor = '#f0f0f0';
           el.style.boxShadow = 'none';
-          el.style.transform = 'none';
         }}
       >
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 3, background: ac.color }} />
+        <div className="resource-card-accent" style={{ position: 'absolute', top: 0, left: 0, width: '100%' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-            <div style={{
+            <div className="resource-icon" style={{
               width: 40, height: 40, borderRadius: 10, flexShrink: 0,
               background: sc.bg,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -211,25 +209,8 @@ const ConnectorsPage: React.FC = () => {
         <Text type="secondary" style={{ fontSize: 13, lineHeight: '20px', height: 40, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
           {item.description}
         </Text>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
+        <div className="resource-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text type="secondary" style={{ fontSize: 11 }}>{item.source} · {item.creator} · {item.createTime}</Text>
-          <Dropdown
-            menu={{
-              items: [
-                { key: 'edit', icon: <EditOutlined />, label: '编辑', onClick: ({ domEvent }) => { domEvent.stopPropagation(); handleEdit(item); } },
-                { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, onClick: ({ domEvent }) => { domEvent.stopPropagation(); handleDelete(item.id); } },
-              ],
-            }}
-            trigger={['click']}
-          >
-            <Button
-              type="text"
-              size="small"
-              icon={<MoreOutlined />}
-              style={{ borderRadius: 6, fontSize: 12 }}
-              onClick={(e) => e.stopPropagation()}
-            />
-          </Dropdown>
         </div>
       </div>
     );
@@ -255,8 +236,9 @@ const ConnectorsPage: React.FC = () => {
             setCardPage(1);
           };
           return (
-            <Col span={6} key={item.key}>
+            <Col span={24 / statCards.length} key={item.key}>
               <Card
+                className="resource-stat-card"
                 size="small"
                 onClick={handleClick}
                 style={{
@@ -314,12 +296,12 @@ const ConnectorsPage: React.FC = () => {
             />
           ) : (
             <>
-              <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14, flex: 1, alignContent: 'start' }}>
+              <div className="resource-card-grid" style={{ marginTop: 12 }}>
                 {filteredData.slice((cardPage - 1) * cardPageSize, cardPage * cardPageSize).map((item) => (
                   <ConnectorCard key={item.id} item={item} />
                 ))}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 0 0' }}>
+              <div className="resource-page-pagination">
                 <Pagination
                   current={cardPage}
                   pageSize={cardPageSize}

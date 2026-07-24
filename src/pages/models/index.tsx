@@ -36,7 +36,6 @@ const filterFields: FilterField[] = [
   { type: 'select', key: 'deployType', placeholder: '部署方式', width: 120, options: [
     { label: '公网', value: '公网' },
     { label: '本地', value: '本地' },
-    { label: '私有云', value: '私有云' },
   ]},
   { type: 'select', key: 'status', placeholder: '状态', width: 100, options: [
     { label: '启用', value: '启用' },
@@ -92,16 +91,16 @@ const ModelsPage: React.FC = () => {
   };
 
   const sourceConfig: Record<string, { color: string; bg: string }> = {
-    '自定义': { color: '#1677ff', bg: '#e6f4ff' },
-    '广场资源': { color: '#fa8c16', bg: '#fff7e6' },
+    '自定义': { color: '#5f6b7a', bg: '#f2f3f5' },
+    '广场资源': { color: '#5f6b7a', bg: '#f2f3f5' },
   };
 
   // 统计卡片
   const statCards = [
     { key: 'all', title: '模型总数', value: data.length, color: '#1677ff', icon: <RobotOutlined />, bg: '#e6f4ff' },
-    { key: '通用大模型', title: '通用大模型', value: data.filter((d) => d.modelType === '通用大模型').length, color: '#52c41a', icon: <RobotOutlined />, bg: '#f6ffed' },
-    { key: '向量化模型', title: '向量化模型', value: data.filter((d) => d.modelType === '向量化模型').length, color: '#faad14', icon: <FileSearchOutlined />, bg: '#fffbe6' },
-    { key: 'ReRank模型', title: 'ReRank模型', value: data.filter((d) => d.modelType === 'ReRank模型').length, color: '#722ed1', icon: <ApiOutlined />, bg: '#f9f0ff' },
+    { key: '通用大模型', title: '通用大模型', value: data.filter((d) => d.modelType === '通用大模型').length, color: '#1677ff', icon: <RobotOutlined />, bg: '#e6f4ff' },
+    { key: '向量化模型', title: '向量化模型', value: data.filter((d) => d.modelType === '向量化模型').length, color: '#1677ff', icon: <FileSearchOutlined />, bg: '#e6f4ff' },
+    { key: 'ReRank模型', title: 'ReRank模型', value: data.filter((d) => d.modelType === 'ReRank模型').length, color: '#1677ff', icon: <ApiOutlined />, bg: '#e6f4ff' },
   ];
   const activeStatIndex = activeStat === 'all' ? 0 : activeStat === '通用大模型' ? 1 : activeStat === '向量化模型' ? 2 : activeStat === 'ReRank模型' ? 3 : -1;
 
@@ -213,7 +212,7 @@ const ModelsPage: React.FC = () => {
   const sourceColumns: ColumnsType<ModelSourceItem> = [
     { title: '模型源名称', dataIndex: 'name', width: 200 },
     { title: '部署方式', dataIndex: 'deployType', width: 100, render: (v) => (
-      <Tag color={v === '公网' ? 'blue' : 'purple'}>{v}</Tag>
+      <Tag className="resource-tag-neutral">{v}</Tag>
     )},
     { title: '备注', dataIndex: 'remark', ellipsis: true },
     { title: '操作', key: 'action', width: 140, render: (_, record) => (
@@ -235,7 +234,7 @@ const ModelsPage: React.FC = () => {
     )},
     { title: '模型类型', dataIndex: 'modelType', width: 120, render: (v) => <Tag>{v}</Tag> },
     { title: '部署方式', dataIndex: 'deployType', width: 100, render: (v) => (
-      <Tag color={v === '公网' ? 'blue' : v === '本地' ? 'purple' : 'geekblue'}>{v}</Tag>
+      <Tag className="resource-tag-neutral">{v}</Tag>
     )},
     { title: '使用状态', dataIndex: 'status', width: 100, render: (v) => (
       <Tag color={v === '启用' ? 'green' : 'orange'}>{v}</Tag>
@@ -271,9 +270,6 @@ const ModelsPage: React.FC = () => {
         <PageHeader
           title="模型管理"
           hint="管理已接入的通用大模型、向量化模型和 ReRank 模型，为智能体提供推理与内容生成能力"
-          extra={
-            <Button icon={<SettingOutlined />} onClick={() => setSourceDrawerOpen(true)}>模型源管理</Button>
-          }
         />
         <Row gutter={16} style={{ padding: '0 0 12px' }}>
           {statCards.map((item, idx) => {
@@ -289,8 +285,9 @@ const ModelsPage: React.FC = () => {
               setCardPage(1);
             };
             return (
-              <Col span={6} key={item.key}>
+              <Col span={24 / statCards.length} key={item.key}>
                 <Card
+                  className="resource-stat-card"
                   size="small"
                   onClick={handleClick}
                   style={{
@@ -332,9 +329,12 @@ const ModelsPage: React.FC = () => {
             onCreate={handleOpenAdd}
             createText="接入模型"
             extra={
-              <Button icon={<ShoppingOutlined />} onClick={() => navigate('/dev/resource-square?tab=model')}>
-                从广场获取
-              </Button>
+              <Space size={8}>
+                <Button icon={<SettingOutlined />} onClick={() => setSourceDrawerOpen(true)}>模型源管理</Button>
+                <Button icon={<ShoppingOutlined />} onClick={() => navigate('/dev/resource-square?tab=model')}>
+                  从广场获取
+                </Button>
+              </Space>
             }
             viewMode={viewMode}
             onViewModeChange={(mode) => { setViewMode(mode); setCardPage(1); }}
@@ -351,10 +351,11 @@ const ModelsPage: React.FC = () => {
               />
             ) : (
               <>
-                <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14, flex: 1, alignContent: 'start' }}>
+                <div className="resource-card-grid" style={{ marginTop: 12 }}>
                   {pagedCards.map((item) => (
                     <div
                       key={item.id}
+                      className="resource-card"
                       onClick={() => handleEdit(item)}
                       style={{
                         background: '#fff', borderRadius: 10, border: '1px solid #f0f0f0',
@@ -367,24 +368,20 @@ const ModelsPage: React.FC = () => {
                         const el = e.currentTarget;
                         el.style.borderColor = '#1677ff';
                         el.style.boxShadow = '0 6px 20px rgba(22,119,255,0.08)';
-                        el.style.transform = 'translateY(-2px)';
                       }}
                       onMouseLeave={(e) => {
                         const el = e.currentTarget;
                         el.style.borderColor = '#f0f0f0';
                         el.style.boxShadow = 'none';
-                        el.style.transform = 'none';
                       }}
                     >
-                      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 3, background: item.status === '启用' ? '#1677ff' : '#d9d9d9' }} />
+                      <div className="resource-card-accent" style={{ position: 'absolute', top: 0, left: 0, width: '100%' }} />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-                          <div style={{
-                            width: 40, height: 40, borderRadius: 10, flexShrink: 0,
-                            background: item.status === '启用' ? 'linear-gradient(135deg, #1677ff, #69b1ff)' : 'linear-gradient(135deg, #bfbfbf, #d9d9d9)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: '#fff', fontSize: 16,
-                          }}>
+                          <div
+                            className="resource-icon"
+                            style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}
+                          >
                             {modelTypeIcon[item.modelType] || <RobotOutlined />}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
@@ -400,14 +397,14 @@ const ModelsPage: React.FC = () => {
                         </Tag>
                       </div>
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        <Tag color="blue" style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{item.modelType}</Tag>
-                        <Tag color={item.deployType === '公网' ? 'geekblue' : item.deployType === '本地' ? 'purple' : 'cyan'} style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{item.deployType}</Tag>
+                        <Tag className="resource-tag-primary" style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{item.modelType}</Tag>
+                        <Tag className="resource-tag-neutral" style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{item.deployType}</Tag>
                       </div>
                       <Text type="secondary" style={{ fontSize: 13, lineHeight: '20px', height: 40, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                         {item.description}
                       </Text>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
-                        <Text type="secondary" style={{ fontSize: 11 }}>{item.source} · {item.creator} · {item.updateTime}</Text>
+                      <div className="resource-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text type="secondary" style={{ fontSize: 11 }}>{item.source} · {item.creator} · {item.createTime}</Text>
                         <Space size={4}>
                           <Dropdown
                             menu={{
@@ -426,7 +423,7 @@ const ModelsPage: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 0 0' }}>
+                <div className="resource-page-pagination">
                   <Pagination
                     current={cardPage}
                     pageSize={cardPageSize}
@@ -479,7 +476,6 @@ const ModelsPage: React.FC = () => {
             <Select>
               <Option value="公网">公网</Option>
               <Option value="本地">本地</Option>
-              <Option value="私有云">私有云</Option>
             </Select>
           </Form.Item>
           <Form.Item name="source" label="来源" rules={[{ required: true }]}>

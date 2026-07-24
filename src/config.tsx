@@ -142,6 +142,11 @@ export const moduleLabelMap: Record<string, string> = {
 
 /** 根据路由路径解析页面名称（用于页签标题） */
 export function resolvePageLabel(path: string): string {
+  const exactPageLabels: Record<string, string> = {
+    '/dev/tools/plugins': '插件管理',
+  };
+  if (exactPageLabels[path]) return exactPageLabels[path];
+
   // 先匹配一级模块根路径
   for (const mod of topNavModules) {
     if (path === mod.path) return mod.label;

@@ -98,11 +98,69 @@ html, body, #root {
 
 /* 统计卡片悬浮效果 */
 .stat-card {
-  cursor: pointer;
   transition: box-shadow 0.2s;
 }
 .stat-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Resource management pages */
+.resource-stat-card {
+  border-radius: 8px !important;
+}
+
+.resource-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  flex: 1;
+  align-content: start;
+}
+
+.resource-card {
+  min-height: 204px;
+  height: 100%;
+  border-radius: 8px !important;
+  border: 1px solid #f0f0f0 !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.resource-card:hover {
+  border-color: #91caff !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+.resource-card-accent {
+  height: 2px !important;
+  background: #1677ff !important;
+}
+
+.resource-icon {
+  background: #e6f4ff !important;
+  color: #1677ff !important;
+}
+
+.resource-tag-primary {
+  border-color: transparent !important;
+  background: #e6f4ff !important;
+  color: #1677ff !important;
+}
+
+.resource-tag-neutral {
+  border-color: transparent !important;
+  background: #f2f3f5 !important;
+  color: #5f6b7a !important;
+}
+
+.resource-card-footer {
+  margin-top: auto !important;
+}
+
+.resource-page-pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto !important;
+  padding-top: 16px !important;
 }
 
 /* Markdown 渲染样式 */
