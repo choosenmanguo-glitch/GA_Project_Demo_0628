@@ -14,6 +14,7 @@ import {
   InputNumber,
   Modal,
   Pagination,
+  Popconfirm,
   Row,
   Select,
   Space,
@@ -27,8 +28,8 @@ import {
   ApiOutlined,
   ArrowLeftOutlined,
   BlockOutlined,
+  PauseCircleOutlined,
   CheckCircleOutlined,
-  CopyOutlined,
   DatabaseOutlined,
   DeleteOutlined,
   EditOutlined,
@@ -56,6 +57,8 @@ type KBStatus = 'available' | 'processing' | 'error';
 type RagflowSyncStatus = 'none' | 'creating' | 'synced' | 'failed';
 type KBSubType = 'document' | 'structured' | 'graph';
 
+type KBSource = '自定义' | '广场资源';
+
 interface KnowledgeBase {
   id: string;
   name: string;
@@ -65,9 +68,10 @@ interface KnowledgeBase {
   desc: string;
   owner: string;
   date: string;
+  source: KBSource;
   fileCount: number | null;
   active: boolean;
-  status: KBStatus;
+  status?: KBStatus;
   ragflowDatasetId?: string;
   ragflowTenantId?: string;
   ragflowUserId?: string;
@@ -105,6 +109,7 @@ interface ExternalApiConfig {
   name: string;
   endpoint: string;
   apiKey: string;
+  remark?: string;
 }
 
 const categoryConfig: Record<KBCategory, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
@@ -167,6 +172,7 @@ const initialKBList: KnowledgeBase[] = [
     name: '反诈案例专业知识库',
     category: 'professional',
     typeTag: '专业知识库',
+    source: '自定义',
     desc: '沉淀电信网络诈骗案件材料、资金穿透研判报告和处置规范，用于专业检索与智能体问答。',
     owner: '王大队',
     date: '2026-06-18',
@@ -194,6 +200,7 @@ const initialKBList: KnowledgeBase[] = [
     category: 'easy',
     subType: 'document',
     typeTag: '文档知识库',
+    source: '自定义',
     desc: '面向 110 接警场景的警情分类标准、处置流程和常见问答。',
     owner: '李警官',
     date: '2026-05-22',
@@ -206,6 +213,7 @@ const initialKBList: KnowledgeBase[] = [
     name: '法律法规外部库',
     category: 'external',
     typeTag: '外部 API 接入',
+    source: '自定义',
     desc: '通过第三方法规检索服务接入现行法律法规、司法解释和执法规范。',
     owner: '周科长',
     date: '2026-05-09',
@@ -220,6 +228,7 @@ const initialKBList: KnowledgeBase[] = [
     name: '卷宗证据链知识库',
     category: 'professional',
     typeTag: '专业知识库',
+    source: '广场资源',
     desc: '用于刑事卷宗材料解析、证据链要素抽取与检索增强。',
     owner: '陈队长',
     date: '2026-06-24',
@@ -244,6 +253,7 @@ const initialKBList: KnowledgeBase[] = [
     category: 'easy',
     subType: 'document',
     typeTag: '文档知识库',
+    source: '广场资源',
     desc: '交通事故责任认定、道路交通安全法及地方实施细则。',
     owner: '赵警官',
     date: '2026-04-16',
@@ -395,42 +405,55 @@ const LabelWithTip: React.FC<{ label: string; tip: string }> = ({ label, tip }) 
   </Space>
 );
 
-const ExternalApiCreateModal: React.FC<{
+const ExternalApiFormDrawer: React.FC<{
   open: boolean;
+  editingId: string | null;
+  initialData: ExternalApiConfig | null;
   onClose: () => void;
   onSave: (config: ExternalApiConfig) => void;
-}> = ({ open, onClose, onSave }) => {
+}> = ({ open, editingId, initialData, onClose, onSave }) => {
   const [form] = Form.useForm();
+  const isEdit = editingId !== null;
 
   useEffect(() => {
-    if (open) form.resetFields();
-  }, [open, form]);
+    if (open) {
+      if (isEdit && initialData) {
+        form.setFieldsValue(initialData);
+      } else {
+        form.resetFields();
+      }
+    }
+  }, [open, isEdit, initialData, form]);
 
   const handleSubmit = async () => {
     const values = await form.validateFields();
-    const newConfig: ExternalApiConfig = {
-      id: `ext-api-${Date.now()}`,
+    const config: ExternalApiConfig = {
+      id: isEdit ? editingId! : `ext-api-${Date.now()}`,
       name: values.name,
       endpoint: values.endpoint,
       apiKey: values.apiKey,
+      remark: values.remark,
     };
-    onSave(newConfig);
+    onSave(config);
     form.resetFields();
     onClose();
   };
 
   return (
-    <Modal
-      title="新建外部知识库 API"
+    <Drawer
+      title={isEdit ? '编辑外部知识库 API' : '添加外部知识库 API'}
+      width={500}
       open={open}
-      onCancel={onClose}
-      onOk={handleSubmit}
-      okText="保存"
-      cancelText="取消"
+      onClose={onClose}
       destroyOnClose
-      width={480}
+      footer={
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <Button onClick={onClose}>取消</Button>
+          <Button type="primary" onClick={handleSubmit}>确定</Button>
+        </div>
+      }
     >
-      <Form form={form} layout="vertical" style={{ paddingTop: 16 }}>
+      <Form form={form} layout="vertical" style={{ paddingTop: 8 }}>
         <Form.Item name="name" label="外部知识库名称" rules={[{ required: true, message: '请输入外部知识库名称' }]}>
           <Input placeholder="例如：反诈数据检索 API" maxLength={50} />
         </Form.Item>
@@ -440,8 +463,89 @@ const ExternalApiCreateModal: React.FC<{
         <Form.Item name="apiKey" label="API Key" rules={[{ required: true, message: '请输入 API Key' }]}>
           <Input.Password placeholder="输入 API Key" />
         </Form.Item>
+        <Form.Item name="remark" label="备注">
+          <Input.TextArea rows={3} placeholder="备注信息（可选）" />
+        </Form.Item>
       </Form>
-    </Modal>
+    </Drawer>
+  );
+};
+
+const ExternalApiManageDrawer: React.FC<{
+  open: boolean;
+  externalApiList: ExternalApiConfig[];
+  kbList: KnowledgeBase[];
+  onClose: () => void;
+  onAdd: () => void;
+  onEdit: (api: ExternalApiConfig) => void;
+  onDelete: (apiId: string) => void;
+}> = ({ open, externalApiList, kbList, onClose, onAdd, onEdit, onDelete }) => {
+  const [keyword, setKeyword] = useState('');
+
+  useEffect(() => {
+    if (!open) setKeyword('');
+  }, [open]);
+
+  const filteredList = useMemo(() => {
+    if (!keyword) return externalApiList;
+    const word = keyword.toLowerCase();
+    return externalApiList.filter((api) =>
+      api.name.toLowerCase().includes(word) || (api.remark || '').toLowerCase().includes(word)
+    );
+  }, [externalApiList, keyword]);
+
+  const getRefCount = (api: ExternalApiConfig) => {
+    return kbList.filter((kb) => kb.category === 'external' && kb.apiEndpoint === api.endpoint).length;
+  };
+
+  const columns: ColumnsType<ExternalApiConfig> = [
+    { title: '名称', dataIndex: 'name', width: 180 },
+    { title: 'Endpoint', dataIndex: 'endpoint', ellipsis: true },
+    { title: '备注', dataIndex: 'remark', width: 160, ellipsis: true, render: (v) => v || <Text type="secondary">-</Text> },
+    { title: '操作', key: 'action', width: 140, render: (_, record) => {
+      const refCount = getRefCount(record);
+      return (
+        <Space size={2}>
+          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => onEdit(record)}>编辑</Button>
+          <Popconfirm
+            title={refCount > 0 ? `该 API 正被 ${refCount} 个知识库使用，删除后可能影响知识库检索功能，确定删除？` : '确定删除该 API 配置？'}
+            onConfirm={() => onDelete(record.id)}
+          >
+            <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
+          </Popconfirm>
+        </Space>
+      );
+    }},
+  ];
+
+  return (
+    <Drawer
+      title="外部 API 管理"
+      open={open}
+      onClose={onClose}
+      width={720}
+      placement="right"
+      destroyOnClose
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <FilterBar
+          placeholder="搜索名称或备注"
+          onSubmit={() => {}}
+          onReset={() => setKeyword('')}
+          onCreate={onAdd}
+          createText="添加外部 API"
+          style={{ borderTop: 'none', paddingLeft: 0, paddingRight: 0 }}
+        />
+        <div style={{ flex: 1, overflow: 'auto', padding: '12px 0' }}>
+          <Table
+            columns={columns}
+            dataSource={filteredList}
+            rowKey="id"
+            pagination={{ defaultPageSize: 10, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }}
+          />
+        </div>
+      </div>
+    </Drawer>
   );
 };
 
@@ -876,8 +980,9 @@ const KnowledgeBaseDetail: React.FC<{
             <Tag style={{ border: 'none', borderRadius: 4, background: subTypeConfig[kb.subType].color + '18', color: subTypeConfig[kb.subType].color, fontWeight: 500, fontSize: 12, padding: '0 10px', lineHeight: '22px' }}>{subTypeConfig[kb.subType].label}</Tag>
           )}
           <Tag style={{ border: 'none', borderRadius: 4, background: st.bg, color: st.color, fontWeight: 500, fontSize: 12, padding: '0 10px', lineHeight: '22px' }}>{st.label}</Tag>
+          <Tag style={{ border: 'none', borderRadius: 4, background: kb.source === '自定义' ? '#f2f3f5' : '#fff7e6', color: kb.source === '自定义' ? '#5f6b7a' : '#fa8c16', fontWeight: 500, fontSize: 12, padding: '0 10px', lineHeight: '22px' }}>{kb.source}</Tag>
         </Space>
-        <Button type="text" size="small" icon={<EditOutlined />} onClick={() => onEdit(kb)} style={{ color: DS.textSec, fontSize: 12 }}>编辑信息</Button>
+        {kb.source !== '广场资源' && <Button type="text" size="small" icon={<EditOutlined />} onClick={() => onEdit(kb)} style={{ color: DS.textSec, fontSize: 12 }}>编辑信息</Button>}
       </div>
 
       {/* Body */}
@@ -922,23 +1027,26 @@ const KnowledgeBasePage: React.FC = () => {
   const [activeStatKey, setActiveStatKey] = useState<'all' | KBCategory | null>(null);
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState<boolean | undefined>();
+  const [sourceFilter, setSourceFilter] = useState<KBSource | undefined>();
   const [page, setPage] = useState(1);
+  const [cardPageSize, setCardPageSize] = useState(12);
   const [typeModalOpen, setTypeModalOpen] = useState(false);
   const [professionalDrawerOpen, setProfessionalDrawerOpen] = useState(false);
   const [simpleDrawerCategory, setSimpleDrawerCategory] = useState<Exclude<KBCategory, 'professional'> | null>(null);
   const [defaultSubType, setDefaultSubType] = useState<KBSubType | undefined>();
   const [editingKB, setEditingKB] = useState<KnowledgeBase | null>(null);
   const [activeKB, setActiveKB] = useState<KnowledgeBase | null>(null);
-  const [filterValues, setFilterValues] = useState<Record<string, any>>({ keyword: '', category: undefined, status: undefined });
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({ keyword: '', category: undefined, status: undefined, source: undefined });
   const [viewMode, setViewMode] = useState<'table' | 'card'>('card');
   const [externalApiList, setExternalApiList] = useState<ExternalApiConfig[]>([
     { id: 'ext-api-mock-1', name: '反诈数据检索 API', endpoint: 'https://antifraud.police.cn/v1/retrieval', apiKey: 'sk-mock-********' },
     { id: 'ext-api-mock-2', name: '户籍信息知识库 API', endpoint: 'https://household.police.cn/api/kb/query', apiKey: 'sk-mock-********' },
   ]);
-  const [externalApiCreateModalOpen, setExternalApiCreateModalOpen] = useState(false);
+  const [externalApiManageOpen, setExternalApiManageOpen] = useState(false);
+  const [externalApiFormOpen, setExternalApiFormOpen] = useState(false);
+  const [editingApiId, setEditingApiId] = useState<string | null>(null);
 
   const pageSize = 8;
-  const cardPageSize = 12;
   const categoryKeys: ('all' | KBCategory)[] = ['all', 'easy', 'professional', 'external'];
 
   const statCards = useMemo(() => [
@@ -955,9 +1063,10 @@ const KnowledgeBasePage: React.FC = () => {
       if (activeCategory !== 'all' && item.category !== activeCategory) return false;
       if (keyword && !item.name.includes(keyword) && !item.desc.includes(keyword)) return false;
       if (statusFilter !== undefined && item.active !== statusFilter) return false;
+      if (sourceFilter && item.source !== sourceFilter) return false;
       return true;
     });
-  }, [activeCategory, kbList, keyword, statusFilter]);
+  }, [activeCategory, kbList, keyword, statusFilter, sourceFilter]);
 
   const pagedList = viewMode === 'card'
     ? filteredList.slice((page - 1) * cardPageSize, page * cardPageSize)
@@ -980,6 +1089,7 @@ const KnowledgeBasePage: React.FC = () => {
       name: String(values.name),
       category: 'professional',
       typeTag: '专业知识库',
+      source: '自定义',
       desc: String(values.desc || '暂无描述'),
       owner: '当前用户',
       date: new Date().toISOString().slice(0, 10),
@@ -1009,6 +1119,7 @@ const KnowledgeBasePage: React.FC = () => {
       category: simpleDrawerCategory,
       subType: isExternal ? undefined : (defaultSubType || 'document'),
       typeTag: isExternal ? '外部 API 接入' : (subTypeConfig[defaultSubType || 'document']?.label || '文档知识库'),
+      source: '自定义',
       desc: String(values.desc || '暂无描述'),
       owner: '当前用户',
       date: new Date().toISOString().slice(0, 10),
@@ -1101,13 +1212,45 @@ const KnowledgeBasePage: React.FC = () => {
     message.success('知识库已更新');
   };
 
+  // 外部 API 管理 CRUD
+  const editingApiData = useMemo(() => {
+    if (!editingApiId) return null;
+    return externalApiList.find((a) => a.id === editingApiId) || null;
+  }, [editingApiId, externalApiList]);
+
+  const handleSaveApi = (config: ExternalApiConfig) => {
+    if (editingApiId) {
+      setExternalApiList((prev) => prev.map((a) => (a.id === editingApiId ? config : a)));
+      message.success('外部 API 已更新');
+    } else {
+      setExternalApiList((prev) => [...prev, config]);
+      message.success('外部 API 已创建');
+    }
+  };
+
+  const handleEditApi = (api: ExternalApiConfig) => {
+    setEditingApiId(api.id);
+    setExternalApiFormOpen(true);
+  };
+
+  const handleDeleteApi = (id: string) => {
+    setExternalApiList((prev) => prev.filter((a) => a.id !== id));
+    message.success('外部 API 已删除');
+  };
+
+  const handleOpenAddApi = () => {
+    setEditingApiId(null);
+    setExternalApiFormOpen(true);
+  };
+
   const handleReset = () => {
     setKeyword('');
     setStatusFilter(undefined);
+    setSourceFilter(undefined);
     setActiveCategory('all');
     setActiveStatKey(null);
     setPage(1);
-    setFilterValues({ keyword: '', category: undefined, status: undefined });
+    setFilterValues({ keyword: '', category: undefined, status: undefined, source: undefined });
   };
 
   if (activeKB) {
@@ -1174,6 +1317,10 @@ const KnowledgeBasePage: React.FC = () => {
           <FilterBar
             filters={[
               { type: 'search', key: 'keyword', placeholder: '搜索知识库名称或描述', width: 240 },
+              { type: 'select', key: 'source', placeholder: '来源', width: 120, options: [
+                { label: '自定义', value: '自定义' },
+                { label: '广场资源', value: '广场资源' },
+              ]},
               { type: 'select', key: 'category', placeholder: '知识库类型', width: 140, options: [
                 { label: '普通知识库', value: 'easy' },
                 { label: '专业知识库', value: 'professional' },
@@ -1188,6 +1335,10 @@ const KnowledgeBasePage: React.FC = () => {
             onFilterChange={(key, value) => {
               setFilterValues((prev) => ({ ...prev, [key]: value }));
               if (key === 'keyword') { setKeyword(value); setPage(1); }
+              if (key === 'source') {
+                setSourceFilter((value || undefined) as KBSource | undefined);
+                setPage(1);
+              }
               if (key === 'category') {
                 setActiveCategory((value || 'all') as 'all' | KBCategory);
                 setActiveStatKey(null);
@@ -1204,9 +1355,12 @@ const KnowledgeBasePage: React.FC = () => {
             onCreate={() => setTypeModalOpen(true)}
             createText="创建知识库"
             extra={
-              <Button icon={<ShoppingOutlined />} onClick={() => navigate('/dev/resource-square?tab=knowledge')}>
-                从广场获取
-              </Button>
+              <Space size={8}>
+                <Button icon={<SettingOutlined />} onClick={() => setExternalApiManageOpen(true)}>外部 API 管理</Button>
+                <Button icon={<ShoppingOutlined />} onClick={() => navigate('/dev/resource-square?tab=knowledge')}>
+                  从广场获取
+                </Button>
+              </Space>
             }
             viewMode={viewMode}
             onViewModeChange={setViewMode}
@@ -1287,15 +1441,15 @@ const KnowledgeBasePage: React.FC = () => {
                             {kb.desc}
                           </Text>
 
-                          {/* 底部：创建人/时间 + 操作 */}
+                          {/* 底部：来源/创建人/日期 + 操作 */}
                           <div className="resource-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Text type="secondary" style={{ fontSize: 11 }}>{kb.owner} · {kb.date}</Text>
+                            <Text type="secondary" style={{ fontSize: 11 }}>{kb.source} · {kb.owner} · {kb.date}</Text>
                             <Dropdown
                               menu={{
                                 items: [
-                                  { key: 'edit', icon: <EditOutlined />, label: '编辑', onClick: ({ domEvent }) => { domEvent.stopPropagation(); setEditingKB(kb); } },
-                                  { key: 'copy', icon: <CopyOutlined />, label: '复制', onClick: ({ domEvent }) => { domEvent.stopPropagation(); message.success('已复制'); } },
-                                  { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, onClick: ({ domEvent }) => { domEvent.stopPropagation(); handleDelete(kb); } },
+                                  ...(kb.source !== '广场资源' ? [{ key: 'edit', icon: <EditOutlined />, label: '编辑', onClick: ({ domEvent }: any) => { domEvent.stopPropagation(); setEditingKB(kb); } }] : []),
+                                  { key: 'toggle', icon: kb.active ? <PauseCircleOutlined /> : <CheckCircleOutlined />, label: kb.active ? '停用' : '启用', onClick: ({ domEvent }: any) => { domEvent.stopPropagation(); handleToggleActive(kb); } },
+                                  { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, onClick: ({ domEvent }: any) => { domEvent.stopPropagation(); handleDelete(kb); } },
                                 ],
                               }}
                               trigger={['click']}
@@ -1322,7 +1476,7 @@ const KnowledgeBasePage: React.FC = () => {
                       showSizeChanger
                       showTotal={(total) => `共 ${total} 个知识库`}
                       pageSizeOptions={['8', '12', '16', '24']}
-                      onChange={setPage}
+                      onChange={(p, s) => { setPage(p); setCardPageSize(s); }}
                     />
                   </div>
                 </>
@@ -1389,6 +1543,9 @@ const KnowledgeBasePage: React.FC = () => {
                           <Text type="secondary">-</Text>
                         ),
                     },
+                    { title: '来源', dataIndex: 'source', width: 100, render: (v: KBSource) => (
+                      <Tag style={{ borderRadius: 4, background: v === '自定义' ? '#f2f3f5' : '#fff7e6', color: v === '自定义' ? '#5f6b7a' : '#fa8c16', border: 'none', margin: 0 }}>{v}</Tag>
+                    )},
                     {
                       title: '文件数',
                       dataIndex: 'fileCount',
@@ -1415,7 +1572,7 @@ const KnowledgeBasePage: React.FC = () => {
                       width: 180,
                       render: (_, record) => (
                         <Space size={0}>
-                          <Button type="link" size="small" onClick={(event) => { event.stopPropagation(); setEditingKB(record); }}>编辑</Button>
+                          {record.source !== '广场资源' && <Button type="link" size="small" onClick={(event) => { event.stopPropagation(); setEditingKB(record); }}>编辑</Button>}
                           <Button
                             type="link"
                             size="small"
@@ -1453,16 +1610,24 @@ const KnowledgeBasePage: React.FC = () => {
           onClose={() => setSimpleDrawerCategory(null)}
           onSubmit={handleSimpleSubmit}
           externalApiList={externalApiList}
-          onOpenApiCreate={() => setExternalApiCreateModalOpen(true)}
+          onOpenApiCreate={() => { setEditingApiId(null); setExternalApiFormOpen(true); }}
         />
       )}
-      <ExternalApiCreateModal
-        open={externalApiCreateModalOpen}
-        onClose={() => setExternalApiCreateModalOpen(false)}
-        onSave={(config) => {
-          setExternalApiList((prev) => [...prev, config]);
-          message.success('外部知识库 API 已创建');
-        }}
+      <ExternalApiManageDrawer
+        open={externalApiManageOpen}
+        externalApiList={externalApiList}
+        kbList={kbList}
+        onClose={() => setExternalApiManageOpen(false)}
+        onAdd={handleOpenAddApi}
+        onEdit={handleEditApi}
+        onDelete={handleDeleteApi}
+      />
+      <ExternalApiFormDrawer
+        open={externalApiFormOpen}
+        editingId={editingApiId}
+        initialData={editingApiData}
+        onClose={() => { setExternalApiFormOpen(false); setEditingApiId(null); }}
+        onSave={handleSaveApi}
       />
       <EditDrawer
         kb={editingKB}
