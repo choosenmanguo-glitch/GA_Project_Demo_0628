@@ -8,7 +8,6 @@ import {
   CopyOutlined,
   ExperimentOutlined,
   ShopOutlined,
-  StarOutlined,
   CodeSandboxOutlined,
   FileTextOutlined,
   ToolOutlined,
@@ -68,7 +67,6 @@ export const devSideMenuItems: MenuProps['items'] = [
     label: '资源广场',
     children: [
       { key: '/dev/resource-square', icon: React.createElement(ShopOutlined), label: '资源广场' },
-      { key: '/dev/my-resources', icon: React.createElement(StarOutlined), label: '我的资源' },
     ],
   },
   {

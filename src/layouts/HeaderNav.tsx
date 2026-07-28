@@ -78,7 +78,7 @@ const HeaderNav: React.FC = () => {
           justifyContent: 'space-between',
           height: 60,
           padding: '0 24px',
-          background: '#1E61B9',
+          background: 'linear-gradient(135deg, #1677ff, #4096ff, #69b1ff)',
           position: 'sticky',
           top: 0,
           zIndex: 100,

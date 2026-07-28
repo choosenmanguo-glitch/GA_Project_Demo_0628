@@ -1,55 +1,62 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, App as AntdApp, Button, Card, Col, Dropdown, Form, Input, Modal, Row, Select, Space, Tag } from 'antd';
+import { App as AntdApp, Button, Card, Dropdown, Pagination, Typography } from 'antd';
 import {
-  DeleteOutlined, EditOutlined, EllipsisOutlined, EyeOutlined, GlobalOutlined,
-  PlusOutlined, PushpinOutlined, SafetyCertificateOutlined, SendOutlined, SwapOutlined,
+  DeleteOutlined, EditOutlined, EyeOutlined,
+  PushpinOutlined, SafetyCertificateOutlined, SendOutlined,
+  AppstoreOutlined, MoreOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import PageHeader from '@/components/PageHeader';
+import FilterBar from '@/components/FilterBar';
+import type { FilterField } from '@/components/FilterBar';
 import ConfirmActionModal from '@/components/ConfirmActionModal';
 import ResourceCard from '@/features/resource-center/components/ResourceCard';
 import ResourceFormDrawer from '@/features/resource-center/components/ResourceFormDrawer';
 import ResourcePermissionDrawer from '@/features/resource-center/components/ResourcePermissionDrawer';
 import { useResourceCenter } from '@/features/resource-center/ResourceCenterContext';
-import type { CreateResourceInput, PublishStatus, ResourceItem, ResourceType } from '@/features/resource-center/types';
-import { pageContainerStyle, panelStyle, strategyConfig, typeConfig } from '@/features/resource-center/ui';
+import type { CreateResourceInput, ResourceItem, ResourceType } from '@/features/resource-center/types';
+import { typeConfig } from '@/features/resource-center/ui';
+
+const { Text } = Typography;
+
+const filterFields: FilterField[] = [
+  { type: 'search', key: 'keyword', placeholder: '搜索资源名称、所有权人', width: 240 },
+  { type: 'select', key: 'type', placeholder: '资源类型', width: 120, options: [
+    { label: '知识库', value: 'knowledge' },
+    { label: '模型', value: 'model' },
+    { label: 'API', value: 'api' },
+    { label: 'MCP', value: 'mcp' },
+  ]},
+  { type: 'select', key: 'status', placeholder: '发布状态', width: 120, options: [
+    { label: '已上架', value: 'published' },
+    { label: '已下架', value: 'offline' },
+    { label: '待上架', value: 'pending' },
+  ]},
+];
 
 export default function ResourceManagePage() {
   const { message } = AntdApp.useApp();
   const {
     resources, createResource, updateResource, togglePublish, togglePinned,
-    grants, deleteResource, transferResource,
+    grants, deleteResource,
   } = useResourceCenter();
-  const [keyword, setKeyword] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'all' | ResourceType>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | PublishStatus>('all');
+  const [filters, setFilters] = useState<Record<string, any>>({ keyword: '', type: undefined, status: undefined });
+  const [activeStat, setActiveStat] = useState<string | null>(null);
+  const [cardPage, setCardPage] = useState(1);
+  const [cardPageSize, setCardPageSize] = useState(12);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ResourceItem | null>(null);
   const [detail, setDetail] = useState<ResourceItem | null>(null);
   const [permissionTarget, setPermissionTarget] = useState<ResourceItem | null>(null);
-  const [transferTarget, setTransferTarget] = useState<ResourceItem | null>(null);
-  const [transferOwner, setTransferOwner] = useState('');
-  const [transferReceiverAccount, setTransferReceiverAccount] = useState('');
-  const [transferRemark, setTransferRemark] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<ResourceItem | null>(null);
-  const transferCandidates = [
-    { value: 'zhangsan', label: '张三', dept: '总裁办' },
-    { value: 'lisi', label: '李四', dept: '系统架构部' },
-    { value: 'wangwu', label: '王五', dept: '平台开发部' },
-  ];
 
   const activeResources = resources.filter(resource => !resource.isDeleted);
   const filtered = useMemo(() => activeResources.filter(resource => {
-    if (typeFilter !== 'all' && resource.type !== typeFilter) return false;
-    if (statusFilter !== 'all' && resource.publishStatus !== statusFilter) return false;
-    const word = keyword.trim().toLowerCase();
+    if (filters.type && resource.type !== filters.type) return false;
+    if (filters.status && resource.publishStatus !== filters.status) return false;
+    const word = (filters.keyword || '').trim().toLowerCase();
     return !word || resource.name.toLowerCase().includes(word) || resource.owner.toLowerCase().includes(word);
-  }), [activeResources, keyword, statusFilter, typeFilter]);
-
-  const stats = [
-    { label: '资源总数', value: activeResources.length, color: '#1677ff' },
-    ...(['knowledge', 'model', 'api', 'mcp'] as ResourceType[]).map(type => ({ label: typeConfig[type].label, value: activeResources.filter(resource => resource.type === type).length, color: typeConfig[type].color })),
-  ];
+  }), [activeResources, filters]);
 
   const editResource = (resource: ResourceItem) => {
     if (resource.publishStatus === 'published' || resource.publishStatus === 'publishing') {
@@ -66,7 +73,6 @@ export default function ResourceManagePage() {
     { key: 'publish', icon: <SendOutlined />, label: resource.publishStatus === 'published' ? '下架资源' : '上架资源', onClick: () => { togglePublish(resource.id); message.success(resource.publishStatus === 'published' ? '资源已下架' : '资源已上架'); } },
     { key: 'pin', icon: <PushpinOutlined />, label: resource.isPinned ? '取消置顶' : '置顶资源', onClick: () => togglePinned(resource.id) },
     { key: 'strategy', icon: <SafetyCertificateOutlined />, label: '权限管理', onClick: () => setPermissionTarget(resource) },
-    { key: 'transfer', icon: <SwapOutlined />, label: '转移所有权', onClick: () => { setTransferTarget(resource); setTransferOwner(''); setTransferReceiverAccount(''); setTransferRemark(''); } },
     { type: 'divider' },
     { key: 'delete', icon: <DeleteOutlined />, danger: true, label: '删除资源', onClick: () => setDeleteTarget(resource) },
   ];
@@ -83,71 +89,113 @@ export default function ResourceManagePage() {
     setEditing(null);
   };
 
+  const statCards = [
+    { key: 'all', title: '资源总数', value: activeResources.length, color: '#1677ff', bg: '#e6f4ff', icon: <AppstoreOutlined /> },
+    ...(['knowledge', 'model', 'api', 'mcp'] as ResourceType[]).map(type => ({
+      key: type, title: typeConfig[type].label,
+      value: activeResources.filter(resource => resource.type === type).length,
+      color: '#1677ff', bg: '#e6f4ff', icon: typeConfig[type].icon,
+    })),
+  ];
+  const activeStatIndex = activeStat === null ? -1 : statCards.findIndex(item => item.key === activeStat);
+
   return (
-    <div style={pageContainerStyle}>
+    <div style={{ flex: 1, padding: '16px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <PageHeader
         title="资源管理"
         hint="平台共享资源的创建、上架、公开策略、授权与安全删除"
-        extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); setFormOpen(true); }}>创建资源</Button>}
       />
 
-      <Row gutter={12} style={{ margin: '4px 0 16px' }}>
-        {stats.map(stat => <Col key={stat.label} flex="1"><Card styles={{ body: { padding: '14px 18px' } }}><div style={{ color: '#7a8494', fontSize: 13 }}>{stat.label}</div><div style={{ fontSize: 26, fontWeight: 650, color: stat.color }}>{stat.value}</div></Card></Col>)}
-      </Row>
-
-      <div style={{ ...panelStyle, padding: 14, marginBottom: 16, display: 'flex', gap: 10, justifyContent: 'space-between', flexWrap: 'wrap' }}>
-        <Space wrap>
-          <Input.Search allowClear value={keyword} onChange={event => setKeyword(event.target.value)} placeholder="搜索资源名称、所有权人" style={{ width: 280 }} />
-          <Select value={typeFilter} onChange={setTypeFilter} style={{ width: 130 }} options={[{ value: 'all', label: '全部类型' }, ...Object.entries(typeConfig).map(([value, config]) => ({ value, label: config.label }))]} />
-          <Select value={statusFilter} onChange={setStatusFilter} style={{ width: 130 }} options={[{ value: 'all', label: '全部状态' }, { value: 'published', label: '已上架' }, { value: 'publishing', label: '发布审核中' }, { value: 'offline', label: '已下架' }, { value: 'pending', label: '待上架' }]} />
-        </Space>
-        <Tag>共 {filtered.length} 个资源</Tag>
+      <div style={{ display: 'flex', gap: 16, padding: '0 0 12px' }}>
+        {statCards.map((item, idx) => {
+          const isActive = activeStatIndex === idx;
+          const handleClick = () => {
+            if (item.key === 'all') {
+              setActiveStat('all');
+              setFilters(prev => ({ ...prev, type: undefined }));
+            } else {
+              setActiveStat(item.key);
+              setFilters(prev => ({ ...prev, type: item.key }));
+            }
+          };
+          return (
+            <Card
+              key={item.key}
+              className="resource-stat-card"
+              size="small"
+              onClick={handleClick}
+              style={{
+                flex: 1, minWidth: 0,
+                borderRadius: 10,
+                borderColor: isActive ? item.color : '#f0f0f0',
+                cursor: 'pointer',
+                background: isActive ? item.bg : '#fff',
+                boxShadow: isActive ? `0 2px 8px ${item.color}18` : 'none',
+                transition: 'all .2s',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                  background: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: item.color, fontSize: 20,
+                }}>
+                  {item.icon}
+                </div>
+                <div>
+                  <Text type="secondary" style={{ fontSize: 12 }}>{item.title}</Text>
+                  <div style={{ fontSize: 26, fontWeight: 700, color: item.color, lineHeight: '32px' }}>
+                    {item.value}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
       </div>
 
-      <Row gutter={[16, 16]}>
-        {filtered.map(resource => (
-          <Col key={resource.id} xs={24} md={12} xl={8}>
-            <ResourceCard
-              resource={resource}
-              mode="manage"
-              footer={<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Space size={4}>
-                  <Tag color={resource.publishStatus === 'published' ? 'success' : resource.publishStatus === 'publishing' ? 'processing' : 'default'}>{resource.publishStatus === 'published' ? '已上架' : resource.publishStatus === 'publishing' ? '发布审核中' : resource.publishStatus === 'pending' ? '待上架' : '已下架'}</Tag>
-                  <Tag icon={<GlobalOutlined />} color={strategyConfig[resource.publicStrategy].color} style={{ cursor: 'pointer' }} onClick={() => setPermissionTarget(resource)}>{strategyConfig[resource.publicStrategy].label}</Tag>
-                </Space>
-                <Dropdown menu={{ items: menuItems(resource) }} trigger={['click']}><Button type="text" icon={<EllipsisOutlined style={{ fontSize: 20 }} />} /></Dropdown>
-              </div>}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 8, overflow: 'hidden' }}>
+        <FilterBar
+          filters={filterFields}
+          filterValues={filters}
+          onFilterChange={(key, value) => { setFilters((prev) => ({ ...prev, [key]: value })); setCardPage(1); if (key === 'type') setActiveStat(null); }}
+          onSearch={() => {}}
+          onReset={() => { setFilters({ keyword: '', type: undefined, status: undefined }); setActiveStat(null); setCardPage(1); }}
+          onCreate={() => { setEditing(null); setFormOpen(true); }}
+          createText="创建资源"
+        />
+        <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px', display: 'flex', flexDirection: 'column' }}>
+          <div className="resource-card-grid" style={{ marginTop: 12 }}>
+            {filtered.slice((cardPage - 1) * cardPageSize, cardPage * cardPageSize).map(resource => (
+              <ResourceCard
+                key={resource.id}
+                resource={resource}
+                mode="manage"
+                onCardClick={() => setDetail(resource)}
+                onStrategyClick={() => setPermissionTarget(resource)}
+                footer={<div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                  <Dropdown menu={{ items: menuItems(resource) }} trigger={['click']}><Button type="text" size="small" icon={<MoreOutlined />} style={{ borderRadius: 6, fontSize: 12 }} onClick={(e) => e.stopPropagation()} /></Dropdown>
+                </div>}
+              />
+            ))}
+          </div>
+          <div className="resource-page-pagination">
+            <Pagination
+              current={cardPage}
+              pageSize={cardPageSize}
+              total={filtered.length}
+              showSizeChanger
+              showTotal={(total) => `共 ${total} 条`}
+              pageSizeOptions={['8', '12', '16', '24']}
+              onChange={(page, size) => { setCardPage(page); setCardPageSize(size); }}
             />
-          </Col>
-        ))}
-      </Row>
+          </div>
+        </div>
+      </div>
 
       <ResourceFormDrawer open={formOpen} resource={editing} onClose={() => { setFormOpen(false); setEditing(null); }} onSubmit={submitResource} />
       <ResourceFormDrawer open={!!detail} resource={detail} readOnly onClose={() => setDetail(null)} onSubmit={() => undefined} />
       <ResourcePermissionDrawer open={!!permissionTarget} resource={permissionTarget} onClose={() => setPermissionTarget(null)} />
-
-      <Modal
-        title="所有权转移"
-        open={!!transferTarget}
-        onCancel={() => setTransferTarget(null)}
-        okText="确认转移"
-        okButtonProps={{ disabled: !transferOwner || transferReceiverAccount !== transferOwner }}
-        onOk={() => {
-          const receiver = transferCandidates.find(item => item.value === transferOwner);
-          if (!receiver || transferReceiverAccount !== receiver.value) return;
-          if (transferTarget) transferResource(transferTarget.id, receiver.label);
-          setTransferTarget(null);
-          message.success('转移审批已提交');
-        }}
-        destroyOnHidden
-      >
-        <Alert title="转移所有权是一项敏感操作。成功后，您将失去该资源的所有控制权，身份将自动降级为“可使用”状态。" type="warning" showIcon style={{ marginBottom: 24 }} />
-        <Form layout="vertical">
-          <Form.Item label="选择接收人" required><Select value={transferOwner || undefined} onChange={value => { setTransferOwner(value); setTransferReceiverAccount(''); }} placeholder="搜索内部用户..." options={transferCandidates.map(item => ({ value: item.value, label: `${item.label} · ${item.dept}` }))} /></Form.Item>
-          <Form.Item label="转移备注"><Input.TextArea value={transferRemark} onChange={event => setTransferRemark(event.target.value)} placeholder="请说明转移原因..." rows={4} /></Form.Item>
-          <Form.Item label="确认接收人账号" required extra={transferOwner ? `请输入账号 ${transferOwner} 完成确认` : '请先选择接收人'}><Input disabled={!transferOwner} value={transferReceiverAccount} onChange={event => setTransferReceiverAccount(event.target.value)} placeholder="请输入接收人的登录账号以确认" /></Form.Item>
-        </Form>
-      </Modal>
 
       <ConfirmActionModal
         open={!!deleteTarget}

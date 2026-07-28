@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Table, Button, Space, Tag, Drawer, Form, Input, Select, Row, Col, Typography, Tabs, message, Dropdown, Modal,
+  Table, Button, Space, Tag, Drawer, Form, Input, Select, Row, Col, Typography, Tabs, message, Dropdown, Modal, Card,
 } from 'antd';
 import type { MenuProps } from 'antd';
 import {
-  PlusOutlined, SettingOutlined, InfoCircleOutlined, TeamOutlined,
+  AppstoreOutlined, PlusOutlined, SettingOutlined, InfoCircleOutlined, TeamOutlined,
   HistoryOutlined, SearchOutlined, CrownOutlined,
   SafetyOutlined, UserOutlined, EditOutlined,
   StopOutlined, CheckCircleOutlined, DeleteOutlined, EllipsisOutlined,
@@ -251,7 +251,14 @@ export default function OpsSpacesPage() {
     });
   }, [localApprovals, rejectedFilters]);
 
-  const [activeStatIndex, setActiveStatIndex] = useState<number | undefined>(undefined);
+  const [activeStat, setActiveStat] = useState<string | null>(null);
+
+  const spaceStatCards = [
+    { key: 'all', title: '总空间数', value: tab1Spaces.length, color: '#1677ff', bg: '#e6f4ff', icon: <AppstoreOutlined /> },
+    { key: '工作空间', title: '工作空间', value: tab1Spaces.filter(s => s.type === '工作空间').length, color: '#1677ff', bg: '#e6f4ff', icon: <TeamOutlined /> },
+    { key: '专案空间', title: '专案空间', value: tab1Spaces.filter(s => s.type === '专案空间').length, color: '#1677ff', bg: '#e6f4ff', icon: <SafetyOutlined /> },
+  ];
+  const activeStatIndex = activeStat === null ? -1 : spaceStatCards.findIndex(item => item.key === activeStat);
 
   // ── Tab 1 表格列 ──
   const tableColumns: ColumnsType<SpaceItem> = useMemo(() => [
@@ -498,7 +505,7 @@ export default function OpsSpacesPage() {
         activeKey={activeTab}
         onChange={(key) => {
           setActiveTab(key);
-          setActiveStatIndex(undefined);
+          setActiveStat(null);
         }}
         items={[
           {
@@ -506,20 +513,58 @@ export default function OpsSpacesPage() {
             label: '空间管理',
             children: (
               <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-                <StatCards
-                  items={[
-                    { title: '总空间数', value: tab1Spaces.length, color: '#1677ff', onClick: () => { setActiveStatIndex(0); setFilters(prev => ({ ...prev, spaceType: undefined })); } },
-                    { title: '工作空间', value: tab1Spaces.filter(s => s.type === '工作空间').length, color: '#722ed1', onClick: () => { setActiveStatIndex(1); setFilters(prev => ({ ...prev, spaceType: '工作空间' })); } },
-                    { title: '专案空间', value: tab1Spaces.filter(s => s.type === '专案空间').length, color: '#fa8c16', onClick: () => { setActiveStatIndex(2); setFilters(prev => ({ ...prev, spaceType: '专案空间' })); } },
-                  ]}
-                  activeIndex={activeStatIndex}
-                  colSpan={6}
-                />
+                <Row gutter={16} style={{ padding: '0 0 12px' }}>
+                  {spaceStatCards.map((item, idx) => {
+                    const isActive = activeStatIndex === idx;
+                    const handleClick = () => {
+                      if (item.key === 'all') {
+                        setActiveStat('all');
+                        setFilters(prev => ({ ...prev, spaceType: undefined }));
+                      } else {
+                        setActiveStat(item.key);
+                        setFilters(prev => ({ ...prev, spaceType: item.key }));
+                      }
+                    };
+                    return (
+                      <Col span={24 / spaceStatCards.length} key={item.key}>
+                        <Card
+                          className="resource-stat-card"
+                          size="small"
+                          onClick={handleClick}
+                          style={{
+                            borderRadius: 10,
+                            borderColor: isActive ? item.color : '#f0f0f0',
+                            cursor: 'pointer',
+                            background: isActive ? item.bg : '#fff',
+                            boxShadow: isActive ? `0 2px 8px ${item.color}18` : 'none',
+                            transition: 'all .2s',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                            <div style={{
+                              width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                              background: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: item.color, fontSize: 20,
+                            }}>
+                              {item.icon}
+                            </div>
+                            <div>
+                              <Text type="secondary" style={{ fontSize: 12 }}>{item.title}</Text>
+                              <div style={{ fontSize: 26, fontWeight: 700, color: item.color, lineHeight: '32px' }}>
+                                {item.value}
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      </Col>
+                    );
+                  })}
+                </Row>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 8, overflow: 'hidden' }}>
                   <FilterBar
                     filters={spaceFilterFields}
                     filterValues={filters}
-                    onFilterChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
+                    onFilterChange={(key, value) => { setFilters((prev) => ({ ...prev, [key]: value })); if (key === 'spaceType') setActiveStatIndex(undefined); }}
                     onSearch={() => {}}
                     onReset={() => { setFilters({ keyword: '', status: undefined, spaceType: undefined }); setActiveStatIndex(undefined); }}
                     onCreate={() => { setCreateDrawerOpen(true); }}

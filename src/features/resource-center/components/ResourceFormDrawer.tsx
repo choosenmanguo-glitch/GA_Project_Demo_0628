@@ -5,7 +5,7 @@ import {
 } from 'antd';
 import {
   BuildOutlined, CheckOutlined, CloudDownloadOutlined, DeleteOutlined,
-  RightOutlined, SettingOutlined, UserOutlined,
+  RightOutlined, SettingOutlined, UserOutlined, InfoCircleOutlined,
 } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
@@ -55,6 +55,7 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
     { id: 'v1', name: '行政部', description: '全员', type: '部门' },
     { id: 'v2', name: '李想', description: '产品经理', type: '个人' },
   ]);
+  const [addObjectModalOpen, setAddObjectModalOpen] = useState(false);
   const source = creationSource;
   const resourceType = resource?.type || creationType;
   const selectedWorkshop = Form.useWatch('workshopId', form);
@@ -149,9 +150,39 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
         ].map(option => <Col span={12} key={option.value}><div onClick={() => { setCreationSource(option.value); form.setFieldValue('source', option.value); setTechnicalConfigured(option.value === 'workshop'); }} style={{ position: 'relative', height: '100%', padding: 16, border: source === option.value ? '1px solid #1677ff' : '1px solid #f0f0f0', background: source === option.value ? '#f0f7ff' : '#fafafa', borderRadius: 12, cursor: 'pointer' }}><Space align="start"><Avatar shape="square" icon={option.icon} style={{ color: option.color, background: option.value === 'workshop' ? '#e6f4ff' : '#f6ffed' }} /><div><strong>{option.title}</strong><div style={{ color: '#8f959e', fontSize: 12, marginTop: 4 }}>{option.desc}</div></div></Space>{source === option.value && <span style={{ position: 'absolute', right: -1, top: -1, width: 24, height: 24, borderRadius: '0 12px 0 12px', background: '#1677ff', color: '#fff', display: 'grid', placeItems: 'center' }}><CheckOutlined /></span>}</div></Col>)}
       </Row>
     {source === 'workshop' && <>
-      <Form.Item name="workshopSpaceId" label="3. 选择所在空间" rules={[{ required: true, message: '请选择所在空间' }]}><Select options={spaces.map(space => ({ value: space.id, label: `${space.name} · ${space.type}` }))} /></Form.Item>
+      <Form.Item name="workshopSpaceId" label="3. 选择所在空间" rules={[{ required: true, message: '请选择所在空间' }]}>
+        <Select
+          showSearch
+          optionFilterProp="label"
+          optionRender={(option) => (
+            <Space>
+              <Avatar size={32} style={{ background: '#1677ff', flexShrink: 0 }}>{option.data.label?.charAt(0)}</Avatar>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{option.data.label}</div>
+                <div style={{ color: '#8c8c8c', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{option.data.description}</div>
+              </div>
+            </Space>
+          )}
+          options={spaces.map(space => ({ value: space.id, label: space.name, description: space.description }))}
+        />
+      </Form.Item>
       <Form.Item name="workshopId" label="4. 选择现有资源" rules={[{ required: true, message: '请选择现有资源' }]}>
-        <Select showSearch optionFilterProp="label" placeholder={`请选择已存在的 ${typeConfig[resourceType].label} 资源`} options={workshopItems.filter(item => item.type === resourceType).map(item => ({ value: item.id, label: item.name }))} notFoundContent={<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={`暂无未发布的 ${typeConfig[resourceType].label} 资源`} />} />
+        <Select
+          showSearch
+          optionFilterProp="label"
+          placeholder={`请选择已存在的 ${typeConfig[resourceType].label} 资源`}
+          optionRender={(option) => (
+            <Space>
+              <Avatar size={32} icon={typeConfig[resourceType].icon} style={{ background: typeConfig[resourceType].bg, color: typeConfig[resourceType].color, flexShrink: 0 }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{option.data.label}</div>
+                <div style={{ color: '#8c8c8c', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{option.data.description}</div>
+              </div>
+            </Space>
+          )}
+          options={workshopItems.filter(item => item.type === resourceType).map(item => ({ value: item.id, label: item.name, description: item.description }))}
+          notFoundContent={<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={`暂无未发布的 ${typeConfig[resourceType].label} 资源`} />}
+        />
       </Form.Item>
     </>}
   </div>;
@@ -177,7 +208,7 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
         </Space>
       </Radio.Group>
     </Form.Item>
-    <Form.Item noStyle shouldUpdate>{({ getFieldValue }) => getFieldValue('publicStrategy') === 'whitelist' ? <div style={{ marginTop: 24 }}><div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}><strong>可见范围设定</strong><Button size="small" type="primary" onClick={() => setVisibleObjects(prev => [...prev, { id: `v${Date.now()}`, name: '新增授权对象', description: '待配置', type: '个人' }])}>添加对象</Button></div><Table rowKey="id" pagination={false} dataSource={visibleObjects} columns={[{ title: '可见对象', render: (_, item) => <Space><Avatar icon={<UserOutlined />} /><div><div>{item.name}</div><small style={{ color: '#999' }}>{item.description}</small></div></Space> }, { title: '对象类型', dataIndex: 'type', render: value => <Tag>{value}</Tag> }, { title: '操作', render: (_, item) => <Button danger type="text" icon={<DeleteOutlined />} onClick={() => setVisibleObjects(prev => prev.filter(value => value.id !== item.id))} /> }]} /></div> : null}</Form.Item>
+    <Form.Item noStyle shouldUpdate>{({ getFieldValue }) => getFieldValue('publicStrategy') === 'whitelist' ? <div style={{ marginTop: 24 }}><div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}><strong>可见范围设定</strong><Button size="small" type="primary" onClick={() => setAddObjectModalOpen(true)}>添加对象</Button></div><Table rowKey="id" pagination={false} dataSource={visibleObjects} columns={[{ title: '可见对象', render: (_, item) => <Space><Avatar icon={<UserOutlined />} /><div><div>{item.name}</div><small style={{ color: '#999' }}>{item.description}</small></div></Space> }, { title: '对象类型', dataIndex: 'type', render: value => <Tag>{value}</Tag> }, { title: '操作', render: (_, item) => <Button danger type="text" icon={<DeleteOutlined />} onClick={() => setVisibleObjects(prev => prev.filter(value => value.id !== item.id))} /> }]} /></div> : null}</Form.Item>
   </div>;
 
   const footer = readOnly ? <Button type="primary" onClick={onClose}>关闭</Button> : editing ? <Space><Button onClick={onClose}>取消</Button><Button type="primary" onClick={saveEdit}>保存修改</Button></Space> : <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}><Button onClick={onClose}>取消</Button><Space>{step > 0 && <Button onClick={() => setStep(value => value - 1)}>上一步</Button>}{step < 2 ? <Button type="primary" disabled={step === 0 && source === 'workshop' && !selectedWorkshop} onClick={next}>下一步</Button> : <Button type="primary" onClick={finish}>提交创建</Button>}</Space></div>;
@@ -201,6 +232,21 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
     </Drawer>
     <ResourceTechnicalDrawer open={technicalOpen} type={resourceType} initialValues={{ ...resource, ...form.getFieldsValue(), ...technicalValues }} readOnly={readOnly} onClose={() => setTechnicalOpen(false)} onSave={values => { setTechnicalValues(prev => ({ ...prev, ...values })); setTechnicalConfigured(true); setTechnicalOpen(false); message.success('详细配置保存成功'); }} />
     <Modal title="Markdown 预览" open={previewOpen} onCancel={() => setPreviewOpen(false)} footer={null} size="large"><div style={{ minHeight: 220, padding: 12 }}><ReactMarkdown>{markdown || '暂无内容'}</ReactMarkdown></div></Modal>
+    <Modal
+      title="添加可见对象"
+      open={addObjectModalOpen}
+      onCancel={() => setAddObjectModalOpen(false)}
+      footer={<Button onClick={() => setAddObjectModalOpen(false)}>关闭</Button>}
+    >
+      <div style={{ padding: '32px 0', textAlign: 'center' }}>
+        <InfoCircleOutlined style={{ fontSize: 40, color: '#1677ff', marginBottom: 16 }} />
+        <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 8 }}>复用人员 / 部门选择组件</div>
+        <div style={{ color: '#8c8c8c', fontSize: 13, lineHeight: '22px' }}>
+          此处应复用项目中已有的成员选择组件（<code>MemberSelect</code>）与部门选择组件，<br />
+          支持按人员姓名或部门名称搜索并添加至可见范围列表。
+        </div>
+      </div>
+    </Modal>
   </>;
 };
 

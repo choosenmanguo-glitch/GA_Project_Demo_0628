@@ -392,7 +392,6 @@ const ModelsPage: React.FC = () => {
                           </div>
                         </div>
                         <Tag color={item.status === '启用' ? 'green' : 'orange'} style={{ borderRadius: 4, margin: 0, fontSize: 11, flexShrink: 0 }}>
-                          {item.status === '启用' ? <CheckCircleOutlined style={{ fontSize: 10, marginRight: 2 }} /> : <PauseCircleOutlined style={{ fontSize: 10, marginRight: 2 }} />}
                           {item.status}
                         </Tag>
                       </div>

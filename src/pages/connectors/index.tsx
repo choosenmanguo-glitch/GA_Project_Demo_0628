@@ -157,7 +157,6 @@ const ConnectorsPage: React.FC = () => {
 
   // ──── Card Component ────
   const ConnectorCard: React.FC<{ item: ConnectorItem }> = ({ item }) => {
-    const ac = authStatusConfig[item.authStatus];
     const sc = sourceConfig[item.source];
     return (
       <div
@@ -202,8 +201,8 @@ const ConnectorsPage: React.FC = () => {
               </div>
             </div>
           </div>
-          <Tag style={{ borderRadius: 4, margin: 0, fontSize: 11, flexShrink: 0, background: ac.bg, color: ac.color, border: `1px solid ${ac.color}30` }}>
-            {ac.icon}<span style={{ marginLeft: 3 }}>{ac.label}</span>
+          <Tag color={item.authStatus === '已授权' ? 'success' : 'default'} style={{ borderRadius: 4, margin: 0, fontSize: 11, flexShrink: 0 }}>
+            {item.authStatus}
           </Tag>
         </div>
         <Text type="secondary" style={{ fontSize: 13, lineHeight: '20px', height: 40, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
