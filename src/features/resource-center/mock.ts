@@ -105,6 +105,10 @@ export const initialApplications: ResourceApplication[] = [
   { id: 'app-3', resourceId: '10', spaceId: '4', applicant: '王五', dept: '刑警大队', applyTime: '2026-05-13 11:45', duration: 'permanent', reason: '项目工程自动化提效实践。', status: 'pending' },
   { id: 'history-1', resourceId: '9', spaceId: '1', applicant: '赵六', dept: '指挥中心', applyTime: '2026-05-12 14:20', duration: 'permanent', reason: '运营消息通知。', status: 'approved', operator: '演示用户', opinion: '业务场景需要，审批通过', approvalTime: '2026-05-12 15:00' },
   { id: 'history-2', resourceId: '1', spaceId: '3', applicant: '钱七七', dept: '交警支队', applyTime: '2026-05-11 09:12', duration: 'custom', expireDate: '2026-08-31', reason: '知识库复用。', status: 'rejected', operator: '演示用户', opinion: '共享范围不符合规范', approvalTime: '2026-05-11 10:30' },
+  // 当前默认空间（spaceId: '0'）的申请记录
+  { id: 'my-app-1', resourceId: '14', spaceId: '0', applicant: '演示用户', dept: '研发中心', applyTime: '2026-07-20 09:15', duration: 'permanent', reason: '需要参考开发文档进行环境配置和问题排查。', status: 'approved', operator: '管理员', opinion: '业务需要，审批通过', approvalTime: '2026-07-20 14:30' },
+  { id: 'my-app-2', resourceId: '10', spaceId: '0', applicant: '演示用户', dept: '研发中心', applyTime: '2026-07-25 10:30', duration: 'custom', expireDate: '2026-12-31', reason: '项目需要集成GitHub代码库读取能力。', status: 'pending' },
+  { id: 'my-app-3', resourceId: '4', spaceId: '0', applicant: '演示用户', dept: '研发中心', applyTime: '2026-07-18 16:00', duration: 'permanent', reason: '需要使用BGE-M3向量模型进行语义检索实验。', status: 'rejected', operator: '管理员', opinion: '向量模型资源暂不对个人开放，请使用团队共享资源。', approvalTime: '2026-07-19 09:00' },
 ];
 
 export const initialAuditLogs: ResourceAuditLog[] = [

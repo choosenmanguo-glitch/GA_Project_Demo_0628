@@ -49,21 +49,18 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
         padding: '20px 20px 16px',
         position: 'relative',
         overflow: 'hidden',
-        cursor: onCardClick ? 'pointer' : 'default',
+        cursor: (onCardClick || selectable) ? 'pointer' : 'default',
         display: 'flex',
         flexDirection: 'column',
         gap: 12,
         boxShadow: 'none',
         transition: 'all .2s',
       }}
-      onClick={onCardClick}
+      onClick={selectable ? () => onSelect?.(!selected) : onCardClick}
     >
       <div className="resource-card-accent" style={{ position: 'absolute', top: 0, left: 0, width: '100%' }} />
       {/* 顶部行：图标 + 名称/标识 + 状态标签 */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-        {selectable && (
-          <Checkbox checked={selected} onChange={event => onSelect?.(event.target.checked)} style={{ marginTop: 5 }} />
-        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', flex: 1, minWidth: 0, gap: 8, alignItems: 'flex-start' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1, minWidth: 0 }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: type.bg, color: type.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
@@ -121,9 +118,11 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Button danger size="small" onClick={onRemove}>删除</Button>
           </div>
+        ) : selectable ? (
+          <Checkbox checked={selected} onChange={event => onSelect?.(event.target.checked)} onClick={e => e.stopPropagation()} />
         ) : footer ?? (
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            {mode === 'mine' && (
+            {mode === 'mine' && !selectable && (
               <Button type={installStatus === 'failed' ? 'default' : 'primary'} danger={installStatus === 'failed'} loading={installStatus === 'installing'} onClick={onInstall}>
                 {installStatus === 'installed' ? '更新安装' : installStatus === 'failed' ? '重新安装' : installStatus === 'installing' ? '安装中' : '安装资源'}
               </Button>
