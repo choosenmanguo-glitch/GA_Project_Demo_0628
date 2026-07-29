@@ -59,7 +59,7 @@ export const ResourceCenterProvider: React.FC<{ children: React.ReactNode }> = (
     if (resource?.isDeleted) return { status: 'revoked', isAcquired: !!grant, grant, invalidReason: 'deleted' };
     if (grant?.expired) return { status: 'revoked', isAcquired: true, grant, invalidReason: 'expired' };
     if (grant?.revoked || resource?.status === 'revoked') return { status: 'revoked', isAcquired: !!grant, grant, invalidReason: 'revoked' };
-    if (pendingApplication) return { status: 'reviewing', isAcquired: false, pendingApplication };
+    if (pendingApplication) return { status: 'reviewing', isAcquired: false, grant, pendingApplication };
     if (grant) return { status: 'authorized', isAcquired: true, grant };
     return { status: resource?.status === 'authorized' ? 'authorized' : 'view_only', isAcquired: false };
   }, [applications, grants, resources]);

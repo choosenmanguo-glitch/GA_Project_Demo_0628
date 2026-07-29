@@ -142,6 +142,7 @@ export const moduleLabelMap: Record<string, string> = {
 export function resolvePageLabel(path: string): string {
   const exactPageLabels: Record<string, string> = {
     '/dev/tools/plugins': '插件管理',
+    '/dev/my-resources': '我的资源',
   };
   if (exactPageLabels[path]) return exactPageLabels[path];
 
