@@ -71,10 +71,6 @@ const ConnectorsPage: React.FC = () => {
     { key: '未授权', title: '未授权', value: data.filter(d => d.authStatus === '未授权').length, color: '#1677ff', icon: <ExclamationCircleOutlined />, bg: '#e6f4ff' },
   ];
 
-  const handleGoSquare = () => {
-    navigate('/dev/resource-square?tab=连接器');
-  };
-
   const handleOpenAdd = () => {
     setEditingId(null);
     form.resetFields();
@@ -278,7 +274,7 @@ const ConnectorsPage: React.FC = () => {
           onReset={() => { setFilters({ keyword: '', source: undefined, authStatus: undefined }); setActiveStat(null); setCardPage(1); }}
           viewMode={viewMode}
           onViewModeChange={(mode) => setViewMode(mode)}
-          extra={<Button icon={<ShoppingOutlined />} onClick={handleGoSquare}>从广场获取</Button>}
+          extra={<Button icon={<ShoppingOutlined />} onClick={() => window.open('/standalone/resource-square?tab=mcp', '_blank')}>从广场获取</Button>}
           onCreate={handleOpenAdd}
           createText="创建连接器"
         />

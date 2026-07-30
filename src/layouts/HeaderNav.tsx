@@ -36,6 +36,8 @@ const HeaderNav: React.FC = () => {
   const activeModule = React.useMemo(() => {
     const path = location.pathname;
     if (path === '/') return 'dev';
+    // standalone 页面不高亮任何顶级菜单
+    if (path.startsWith('/standalone')) return '';
     for (const mod of topNavModules) {
       if (path.startsWith(mod.path)) return mod.key;
     }

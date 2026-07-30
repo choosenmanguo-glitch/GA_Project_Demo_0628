@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { App as AntdApp, Button, Drawer, Pagination, Tag } from 'antd';
 import { CheckOutlined, CloseOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PageHeader from '@/components/PageHeader';
 import FilterBar from '@/components/FilterBar';
 import type { FilterField } from '@/components/FilterBar';
@@ -32,9 +32,16 @@ const filterFields: FilterField[] = [
   ]},
 ];
 
-export default function MyResourcesPage() {
+interface MyResourcesPageProps {
+  /** 紧凑模式：在资源广场 tab 内嵌时使用，隐藏 PageHeader，无外层 padding */
+  compact?: boolean;
+}
+
+export default function MyResourcesPage({ compact }: MyResourcesPageProps) {
   const { message } = AntdApp.useApp();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isStandalone = location.pathname.startsWith('/standalone');
   const { currentSpace } = useWorkspace();
   const { resources, grants, applications, getAccess, installResource, batchInstall, removeGrant } = useResourceCenter();
   const [filters, setFilters] = useState<Record<string, any>>({ keyword: '', status: undefined, type: undefined, installStatus: undefined });
@@ -79,24 +86,26 @@ export default function MyResourcesPage() {
   };
 
   return (
-    <div style={{ flex: 1, padding: '16px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <PageHeader
-        title={
-          <span>
-            <ArrowLeftOutlined
-              onClick={() => navigate('/dev/resource-square')}
-              style={{ marginRight: 8, cursor: 'pointer', color: 'rgba(0,0,0,0.45)', transition: 'color 0.2s' }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#1677ff')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(0,0,0,0.45)')}
-            />
-            我的资源
-          </span>
-        }
-        hint="当前工作空间已经获取的资源"
-        extra={<Tag color="blue">{currentSpace.name}</Tag>}
-      />
+    <div style={{ flex: 1, padding: compact ? 0 : '16px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      {!compact && (
+        <PageHeader
+          title={
+            <span>
+              <ArrowLeftOutlined
+                onClick={() => navigate(isStandalone ? '/standalone/resource-square' : '/dev/resource-square')}
+                style={{ marginRight: 8, cursor: 'pointer', color: 'rgba(0,0,0,0.45)', transition: 'color 0.2s' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#1677ff')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(0,0,0,0.45)')}
+              />
+              我的资源
+            </span>
+          }
+          hint="当前工作空间已经获取的资源"
+          extra={<Tag color="blue">{currentSpace.name}</Tag>}
+        />
+      )}
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 8, overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: compact ? 'transparent' : '#fff', borderRadius: compact ? 0 : 8, overflow: 'hidden' }}>
         <FilterBar
           filters={filterFields}
           filterValues={filters}

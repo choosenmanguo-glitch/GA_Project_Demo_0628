@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { App as AntdApp, Button, Input, Pagination, Tag, Tabs } from 'antd';
-import { AppstoreOutlined, InboxOutlined, SearchOutlined } from '@ant-design/icons';
+import { useLocation } from 'react-router-dom';
+import { App as AntdApp, Badge, Input, Pagination, Tag, Tabs } from 'antd';
+import { AppstoreOutlined, SearchOutlined } from '@ant-design/icons';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
+import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
+import MyResourcesPage from '@/pages/my-resources';
 import ResourceApplyModal from '@/features/resource-center/components/ResourceApplyModal';
 import ResourceCard from '@/features/resource-center/components/ResourceCard';
 import ResourceDetailDrawer from '@/features/resource-center/components/ResourceDetailDrawer';
@@ -19,15 +21,29 @@ const tabKeys: { key: 'all' | ResourceType; label: string }[] = [
 
 export default function ResourceSquarePage() {
   const { message } = AntdApp.useApp();
-  const navigate = useNavigate();
+  const location = useLocation();
+  const isStandalone = location.pathname.startsWith('/standalone');
   const { currentSpace } = useWorkspace();
-  const { resources, getAccess, acquire, applyForResource } = useResourceCenter();
-  const [activeType, setActiveType] = useState<'all' | ResourceType>('all');
+  const { resources, grants, getAccess, acquire, applyForResource } = useResourceCenter();
+
+  // 从 URL 参数读取预选类型 tab
+  const initialType = useMemo(() => {
+    const tab = new URLSearchParams(location.search).get('tab');
+    return tabKeys.some(t => t.key === tab) ? (tab as ResourceType) : undefined;
+  }, [location.search]);
+
+  const [mainTab, setMainTab] = useState<'all' | 'mine'>('all');
+  const [activeType, setActiveType] = useState<'all' | ResourceType>(initialType || 'all');
   const [keyword, setKeyword] = useState('');
   const [cardPage, setCardPage] = useState(1);
   const [cardPageSize, setCardPageSize] = useState(12);
   const [detailResource, setDetailResource] = useState<ResourceItem | null>(null);
   const [applyResource, setApplyResource] = useState<ResourceItem | null>(null);
+
+  /** 我的资源数量 */
+  const myResourcesCount = useMemo(() => {
+    return grants.filter(grant => grant.spaceId === currentSpace.id).length;
+  }, [grants, currentSpace.id]);
 
   const publishedResources = useMemo(() => resources
     .filter(resource => resource.publishStatus === 'published' && !resource.isDeleted),
@@ -97,93 +113,114 @@ export default function ResourceSquarePage() {
             浏览、获取或申请平台共享的模型、API、MCP 与知识库资源
           </div>
         </div>
-        <Button
-          type="primary"
-          icon={<InboxOutlined />}
-          onClick={() => navigate('/dev/my-resources')}
-          style={{
-            border: 'none',
-            borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 600,
+      </div>
+
+      {/* Main Tabs Row — outside white container */}
+      <div style={{
+        margin: '0 24px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        flexShrink: 0,
+      }}>
+        <Tabs
+          activeKey={mainTab}
+          onChange={key => setMainTab(key as 'all' | 'mine')}
+          tabBarStyle={{ marginBottom: 0, paddingTop: 4, paddingBottom: 4 }}
+          items={[
+            { key: 'all', label: '全部资源' },
+            {
+              key: 'mine',
+              label: (
+                <span>
+                  我的资源
+                  <Badge count={myResourcesCount} overflowCount={999} style={{ marginLeft: 6, backgroundColor: '#1677ff' }} />
+                </span>
+              ),
+            },
+          ]}
+        />
+        {isStandalone ? (
+          <WorkspaceSwitcher inline />
+        ) : (
+          <Tag style={{
+            color: 'rgba(0,0,0,0.65)', border: '1px solid #d9d9d9',
+            borderRadius: 8, padding: '4px 14px', fontSize: 13,
             background: '#fff',
-            color: '#1677ff',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-          }}
-        >
-          我的资源
-        </Button>
-        <Tag style={{
-          color: '#fff', border: '1px solid rgba(255,255,255,0.3)',
-          borderRadius: 8, padding: '4px 14px', fontSize: 13,
-          background: 'rgba(255,255,255,0.12)',
-        }}>
-          当前空间：{currentSpace.name}
-        </Tag>
+          }}>
+            当前空间：{currentSpace.name}
+          </Tag>
+        )}
       </div>
 
       {/* Main Content */}
       <div style={{
-        flex: 1, margin: '24px', display: 'flex', flexDirection: 'column',
+        flex: 1, margin: '12px 24px 24px', display: 'flex', flexDirection: 'column',
         background: '#fff', borderRadius: 12, overflow: 'hidden',
         boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
       }}>
-        {/* Tabs + Search */}
-        <div style={{
-          padding: '0 24px', borderBottom: '1px solid #f0f0f0',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <Tabs
-            activeKey={activeType}
-            onChange={key => { setActiveType(key as 'all' | ResourceType); setCardPage(1); }}
-            tabBarStyle={{ marginBottom: 0, paddingTop: 4, paddingBottom: 4 }}
-            items={tabKeys.map(item => ({
-              key: item.key,
-              label: (
-                <span>
-                  {item.label}{' '}
-                  <Tag variant="filled" style={{ marginInlineEnd: 0, fontSize: 11, minWidth: 20, textAlign: 'center' }}>
-                    {typeCounts[item.key]}
-                  </Tag>
-                </span>
-              ),
-            }))}
-          />
-          <Input
-            allowClear
-            prefix={<SearchOutlined />}
-            value={keyword}
-            onChange={event => { setKeyword(event.target.value); setCardPage(1); }}
-            placeholder="搜索资源名称、描述、所有权人"
-            style={{ width: 280 }}
-          />
-        </div>
-
-        {/* Cards + Pagination */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px', display: 'flex', flexDirection: 'column' }}>
-          <div className="resource-card-grid" style={{ marginTop: 16 }}>
-            {visibleResources.slice((cardPage - 1) * cardPageSize, cardPage * cardPageSize).map(resource => (
-              <ResourceCard
-                key={resource.id}
-                resource={resource}
-                access={getAccess(resource.id, currentSpace.id)}
-                mode="square"
-                onCardClick={() => setDetailResource(resource)}
+        {/* 全部资源 */}
+        {mainTab === 'all' && (
+          <>
+            {/* Type Tabs + Search */}
+            <div style={{
+              padding: '0 24px', borderBottom: '1px solid #f0f0f0',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <Tabs
+                activeKey={activeType}
+                onChange={key => { setActiveType(key as 'all' | ResourceType); setCardPage(1); }}
+                tabBarStyle={{ marginBottom: 0, paddingTop: 4, paddingBottom: 4 }}
+                items={tabKeys.map(item => ({
+                  key: item.key,
+                  label: (
+                    <span>
+                      {item.label}{' '}
+                      <Tag variant="filled" style={{ marginInlineEnd: 0, fontSize: 11, minWidth: 20, textAlign: 'center' }}>
+                        {typeCounts[item.key]}
+                      </Tag>
+                    </span>
+                  ),
+                }))}
               />
-            ))}
-          </div>
-          <div className="resource-page-pagination">
-            <Pagination
-              current={cardPage}
-              pageSize={cardPageSize}
-              total={visibleResources.length}
-              showSizeChanger
-              showTotal={(total) => `共 ${total} 条`}
-              pageSizeOptions={['8', '12', '16', '24']}
-              onChange={(page, size) => { setCardPage(page); setCardPageSize(size); }}
-            />
-          </div>
-        </div>
+              <Input
+                allowClear
+                prefix={<SearchOutlined />}
+                value={keyword}
+                onChange={event => { setKeyword(event.target.value); setCardPage(1); }}
+                placeholder="搜索资源名称、描述、所有权人"
+                style={{ width: 280 }}
+              />
+            </div>
+
+            {/* Cards + Pagination */}
+            <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px', display: 'flex', flexDirection: 'column' }}>
+              <div className="resource-card-grid" style={{ marginTop: 16 }}>
+                {visibleResources.slice((cardPage - 1) * cardPageSize, cardPage * cardPageSize).map(resource => (
+                  <ResourceCard
+                    key={resource.id}
+                    resource={resource}
+                    access={getAccess(resource.id, currentSpace.id)}
+                    mode="square"
+                    onCardClick={() => setDetailResource(resource)}
+                  />
+                ))}
+              </div>
+              <div className="resource-page-pagination">
+                <Pagination
+                  current={cardPage}
+                  pageSize={cardPageSize}
+                  total={visibleResources.length}
+                  showSizeChanger
+                  showTotal={(total) => `共 ${total} 条`}
+                  pageSizeOptions={['8', '12', '16', '24']}
+                  onChange={(page, size) => { setCardPage(page); setCardPageSize(size); }}
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* 我的资源 */}
+        {mainTab === 'mine' && <MyResourcesPage compact />}
       </div>
 
       <ResourceDetailDrawer

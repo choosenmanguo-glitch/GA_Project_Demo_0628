@@ -234,7 +234,7 @@ const ToolsPage: React.FC = () => {
                 <Button icon={<SettingOutlined />} onClick={() => navigate('/dev/tools/plugins')}>
                   插件管理
                 </Button>
-                <Button icon={<ShoppingOutlined />} onClick={() => navigate('/dev/resource-square?tab=api')}>
+                <Button icon={<ShoppingOutlined />} onClick={() => window.open('/standalone/resource-square?tab=api', '_blank')}>
                   从广场获取
                 </Button>
               </>

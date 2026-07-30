@@ -33,9 +33,11 @@ interface Props {
   collapsed?: boolean;
   /** 内联模式：用于页面头部，无边框无背景 */
   inline?: boolean;
+  /** 浅色主题：用于深色 banner 背景，文字和箭头变白 */
+  light?: boolean;
 }
 
-const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
+const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline, light }) => {
   const { currentSpace, spaces, switchSpace } = useWorkspace();
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -124,13 +126,13 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
               width: 26,
               height: 26,
               borderRadius: 7,
-              background: brandBg,
+              background: light ? 'rgba(255,255,255,0.2)' : brandBg,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 13,
               fontWeight: 700,
-              color: brandColor,
+              color: light ? '#fff' : brandColor,
             }}
           >
             {iconChar}
@@ -143,13 +145,13 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
                   width: 24,
                   height: 24,
                   borderRadius: 5,
-                  background: brandBg,
+                  background: light ? 'rgba(255,255,255,0.2)' : brandBg,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: 11,
                   fontWeight: 700,
-                  color: brandColor,
+                  color: light ? '#fff' : brandColor,
                   flexShrink: 0,
                 }}
               >
@@ -159,7 +161,7 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
-                  color: '#1D2129',
+                  color: light ? '#fff' : '#1D2129',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -168,7 +170,7 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline }) => {
                 {currentSpace.name}
               </span>
             </div>
-            <span style={{ fontSize: 10, color: '#B0B8C8', flexShrink: 0, marginLeft: 4 }}>
+            <span style={{ fontSize: 10, color: light ? 'rgba(255,255,255,0.85)' : '#B0B8C8', flexShrink: 0, marginLeft: 4 }}>
               &#9660;
             </span>
           </>

@@ -331,7 +331,7 @@ const ModelsPage: React.FC = () => {
             extra={
               <Space size={8}>
                 <Button icon={<SettingOutlined />} onClick={() => setSourceDrawerOpen(true)}>模型源管理</Button>
-                <Button icon={<ShoppingOutlined />} onClick={() => navigate('/dev/resource-square?tab=model')}>
+                <Button icon={<ShoppingOutlined />} onClick={() => window.open('/standalone/resource-square?tab=model', '_blank')}>
                   从广场获取
                 </Button>
               </Space>

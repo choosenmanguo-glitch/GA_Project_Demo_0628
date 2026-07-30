@@ -1357,7 +1357,7 @@ const KnowledgeBasePage: React.FC = () => {
             extra={
               <Space size={8}>
                 <Button icon={<SettingOutlined />} onClick={() => setExternalApiManageOpen(true)}>外部 API 管理</Button>
-                <Button icon={<ShoppingOutlined />} onClick={() => navigate('/dev/resource-square?tab=knowledge')}>
+                <Button icon={<ShoppingOutlined />} onClick={() => window.open('/standalone/resource-square?tab=knowledge', '_blank')}>
                   从广场获取
                 </Button>
               </Space>
