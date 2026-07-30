@@ -23,6 +23,7 @@ import SpaceCreateDrawer from '@/components/SpaceCreateDrawer';
 import type { SpaceCreateValues } from '@/components/SpaceCreateDrawer';
 import ConfirmActionModal from '@/components/ConfirmActionModal';
 import { useSpaceDetailTabs } from '@/components/SpaceDetailTabs';
+import { tablePagination } from '@/components/PaginationBar';
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
@@ -577,11 +578,7 @@ export default function OpsSpacesPage() {
                       dataSource={filteredSpaces}
                       size="middle"
                       style={{ marginTop: 12 }}
-                      pagination={{
-                        defaultPageSize: 20,
-                        showSizeChanger: true,
-                        showTotal: (t) => `共 ${t} 条`,
-                      }}
+                      pagination={tablePagination()}
                       onRow={(record) => ({
                         onClick: () => setSelectedSpace(record),
                         style: {
@@ -629,11 +626,7 @@ export default function OpsSpacesPage() {
                         dataSource={pendingSpaces}
                         size="middle"
                         style={{ marginTop: 12 }}
-                        pagination={{
-                          defaultPageSize: 20,
-                          showSizeChanger: true,
-                          showTotal: (t) => `共 ${t} 条待审批`,
-                        }}
+                        pagination={tablePagination()}
                         locale={{ emptyText: '暂无待审批的空间申请' }}
                         onRow={(record) => ({
                           style: { cursor: 'pointer' },
@@ -673,11 +666,7 @@ export default function OpsSpacesPage() {
                         dataSource={rejectedSpaces}
                         size="middle"
                         style={{ marginTop: 12 }}
-                        pagination={{
-                          defaultPageSize: 20,
-                          showSizeChanger: true,
-                          showTotal: (t) => `共 ${t} 条记录`,
-                        }}
+                        pagination={tablePagination()}
                         locale={{ emptyText: '暂无审批记录' }}
                         onRow={(record) => ({
                           style: { cursor: 'pointer' },

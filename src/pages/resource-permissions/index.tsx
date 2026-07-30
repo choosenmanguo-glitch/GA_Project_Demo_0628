@@ -2,10 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { App as AntdApp, Avatar, Badge, Button, Card, DatePicker, Drawer, Empty, Form, Input, Popconfirm, Radio, Select, Space, Table, Tabs, Tag, Tooltip } from 'antd';
 import { AuditOutlined, PlusOutlined, SafetyCertificateOutlined, UserOutlined } from '@ant-design/icons';
 import PageHeader from '@/components/PageHeader';
+import { tablePagination } from '@/components/PaginationBar';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useResourceCenter } from '@/features/resource-center/ResourceCenterContext';
 import type { ApplicationStatus, ResourceApplication, ResourceType } from '@/features/resource-center/types';
-import { pageContainerStyle, typeConfig } from '@/features/resource-center/ui';
+import { typeConfig } from '@/features/resource-center/ui';
 
 // V3色系映射（与原型一致）
 const v3Color: Record<string, { bg: string; color: string }> = {
@@ -176,7 +177,7 @@ export default function ResourcePermissionsPage() {
             return true;
           })}
           size="middle"
-          pagination={{ pageSize: 8 }}
+          pagination={tablePagination()}
           locale={{ emptyText: <Empty description="当前没有待审批的资源申请" style={{ padding: '60px 0' }} /> }}
           columns={[
             {
@@ -286,7 +287,7 @@ export default function ResourcePermissionsPage() {
             return true;
           })}
           size="middle"
-          pagination={{ pageSize: 8 }}
+          pagination={tablePagination('条')}
           locale={{ emptyText: <Empty description="暂无相关的历史决策审批记录" style={{ padding: '60px 0' }} /> }}
           columns={[
             {
@@ -507,22 +508,9 @@ export default function ResourcePermissionsPage() {
     </div>
   );
 
-  // ==================== 审计日志（保留在独立区域） ====================
-  const auditLogPanel = auditLogs.length > 0 ? (
-    <Card title={<Space><AuditOutlined />权限与资源操作日志</Space>} style={{ marginTop: 16 }}>
-      <Table rowKey="id" size="small" dataSource={auditLogs} pagination={{ pageSize: 6 }} columns={[
-        { title: '时间', dataIndex: 'time', width: 190 },
-        { title: '资源', dataIndex: 'resourceId', width: 200, render: (id: string) => getResource(id)?.name || '资源已删除' },
-        { title: '操作人', dataIndex: 'operator', width: 130 },
-        { title: '操作', dataIndex: 'action', width: 180 },
-        { title: '详情', dataIndex: 'detail' },
-      ]} />
-    </Card>
-  ) : null;
-
   return (
-    <div style={pageContainerStyle}>
-      <PageHeader title="权限管理" hint="处理资源使用申请，并审计各空间的资源授权关系" extra={<Tag color="processing">待审批 {pendingCount}</Tag>} />
+    <div style={{ flex: 1, padding: '16px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <PageHeader title="资源权限" hint="处理资源使用申请，并审计各空间的资源授权关系" />
 
       <Tabs
         activeKey={permissionSubTab}
@@ -547,7 +535,6 @@ export default function ResourcePermissionsPage() {
           { key: 'audit', label: '权限审计', children: (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {auditTab}
-              {auditLogPanel}
             </div>
           )},
         ]}

@@ -5,6 +5,7 @@ import { PlusOutlined, ThunderboltOutlined, FileTextOutlined, RocketOutlined, Se
 import type { ColumnsType } from 'antd/es/table';
 import PageHeader from '@/components/PageHeader';
 import FilterBar from '@/components/FilterBar';
+import PaginationBar from '@/components/PaginationBar';
 import type { FilterField } from '@/components/FilterBar';
 import { mockAgents, type AgentItem, type AgentType, type PublishType } from '@/mock/data';
 
@@ -308,17 +309,7 @@ export default function AgentManagePage() {
                     />
                   ))}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 0 0' }}>
-                  <Pagination
-                    current={cardPage}
-                    pageSize={cardPageSize}
-                    total={filteredData.length}
-                    showSizeChanger
-                    showTotal={(total) => `共 ${total} 条`}
-                    pageSizeOptions={['8', '12', '16', '24']}
-                    onChange={(page, size) => { setCardPage(page); setCardPageSize(size); }}
-                  />
-                </div>
+                <PaginationBar current={cardPage} pageSize={cardPageSize} total={filteredData.length} onChange={(p, s) => { setCardPage(p); setCardPageSize(s); }} />
               </>
             )}
           </div>

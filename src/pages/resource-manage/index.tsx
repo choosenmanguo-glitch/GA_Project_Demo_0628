@@ -10,6 +10,7 @@ import PageHeader from '@/components/PageHeader';
 import FilterBar from '@/components/FilterBar';
 import type { FilterField } from '@/components/FilterBar';
 import ConfirmActionModal from '@/components/ConfirmActionModal';
+import PaginationBar from '@/components/PaginationBar';
 import ResourceCard from '@/features/resource-center/components/ResourceCard';
 import ResourceFormDrawer from '@/features/resource-center/components/ResourceFormDrawer';
 import ResourcePermissionDrawer from '@/features/resource-center/components/ResourcePermissionDrawer';
@@ -179,17 +180,7 @@ export default function ResourceManagePage() {
               />
             ))}
           </div>
-          <div className="resource-page-pagination">
-            <Pagination
-              current={cardPage}
-              pageSize={cardPageSize}
-              total={filtered.length}
-              showSizeChanger
-              showTotal={(total) => `共 ${total} 条`}
-              pageSizeOptions={['8', '12', '16', '24']}
-              onChange={(page, size) => { setCardPage(page); setCardPageSize(size); }}
-            />
-          </div>
+          <PaginationBar current={cardPage} pageSize={cardPageSize} total={filtered.length} onChange={(p, s) => { setCardPage(p); setCardPageSize(s); }} />
         </div>
       </div>
 

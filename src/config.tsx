@@ -121,7 +121,7 @@ export const moduleSideMenus: Record<string, MenuProps['items']> = {
     ]},
     { type: 'group', label: '资源管理', children: [
       { key: '/manage/resource-manage', icon: React.createElement(AppstoreOutlined), label: '资源管理' },
-      { key: '/manage/resource-permissions', icon: React.createElement(AuditOutlined), label: '权限管理' },
+      { key: '/manage/resource-permissions', icon: React.createElement(AuditOutlined), label: '资源权限' },
     ]},
     { type: 'group', label: '系统管理', children: [
       { key: '/manage/org', icon: React.createElement(BankOutlined), label: '组织管理' },

@@ -48,6 +48,7 @@ import type { ColumnsType } from 'antd/es/table';
 import IconPicker, { type IconPickerValue } from '@/components/IconPicker';
 import PageHeader from '@/components/PageHeader';
 import FilterBar from '@/components/FilterBar';
+import PaginationBar, { tablePagination } from '@/components/PaginationBar';
 
 const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -541,7 +542,7 @@ const ExternalApiManageDrawer: React.FC<{
             columns={columns}
             dataSource={filteredList}
             rowKey="id"
-            pagination={{ defaultPageSize: 10, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }}
+            pagination={tablePagination()}
           />
         </div>
       </div>
@@ -1373,7 +1374,7 @@ const KnowledgeBasePage: React.FC = () => {
                   <div
                     className="resource-card-grid"
                     style={{
-                      paddingTop: 16,
+                      marginTop: 12,
                     }}
                   >
                     {pagedList.map((kb) => {
@@ -1468,31 +1469,14 @@ const KnowledgeBasePage: React.FC = () => {
                       );
                     })}
                   </div>
-                  <div className="resource-page-pagination">
-                    <Pagination
-                      current={page}
-                      pageSize={cardPageSize}
-                      total={filteredList.length}
-                      showSizeChanger
-                      showTotal={(total) => `共 ${total} 个知识库`}
-                      pageSizeOptions={['8', '12', '16', '24']}
-                      onChange={(p, s) => { setPage(p); setCardPageSize(s); }}
-                    />
-                  </div>
+                  <PaginationBar current={page} pageSize={cardPageSize} total={filteredList.length} showTotal={(total) => `共 ${total} 个知识库`} onChange={(p, s) => { setPage(p); setCardPageSize(s); }} />
                 </>
               ) : (
                 <Table<KnowledgeBase>
                   rowKey="id"
                   dataSource={pagedList}
                   style={{ marginTop: 16 }}
-                  pagination={{
-                    current: page,
-                    pageSize,
-                    total: filteredList.length,
-                    showTotal: (total) => `共 ${total} 个知识库`,
-                    showSizeChanger: true,
-                    onChange: setPage,
-                  }}
+                  pagination={{ current: page, pageSize, total: filteredList.length, showTotal: (total) => `共 ${total} 条`, showSizeChanger: true, onChange: setPage, pageSizeOptions: ['8', '12', '16', '24'] }}
                   onRow={(record) => ({
                     onClick: () => setActiveKB(record),
                     style: { cursor: 'pointer' },

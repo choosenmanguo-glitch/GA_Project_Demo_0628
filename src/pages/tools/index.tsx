@@ -12,6 +12,7 @@ import {
 } from '@ant-design/icons';
 import PageHeader from '@/components/PageHeader';
 import FilterBar from '@/components/FilterBar';
+import PaginationBar from '@/components/PaginationBar';
 import { mockTools, ToolItem } from '@/mock/data';
 import type { ColumnsType } from 'antd/es/table';
 import type { FilterField } from '@/components/FilterBar';
@@ -259,17 +260,7 @@ const ToolsPage: React.FC = () => {
                     <ToolCard key={item.id} tool={item} />
                   ))}
                 </div>
-                <div className="resource-page-pagination">
-                  <Pagination
-                    current={cardPage}
-                    pageSize={cardPageSize}
-                    total={filteredData.length}
-                    showSizeChanger
-                    showTotal={(total) => `共 ${total} 条`}
-                    pageSizeOptions={['8', '12', '16', '24']}
-                    onChange={(page, size) => { setCardPage(page); setCardPageSize(size); }}
-                  />
-                </div>
+                <PaginationBar current={cardPage} pageSize={cardPageSize} total={filteredData.length} onChange={(p, s) => { setCardPage(p); setCardPageSize(s); }} />
               </>
             )}
           </div>

@@ -4,6 +4,7 @@ import { CheckOutlined, CloseOutlined, ArrowLeftOutlined } from '@ant-design/ico
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageHeader from '@/components/PageHeader';
 import FilterBar from '@/components/FilterBar';
+import PaginationBar from '@/components/PaginationBar';
 import type { FilterField } from '@/components/FilterBar';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import ResourceCard from '@/features/resource-center/components/ResourceCard';
@@ -145,17 +146,7 @@ export default function MyResourcesPage({ compact }: MyResourcesPageProps) {
               );
             })}
           </div>
-          <div className="resource-page-pagination">
-            <Pagination
-              current={cardPage}
-              pageSize={cardPageSize}
-              total={batchMode ? items.filter(r => !getAccess(r.id, currentSpace.id).invalidReason).length : items.length}
-              showSizeChanger
-              showTotal={(total) => `共 ${total} 条`}
-              pageSizeOptions={['8', '12', '16', '24']}
-              onChange={(page, size) => { setCardPage(page); setCardPageSize(size); }}
-            />
-          </div>
+          <PaginationBar current={cardPage} pageSize={cardPageSize} total={batchMode ? items.filter(r => !getAccess(r.id, currentSpace.id).invalidReason).length : items.length} onChange={(p, s) => { setCardPage(p); setCardPageSize(s); }} />
         </div>
       </div>
 

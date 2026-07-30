@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { App as AntdApp, Badge, Input, Pagination, Tag, Tabs } from 'antd';
+import { App as AntdApp, Badge, Input, Tag, Tabs } from 'antd';
 import { AppstoreOutlined, SearchOutlined } from '@ant-design/icons';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
+import PaginationBar from '@/components/PaginationBar';
 import MyResourcesPage from '@/pages/my-resources';
 import ResourceApplyModal from '@/features/resource-center/components/ResourceApplyModal';
 import ResourceCard from '@/features/resource-center/components/ResourceCard';
@@ -204,17 +205,7 @@ export default function ResourceSquarePage() {
                   />
                 ))}
               </div>
-              <div className="resource-page-pagination">
-                <Pagination
-                  current={cardPage}
-                  pageSize={cardPageSize}
-                  total={visibleResources.length}
-                  showSizeChanger
-                  showTotal={(total) => `共 ${total} 条`}
-                  pageSizeOptions={['8', '12', '16', '24']}
-                  onChange={(page, size) => { setCardPage(page); setCardPageSize(size); }}
-                />
-              </div>
+              <PaginationBar current={cardPage} pageSize={cardPageSize} total={visibleResources.length} onChange={(p, s) => { setCardPage(p); setCardPageSize(s); }} />
             </div>
           </>
         )}

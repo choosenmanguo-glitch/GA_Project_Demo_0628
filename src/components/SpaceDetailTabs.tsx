@@ -17,6 +17,7 @@ import {
 } from '@/mock/data';
 import MemberSelect from '@/components/MemberSelect';
 import IconPicker, { type IconPickerValue } from '@/components/IconPicker';
+import { tablePagination } from '@/components/PaginationBar';
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
@@ -340,7 +341,7 @@ export function useSpaceDetailTabs(space: SpaceItem, showEditButton = true, show
             columns={memberColumns}
             dataSource={filteredMembers}
             size="middle"
-            pagination={{ defaultPageSize: 10, showTotal: t => `共 ${t} 人` }}
+            pagination={tablePagination()}
             style={{ marginTop: 12 }}
           />
 
@@ -400,7 +401,7 @@ export function useSpaceDetailTabs(space: SpaceItem, showEditButton = true, show
         columns={logColumns}
         dataSource={filteredLogs}
         size="middle"
-        pagination={{ defaultPageSize: 20, showTotal: t => `共 ${t} 条` }}
+        pagination={tablePagination()}
         style={{ marginTop: 12 }}
       />
 
