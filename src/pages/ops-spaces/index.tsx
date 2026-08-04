@@ -5,7 +5,7 @@ import {
 import type { MenuProps } from 'antd';
 import {
   AppstoreOutlined, PlusOutlined, SettingOutlined, InfoCircleOutlined, TeamOutlined,
-  HistoryOutlined, SearchOutlined, CrownOutlined,
+  HistoryOutlined, SearchOutlined,
   SafetyOutlined, UserOutlined, EditOutlined,
   StopOutlined, CheckCircleOutlined, DeleteOutlined, EllipsisOutlined,
   RobotOutlined, FileTextOutlined, ToolOutlined, ApiOutlined,
@@ -50,8 +50,8 @@ const approvalFilterFields: FilterField[] = [
 ];
 
 // ── 抽屉内 Tab 内容（独立组件保证 hook 生命周期） ──
-function SpaceDetailDrawerBody({ space, detailTab, onTabChange }: { space: SpaceItem; detailTab: string; onTabChange: (tab: string) => void }) {
-  const { infoContent, membersContent, logsContent } = useSpaceDetailTabs(space, true, false);
+function SpaceDetailDrawerBody({ space, detailTab, onTabChange, defaultEditing = false }: { space: SpaceItem; detailTab: string; onTabChange: (tab: string) => void; defaultEditing?: boolean }) {
+  const { infoContent, membersContent, logsContent } = useSpaceDetailTabs(space, true, false, defaultEditing);
 
   return (
     <div>
@@ -102,6 +102,7 @@ export default function OpsSpacesPage() {
   const [filters, setFilters] = useState<Record<string, any>>({ keyword: '', status: undefined, spaceType: undefined });
   const [selectedSpace, setSelectedSpace] = useState<SpaceItem | null>(null);
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
+  const [openInEditMode, setOpenInEditMode] = useState(false);
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
   const [detailTab, setDetailTab] = useState('info');
   const [memberAddOpen, setMemberAddOpen] = useState(false);
@@ -276,14 +277,14 @@ export default function OpsSpacesPage() {
             {n.charAt(0)}
           </div>
           <div>
-            <a onClick={() => { setSelectedSpace(r); setDetailDrawerOpen(true); }} style={{ fontWeight: 500 }}>{n}</a>
+            <a onClick={() => { setSelectedSpace(r); setOpenInEditMode(false); setDetailDrawerOpen(true); }} style={{ fontWeight: 500 }}>{n}</a>
             <div><Text type="secondary" style={{ fontSize: 12, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150 }}>{r.description || '-'}</Text></div>
           </div>
         </Space>
       ),
     },
     {
-      title: '所属警种/部门', dataIndex: 'dept', width: 110,
+      title: '所属部门', dataIndex: 'dept', width: 110,
       render: d => <Text type="secondary">{d}</Text>,
     },
     {
@@ -333,8 +334,8 @@ export default function OpsSpacesPage() {
         ];
         return (
           <Space size={0} wrap>
-            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setSelectedSpace(r); setDetailTab('info'); setDetailDrawerOpen(true); }}>编辑</Button>
-            <Button type="link" size="small" icon={<TeamOutlined />} onClick={() => { setSelectedSpace(r); setDetailTab('members'); setDetailDrawerOpen(true); }}>成员</Button>
+            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setSelectedSpace(r); setOpenInEditMode(true); setDetailTab('info'); setDetailDrawerOpen(true); }}>编辑</Button>
+            <Button type="link" size="small" icon={<TeamOutlined />} onClick={() => { setSelectedSpace(r); setOpenInEditMode(false); setDetailTab('members'); setDetailDrawerOpen(true); }}>成员</Button>
             <Dropdown menu={{ items: menuItems }} trigger={['click']}>
               <Button type="link" size="small" icon={<EllipsisOutlined />} />
             </Dropdown>
@@ -801,9 +802,6 @@ export default function OpsSpacesPage() {
                         </div>
                         <span style={{ fontWeight: 500 }}>{m.name}</span>
                         <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>{m.dept}</Text>
-                        <Tag style={{ marginLeft: 8 }} color={m.role === '所有者' ? 'gold' : undefined}>
-                          {m.role === '所有者' && <CrownOutlined style={{ marginRight: 2 }} />}{m.role}
-                        </Tag>
                       </div>
                     ))
                   : <Text type="secondary">未添加成员</Text>
@@ -894,6 +892,7 @@ export default function OpsSpacesPage() {
             space={selectedSpace}
             detailTab={detailTab}
             onTabChange={setDetailTab}
+            defaultEditing={openInEditMode}
           />
         )}
       </Drawer>

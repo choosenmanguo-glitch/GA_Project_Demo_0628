@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Tag, Typography, Form, Input, Select, message, Popconfirm, Modal, Tooltip } from 'antd';
 import {
-  PlusOutlined, CrownOutlined, UserOutlined,
+  PlusOutlined, UserOutlined,
   RobotOutlined, ToolOutlined, ApiOutlined, BookOutlined,
 } from '@ant-design/icons';
 import type { SpaceMember } from '@/mock/data';
@@ -209,7 +209,7 @@ const SpaceCreateDrawer: React.FC<Props> = ({ mode, open, onClose, onSubmit }) =
               defaultName={spaceName}
             />
           </Form.Item>
-          <Form.Item label="所属警种/部门">
+          <Form.Item label="所属部门">
             <Select
               placeholder="从组织架构中选择（选填）"
               style={{ borderRadius: 6 }}
@@ -350,9 +350,7 @@ const SpaceCreateDrawer: React.FC<Props> = ({ mode, open, onClose, onSubmit }) =
                   <Text type="secondary" style={{ fontSize: 12 }}>{m.dept}</Text>
                 </div>
                 {m.role === '所有者' ? (
-                  <Tag color="gold" style={{ borderRadius: 4, marginRight: 8 }}>
-                    <CrownOutlined style={{ marginRight: 2 }} />所有者
-                  </Tag>
+                  <span style={{ color: '#8c8c8c', fontSize: 12, marginLeft: 8 }}>所有者</span>
                 ) : (
                   <>
                     <Tag color="blue" style={{ borderRadius: 4, marginRight: 8 }}>
@@ -449,9 +447,6 @@ const SpaceCreateDrawer: React.FC<Props> = ({ mode, open, onClose, onSubmit }) =
                     </div>
                     <span style={{ fontWeight: 500 }}>{m.name}</span>
                     <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>{m.dept}</Text>
-                    <Tag style={{ marginLeft: 8 }} color={m.role === '所有者' ? 'gold' : undefined}>
-                      {m.role === '所有者' && <CrownOutlined style={{ marginRight: 2 }} />}{m.role}
-                    </Tag>
                   </div>
                 ))
               ) : (

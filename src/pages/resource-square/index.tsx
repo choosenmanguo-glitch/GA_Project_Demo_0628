@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { App as AntdApp, Badge, Input, Tag, Tabs } from 'antd';
+import { App as AntdApp, Input, Tag, Tabs } from 'antd';
 import { AppstoreOutlined, SearchOutlined } from '@ant-design/icons';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
@@ -40,11 +40,6 @@ export default function ResourceSquarePage() {
   const [cardPageSize, setCardPageSize] = useState(12);
   const [detailResource, setDetailResource] = useState<ResourceItem | null>(null);
   const [applyResource, setApplyResource] = useState<ResourceItem | null>(null);
-
-  /** 我的资源数量 */
-  const myResourcesCount = useMemo(() => {
-    return grants.filter(grant => grant.spaceId === currentSpace.id).length;
-  }, [grants, currentSpace.id]);
 
   const publishedResources = useMemo(() => resources
     .filter(resource => resource.publishStatus === 'published' && !resource.isDeleted),
@@ -130,12 +125,7 @@ export default function ResourceSquarePage() {
             { key: 'all', label: '全部资源' },
             {
               key: 'mine',
-              label: (
-                <span>
-                  我的资源
-                  <Badge count={myResourcesCount} overflowCount={999} style={{ marginLeft: 6, backgroundColor: '#1677ff' }} />
-                </span>
-              ),
+              label: '我的资源',
             },
           ]}
         />

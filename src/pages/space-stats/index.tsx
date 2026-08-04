@@ -5,7 +5,7 @@ import {
 } from 'antd';
 import {
   RobotOutlined, FolderOutlined, FileTextOutlined, ToolOutlined,
-  ThunderboltOutlined, ApiOutlined, RightOutlined, CrownOutlined,
+  ThunderboltOutlined, ApiOutlined, RightOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import PageHeader from '@/components/PageHeader';
@@ -98,7 +98,6 @@ export default function SpaceStatsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 16, fontWeight: 600 }}>{currentSpace.name}</span>
             <Tag color={currentSpace.type === '个人空间' ? 'blue' : 'green'} style={{ borderRadius: 4 }}>{currentSpace.type}</Tag>
-            <Tag color="gold" style={{ borderRadius: 4 }}><CrownOutlined style={{ marginRight: 2 }} />所有者</Tag>
           </div>
           <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
             <span>创建时间：{currentSpace.createTime}</span>

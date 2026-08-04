@@ -6,7 +6,7 @@ import {
 import {
   TeamOutlined, PlusOutlined, HistoryOutlined,
   EditOutlined, ExportOutlined,
-  InfoCircleOutlined, UserOutlined, CrownOutlined,
+  InfoCircleOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import FilterBar from '@/components/FilterBar';
@@ -21,12 +21,6 @@ import { tablePagination } from '@/components/PaginationBar';
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
-
-// ── 角色颜色映射 ──
-const roleColorMap: Record<string, string> = {
-  '所有者': 'gold',
-  '普通用户': 'default',
-};
 
 // ── 成员筛选 ──
 const memberFilterFields: FilterField[] = [
@@ -54,8 +48,8 @@ export interface SpaceDetailTabsResult {
  * 空间详情 Tab 内容复用 Hook
  * 提供 基本信息 / 成员管理 / 操作日志 三个 Tab 的内容
  */
-export function useSpaceDetailTabs(space: SpaceItem, showEditButton = true, showOverviewCard = true): SpaceDetailTabsResult {
-  const [editing, setEditing] = useState(false);
+export function useSpaceDetailTabs(space: SpaceItem, showEditButton = true, showOverviewCard = true, defaultEditing = false): SpaceDetailTabsResult {
+  const [editing, setEditing] = useState(defaultEditing);
   const [saving, setSaving] = useState(false);
   const [spaceIcon, setSpaceIcon] = useState<IconPickerValue>({ mode: 'text', text: space.name.charAt(0) });
 
@@ -126,11 +120,7 @@ export function useSpaceDetailTabs(space: SpaceItem, showEditButton = true, show
     },
     {
       title: '角色', dataIndex: 'role', width: 100,
-      render: (r: string) => (
-        <Tag color={roleColorMap[r] || 'default'} style={{ borderRadius: 4 }}>
-          {r === '所有者' ? <><CrownOutlined style={{ marginRight: 2 }} />{r}</> : <><UserOutlined style={{ marginRight: 2 }} />{r}</>}
-        </Tag>
-      ),
+      render: (r: string) => <span>{r}</span>,
     },
     { title: '加入时间', dataIndex: 'joinTime', width: 120, render: t => <Text type="secondary">{t}</Text> },
     {
@@ -239,7 +229,7 @@ export function useSpaceDetailTabs(space: SpaceItem, showEditButton = true, show
 
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item label="所属警种/部门" name="dept">
+            <Form.Item label="所属部门" name="dept">
               <Select
                 style={{ borderRadius: 6 }}
                 options={['指挥中心', '反诈中心', '刑警大队', '交警支队', '治安支队', '法制大队', '派出所', '科信大队', '巡特警支队']

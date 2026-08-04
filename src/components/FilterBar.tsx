@@ -21,6 +21,8 @@ interface FilterBarProps {
   onCreate?: () => void;
   createText?: string;
   extra?: React.ReactNode;
+  /** 左侧前置内容（在筛选字段之前） */
+  prefix?: React.ReactNode;
   /** 便捷模式：单一搜索框 */
   placeholder?: string;
   /** 便捷模式：状态筛选 */
@@ -46,6 +48,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
   onCreate,
   createText = '新建',
   extra,
+  prefix,
   placeholder,
   onStatusFilter,
   statusOptions,
@@ -79,6 +82,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
     >
       {/* 左侧：筛选区 + 视图切换 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        {prefix}
         {effectiveFilters.map((f) => {
           if (f.type === 'search') {
             return (

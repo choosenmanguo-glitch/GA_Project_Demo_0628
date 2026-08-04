@@ -4,7 +4,7 @@ import {
 } from 'antd';
 import {
   TeamOutlined, HistoryOutlined,
-  InfoCircleOutlined, CrownOutlined, SafetyOutlined,
+  InfoCircleOutlined, SafetyOutlined,
   KeyOutlined, CopyOutlined,
 } from '@ant-design/icons';
 import PageHeader from '@/components/PageHeader';
@@ -161,7 +161,6 @@ export default function SpaceManagePage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 16, fontWeight: 600 }}>{currentSpace.name}</span>
             <Tag color={currentSpace.type === '个人空间' ? 'blue' : 'green'} style={{ borderRadius: 4 }}>{currentSpace.type}</Tag>
-            <Tag color="gold" style={{ borderRadius: 4 }}><CrownOutlined style={{ marginRight: 2 }} />所有者</Tag>
           </div>
           <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
             <span>创建时间：{currentSpace.createTime}</span>
