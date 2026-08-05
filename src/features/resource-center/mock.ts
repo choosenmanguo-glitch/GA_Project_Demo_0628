@@ -15,20 +15,20 @@ export const initialResources: ResourceItem[] = [
     id: '3', type: 'model', name: 'Qwen-Max', description: '通义千问超大规模语言模型，具备极强的理解和生成能力。',
     owner: '李四', updateTime: '2026-05-01', heat: 5400, status: 'authorized', publishStatus: 'published',
     publicStrategy: 'public', isPinned: true, resourceKey: 'qwen-max', gatewayPath: '/gateway/qwen-max',
-    modelType: 'LargeModel', deployment: '公网', modelName: 'qwen-max', baseurl: 'https://dashscope.aliyuncs.com',
+    modelType: 'LargeModel', deployment: '公网', modelName: 'qwen-max', baseurl: 'https://dashscope.aliyuncs.com', gatewayMode: 'builtin',
     path: '/chat/completions', markdownIntro: intro('Qwen-Max', '适用于复杂问答、内容生成和智能体推理场景。'),
   },
   {
     id: '4', type: 'model', name: 'BGE-M3', description: '多语言、多粒度、多任务的通用向量模型。',
     owner: '赵六', updateTime: '2026-04-20', heat: 3200, status: 'view_only', publishStatus: 'published',
-    publicStrategy: 'visible', resourceKey: 'bge-m3', gatewayPath: '/gateway/bge-m3', modelType: 'VectorModel',
+    publicStrategy: 'visible', resourceKey: 'bge-m3', gatewayPath: '/gateway/bge-m3', modelType: 'VectorModel', gatewayMode: 'builtin',
     deployment: 'Local', path: '/embeddings', markdownIntro: intro('BGE-M3', '适用于知识库向量化和语义检索。'),
   },
   {
     id: '16', type: 'model', name: 'Existing-Qwen-Mock', description: '用于模拟已有数据拉取的预配置模型资源。',
     owner: '演示用户', updateTime: '2026-05-28', heat: 0, status: 'authorized', publishStatus: 'published',
     publicStrategy: 'public', resourceKey: 'existing-qwen-mock', gatewayPath: '/gateway/existing-qwen-mock',
-    modelType: 'LargeModel', deployment: 'Public', markdownIntro: intro('Existing-Qwen-Mock', '用于演示已有模型资源的直接获取流程。'),
+    modelType: 'LargeModel', deployment: 'Public', gatewayMode: 'builtin', markdownIntro: intro('Existing-Qwen-Mock', '用于演示已有模型资源的直接获取流程。'),
   },
   {
     id: '5', type: 'knowledge', name: '人力资源规章制度', description: '公司最新考勤、休假、报销等制度文档库。',
@@ -54,7 +54,7 @@ export const initialResources: ResourceItem[] = [
     id: '13', type: 'model', name: '我的私有预训练模型', description: '我自己在本地训练的小模型，用于特定代码生成。',
     owner: '演示用户', updateTime: '2026-05-13', heat: 12, status: 'authorized', publishStatus: 'published',
     publicStrategy: 'public', resourceKey: 'private-pretrain-model', gatewayPath: '/gateway/private-pretrain-model',
-    modelType: 'LargeModel', deployment: 'Local', markdownIntro: intro('我的私有预训练模型', '演示个人发布资源的管理、授权与审计。'),
+    modelType: 'LargeModel', deployment: 'Local', gatewayMode: 'builtin', markdownIntro: intro('我的私有预训练模型', '演示个人发布资源的管理、授权与审计。'),
   },
   {
     id: '14', type: 'knowledge', name: '个人积累的开发文档', description: '整理的常用开发环境配置指南及疑难问题解决方案。',
@@ -76,7 +76,7 @@ export const initialResources: ResourceItem[] = [
   {
     id: 'invalid-2', type: 'model', name: '过期的临时活动大模型', description: '活动结束后授权已到期自动失效。',
     owner: '运营团队', updateTime: '2026-06-15', heat: 30, status: 'authorized', publishStatus: 'offline',
-    publicStrategy: 'visible', modelType: 'LargeModel',
+    publicStrategy: 'visible', modelType: 'LargeModel', gatewayMode: 'builtin',
   },
   {
     id: 'invalid-3', type: 'mcp', name: '收回授权的内部工具', description: '管理员已主动移除了您的授权。',

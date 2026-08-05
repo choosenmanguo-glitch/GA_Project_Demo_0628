@@ -116,12 +116,14 @@ const ResourceTechnicalDrawer: React.FC<ResourceTechnicalDrawerProps> = ({ open,
   const [form] = Form.useForm<Partial<CreateResourceInput>>();
   const [apiMode, setApiMode] = useState<'manual' | 'openapi'>('manual');
   const authType = Form.useWatch('authType', form);
+  const gatewayMode = Form.useWatch('gatewayMode', form);
 
   useEffect(() => {
     if (!open) return;
     form.resetFields();
     form.setFieldsValue({
       method: 'POST', authType: 'none', authPrefix: 'bearer', mcpTransport: 'HTTP', gatewayPath: generateRandomPath(),
+      gatewayMode: 'builtin',
       requestParams: [], constantParams: [], responseParams: [], errorCodes: [], ...initialValues,
     });
     setApiMode(initialValues.swaggerSchema ? 'openapi' : 'manual');
@@ -130,9 +132,14 @@ const ResourceTechnicalDrawer: React.FC<ResourceTechnicalDrawerProps> = ({ open,
   const save = async () => {
     let values: Partial<CreateResourceInput>;
     try {
-      values = type === 'api' && apiMode === 'openapi'
-        ? { ...form.getFieldsValue(), ...(await form.validateFields(['swaggerSchema', 'gatewayPath'])) }
-        : await form.validateFields();
+      if (type === 'api' && apiMode === 'openapi') {
+        values = { ...form.getFieldsValue(), ...(await form.validateFields(['swaggerSchema', 'gatewayPath'])) };
+      } else if (type === 'model' && form.getFieldValue('gatewayMode') === 'external') {
+        values = await form.validateFields();
+        delete values.gatewayPath;
+      } else {
+        values = await form.validateFields();
+      }
     } catch {
       // Ant Design 已在对应字段下展示校验信息，阻止提交即可。
       return;
@@ -155,7 +162,16 @@ const ResourceTechnicalDrawer: React.FC<ResourceTechnicalDrawerProps> = ({ open,
     <Form.Item name="apikey" label="API Key"><Input.Password placeholder="输入 API Key" /></Form.Item>
     <Form.Item name="modelName" label="模型名称" rules={[{ required: true }, { pattern: /^[a-zA-Z0-9_.-]+$/, message: '只能包含字母、数字、下划线、短横线或点' }]}><Input /></Form.Item>
     <Form.Item name="deploymentMode" label="部署方式" rules={[{ required: true }]}><Radio.Group options={[{ value: 'Internal', label: '内网' }, { value: 'Public', label: '公网' }]} /></Form.Item>
-    <GatewayPathField disabled={readOnly || !!initialValues.gatewayPath} />
+    <Form.Item name="gatewayMode" label="网关设置" rules={[{ required: true }]} tooltip="内置网关：将大模型注册到 Higress，代理后使用；外部网关：直接使用外部网关路由，不再由 Higress 代理。">
+      <Radio.Group
+        options={[
+          { value: 'builtin', label: '内置网关' },
+          { value: 'external', label: '外部网关' },
+        ]}
+        disabled={readOnly}
+      />
+    </Form.Item>
+    {gatewayMode !== 'external' && <GatewayPathField disabled={readOnly || !!initialValues.gatewayPath} />}
   </>;
 
   const knowledgeFields = <>

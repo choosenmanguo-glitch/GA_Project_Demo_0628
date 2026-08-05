@@ -50,6 +50,7 @@ export interface ResourceItem {
   deployment?: string;
   deploymentMode?: 'Internal' | 'Public';
   modelType?: 'LargeModel' | 'VectorModel' | 'RerankModel';
+  gatewayMode?: 'builtin' | 'external';
   knowledgeType?: string;
   kbId?: string;
   markdownIntro?: string;
@@ -131,6 +132,7 @@ export interface CreateResourceInput {
   deployment?: string;
   deploymentMode?: ResourceItem['deploymentMode'];
   modelType?: ResourceItem['modelType'];
+  gatewayMode?: ResourceItem['gatewayMode'];
   knowledgeType?: string;
   kbId?: string;
   baseurl?: string;
