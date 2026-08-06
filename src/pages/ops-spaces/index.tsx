@@ -118,9 +118,6 @@ export default function OpsSpacesPage() {
   // ── 审批详情抽屉 ──
   const [pendingDetailSpace, setPendingDetailSpace] = useState<SpaceApproval | null>(null);
   const [pendingDetailOpen, setPendingDetailOpen] = useState(false);
-
-  // ── 驳回原因 ──
-  const [rejectionReasonOpen, setRejectionReasonOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
 
   // ── Tab 3 状态 ──
@@ -180,6 +177,7 @@ export default function OpsSpacesPage() {
     message.success(`空间申请已通过，「${approval.spaceName}」已启用`);
     setPendingDetailOpen(false);
     setPendingDetailSpace(null);
+    setRejectionReason('');
     triggerRefresh();
   };
 
@@ -193,7 +191,6 @@ export default function OpsSpacesPage() {
         : a
     ));
     message.success(`已驳回空间申请「${approval.spaceName}」${rejectionReason ? `，原因：${rejectionReason}` : ''}`);
-    setRejectionReasonOpen(false);
     setRejectionReason('');
     setPendingDetailOpen(false);
     setPendingDetailSpace(null);
@@ -487,11 +484,6 @@ export default function OpsSpacesPage() {
     setPendingDetailOpen(true);
   };
 
-  // ── 从抽屉发起驳回 ──
-  const handleRejectFromDrawer = () => {
-    setRejectionReasonOpen(true);
-  };
-
   // ── 创建空间提交 ──
   const handleCreateSubmit = (_values: SpaceCreateValues) => {
     message.success('空间创建成功');
@@ -693,21 +685,23 @@ export default function OpsSpacesPage() {
         footer={
           pendingDetailSpace?.status === '待审核' ? (
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <Button onClick={() => { setPendingDetailOpen(false); setPendingDetailSpace(null); setRejectionReason(''); }}>取消</Button>
               <Button
                 danger
-                icon={<CloseCircleOutlined />}
-                onClick={handleRejectFromDrawer}
+                onClick={() => {
+                  if (!rejectionReason.trim()) { message.warning('请填写审批意见'); return; }
+                  if (pendingDetailSpace) handleReject(pendingDetailSpace);
+                }}
               >
-                驳回（填写原因）
+                驳回
               </Button>
               <Button
                 type="primary"
-                icon={<CheckCircleOutlined />}
                 onClick={() => {
                   if (pendingDetailSpace) handleApprove(pendingDetailSpace);
                 }}
               >
-                确认通过
+                通过
               </Button>
             </div>
           ) : undefined
@@ -822,52 +816,36 @@ export default function OpsSpacesPage() {
             )}
 
             {pendingDetailSpace.status === '待审核' && (
-              /* 审批提示 */
-              <div style={{
-                padding: '16px 20px', borderRadius: 10, background: '#fffbe6',
-                border: '1px solid #ffe58f',
-              }}>
-                <Title level={5} style={{ margin: 0, marginBottom: 8, color: '#d48806' }}>审批须知</Title>
-                <div style={{ fontSize: 13, color: '#8c6d00', lineHeight: '22px' }}>
-                  <div>通过后，该空间将立即启用，空间创建者将自动成为空间所有者。</div>
-                  <div>驳回需填写驳回原因，驳回后该空间不会出现在用户切换列表中。</div>
-                  <div>请确认空间基本信息、资源、成员无误后再操作。</div>
+              <>
+                <div style={{
+                  padding: '20px', borderRadius: 10, background: '#fafafa',
+                  border: '1px solid #f0f0f0', marginBottom: 16,
+                }}>
+                  <Title level={5} style={{ margin: 0, marginBottom: 12 }}>审批意见</Title>
+                  <Input.TextArea
+                    value={rejectionReason}
+                    onChange={e => setRejectionReason(e.target.value)}
+                    placeholder="请输入审批意见（驳回时必填）"
+                    rows={4}
+                  />
                 </div>
-              </div>
+                {/* 审批提示 */}
+                <div style={{
+                  padding: '16px 20px', borderRadius: 10, background: '#fffbe6',
+                  border: '1px solid #ffe58f',
+                }}>
+                  <Title level={5} style={{ margin: 0, marginBottom: 8, color: '#d48806' }}>审批须知</Title>
+                  <div style={{ fontSize: 13, color: '#8c6d00', lineHeight: '22px' }}>
+                    <div>通过后，该空间将立即启用，空间创建者将自动成为空间所有者。</div>
+                    <div>驳回需在上方填写审批意见，驳回后该空间不会出现在用户切换列表中。</div>
+                    <div>请确认空间基本信息、资源、成员无误后再操作。</div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         )}
       </Drawer>
-
-      {/* ── 驳回原因弹窗 ── */}
-      <Modal
-        title="填写驳回原因"
-        open={rejectionReasonOpen}
-        onCancel={() => { setRejectionReasonOpen(false); setRejectionReason(''); }}
-        onOk={() => {
-          if (!rejectionReason.trim()) {
-            message.warning('请填写驳回原因');
-            return;
-          }
-          if (pendingDetailSpace) handleReject(pendingDetailSpace);
-        }}
-        okText="确认驳回"
-        cancelText="取消"
-        okButtonProps={{ danger: true }}
-        destroyOnClose
-      >
-        <Form layout="vertical">
-          <Form.Item label="驳回原因" required>
-            <TextArea
-              rows={4}
-              placeholder="请填写驳回原因，以便申请人了解审批结果"
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              style={{ borderRadius: 6 }}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
 
       {/* ── 创建空间抽屉 ── */}
       <SpaceCreateDrawer

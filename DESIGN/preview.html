@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-preview-source="design-md" data-dark-strategy="Default Preview">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>鲁警智算开发与管理中心视觉规范 设计系统预览</title>
+  <style>
+    :root {
+      --preview-generated-from: "design-md";
+      --bg-page: #f5f7fa;
+      --bg-surface: #ffffff;
+      --bg-elevated: #ffffff;
+      --text-primary: #1D2129;
+      --text-muted: #7A8599;
+      --brand: #1677ff;
+      --color-danger: #ff4d4f;
+      --border: #d9d9d9;
+      --radius-card: 12px;
+      --radius-control: 6px;
+      --gap: 16px;
+      --shadow-card: none;
+      --font-sans: 'PingFang SC', '苹方', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --spec-topbar-bg: #ffffff;
+      --spec-topbar: 56px;
+      --spec-sidebar-width: 220px;
+      --spec-sidebar: #ffffff;
+      --spec-sidebar-active-bg: #e6f4ff;
+      --spec-tags: 0px;
+      --color-primary: #1677ff;
+      --color-primaryhover: #4096ff;
+      --color-primaryactive: #0958d9;
+      --color-primaryselected: #e6f4ff;
+      --color-primarysurface: #f0f5ff;
+      --color-primaryborder: #d6e4ff;
+      --color-primaryborderhover: #91caff;
+      --color-primarygradientend: #69b1ff;
+      --color-branddeep: #1d39c4;
+      --color-onprimary: #ffffff;
+      --color-text: #1D2129;
+      --color-textsecondary: #5F6B7A;
+      --color-textmuted: #7A8599;
+      --color-textdisabled: #B0B8C8;
+      --color-canvas: #f5f7fa;
+      --color-surface: #ffffff;
+      --color-surfacemuted: #fafafa;
+      --color-neutralsurface: #f2f3f5;
+      --color-border: #d9d9d9;
+      --color-bordersubtle: #f0f0f0;
+      --color-success: #52c41a;
+      --color-warning: #faad14;
+      --color-danger: #ff4d4f;
+      --color-accentpurple: #722ed1;
+      --color-accentcyan: #13c2c2;
+      --color-accentorange: #fa8c16;
+      --color-accentmagenta: #eb2f96;
+      --radius-tag: 4px;
+      --radius-control: 6px;
+      --radius-container: 8px;
+      --radius-identity: 12px;
+      --radius-pill: 999px;
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 12px;
+      --space-lg: 16px;
+      --space-cardinset: 20px;
+      --space-xl: 24px;
+      --space-xxl: 32px;
+      --shadow-card: none;
+      --shadow-cardhover: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-popover: 0 2px 8px rgba(0,0,0,0.06);
+      --type-heading-fontsize: 18px;
+      --type-heading-fontweight: 600;
+      --type-heading-lineheight: 26px;
+      --type-sectiontitle-fontsize: 14px;
+      --type-sectiontitle-fontweight: 600;
+      --type-sectiontitle-lineheight: 22px;
+      --type-body-fontsize: 14px;
+      --type-body-fontweight: 400;
+      --type-body-lineheight: 22px;
+      --type-compactbody-fontsize: 13px;
+      --type-compactbody-fontweight: 400;
+      --type-compactbody-lineheight: 20px;
+      --type-caption-fontsize: 12px;
+      --type-caption-fontweight: 400;
+      --type-caption-lineheight: 20px;
+      --type-metric-fontsize: 28px;
+      --type-metric-fontweight: 600;
+      --type-metric-lineheight: 36px;
+      --type-resourcemetric-fontsize: 26px;
+      --type-resourcemetric-fontweight: 700;
+      --type-resourcemetric-lineheight: 32px;
+      --type-cardtitle-fontsize: 15px;
+      --type-cardtitle-fontweight: 650;
+      --type-cardtitle-lineheight: 22px;
+      --type-button-fontsize: 14px;
+      --type-button-fontweight: 400;
+      --type-button-lineheight: 1;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    section[id], .toc-anchor { scroll-margin-top: 88px; }
+    body {
+      margin: 0;
+      background: var(--bg-page);
+      color: var(--text-primary);
+      font: 16px/1.5 var(--font-sans);
+    }
+    .top-nav { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 28px; background: var(--bg-page); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); }
+    .top-nav-title { font-family: var(--font-sans); font-weight: 700; font-size: 16px; color: var(--text-primary); text-decoration: none; }
+    .top-nav-links { display: flex; gap: 14px; flex-wrap: wrap; }
+    .top-nav-links a { font-size: 13px; color: var(--text-muted); text-decoration: none; font-weight: 500; }
+    .top-nav-links a:hover { color: var(--brand); }
+    .layout { display: grid; grid-template-columns: minmax(180px, 220px) minmax(0, 1fr); gap: 28px; max-width: 1440px; margin: 0 auto; padding: 28px 24px 80px; }
+    .toc { position: sticky; top: 24px; align-self: start; display: grid; gap: 12px; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--bg-surface); }
+    .toc strong { display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-primary); }
+    .toc-group { display: grid; gap: 6px; }
+    .toc-parent, .toc-child { color: var(--text-muted); text-decoration: none; border-radius: var(--radius-control); }
+    .toc-parent { padding: 4px 8px; color: var(--text-primary); font-size: 13px; font-weight: 600; background: color-mix(in srgb, var(--bg-elevated) 72%, transparent); }
+    .toc-children { display: grid; gap: 2px; padding-left: 10px; border-left: 1px solid var(--border); margin-left: 8px; }
+    .toc-child { position: relative; padding: 3px 8px 3px 10px; font-size: 12px; line-height: 1.45; }
+    .toc-child::before { content: ""; position: absolute; left: -11px; top: 50%; width: 8px; border-top: 1px solid var(--border); transform: translateY(-50%); }
+    .toc a:hover { color: var(--text-primary); background: var(--bg-elevated); }
+    .page { min-width: 0; }
+    section {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      background: var(--bg-surface);
+      box-shadow: var(--shadow-card);
+    }
+    section { margin-top: var(--gap); padding: clamp(20px, 4vw, 32px); }
+    h2 { margin: 0 0 4px; font-size: 22px; font-weight: 700; }
+    h3 { margin: 20px 0 12px; font-size: 17px; font-weight: 600; }
+    h4 { margin: 14px 0 8px; font-size: 14px; font-weight: 600; }
+    p { color: var(--text-muted); line-height: 1.6; margin: 6px 0 0; }
+    .section-head { margin-bottom: 18px; }
+    .section-head p { max-width: 760px; }
+    .section-note { margin: 0 0 14px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--bg-elevated); color: var(--text-muted); font-size: 13px; }
+    .review-summary {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;
+      padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-card);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--brand) 9%, var(--bg-surface)), var(--bg-surface));
+    }
+    .review-summary div { display: grid; gap: 4px; }
+    .review-summary span { color: var(--text-muted); font-size: 12px; }
+    .review-summary strong { color: var(--text-primary); font-size: 18px; line-height: 1.2; }
+    .grid { display: grid; gap: 14px; }
+    .colors { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    .components { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .comp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .swatch, .component-card, .type-row, .scale-row, .surface-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      background: var(--bg-elevated);
+      overflow: hidden;
+    }
+    .swatch-color { height: 72px; }
+    .swatch-body, .component-card, .type-row, .scale-row, .surface-card { padding: 14px; }
+    .swatch-body strong { display: block; font-size: 13px; }
+    .swatch-body span { display: block; margin-top: 3px; color: var(--text-muted); font-size: 12px; }
+    .swatch-body .usage { color: var(--text-muted); font-size: 11px; margin-top: 6px; font-style: italic; }
+    code { color: var(--text-muted); font-family: var(--font-mono); font-size: 12px; }
+    .muted { color: var(--text-muted); }
+    .type-showcase { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr); gap: 16px; margin-bottom: 16px; }
+    .type-ladder, .type-context-demo { padding: 16px; display: grid; gap: 14px; }
+    .type-card-title { display: grid; gap: 4px; }
+    .type-card-title strong { font-size: 14px; color: var(--text-primary); }
+    .type-card-title span { font-size: 12px; color: var(--text-muted); }
+    .type-ladder-list { display: grid; gap: 10px; }
+    .type-ladder-row {
+      display: grid; grid-template-columns: minmax(124px, 156px) minmax(0, 1fr) auto;
+      gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--border);
+      border-radius: var(--radius-control); background: var(--bg-surface);
+    }
+    .type-ladder-row > span { color: var(--text-muted); font-size: 12px; }
+    .type-ladder-row > strong { min-width: 0; color: var(--text-primary); }
+    .type-context-shell { border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--bg-surface); overflow: hidden; }
+    .type-context-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--bg-elevated);
+    }
+    .type-context-head strong { color: var(--text-primary); font-size: 16px; font-weight: 600; line-height: 1.5; }
+    .type-context-head button {
+      height: 32px; padding: 0 14px; border: none; border-radius: var(--radius-control);
+      background: var(--brand); color: #fff; font: 500 14px/1.2 var(--font-sans);
+    }
+    .type-context-panel { display: grid; gap: 8px; padding: 16px; }
+    .type-context-panel strong { color: var(--text-primary); font-size: 16px; font-weight: 600; line-height: 1.5; }
+    .type-context-panel p { margin: 0; color: var(--text-primary); font-size: 14px; line-height: 1.5; }
+    .type-context-panel span { color: var(--text-muted); font-size: 12px; line-height: 1.4; }
+    .type-semantic-note {
+      margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-card);
+      background: color-mix(in srgb, var(--brand) 6%, var(--bg-surface));
+    }
+    .type-semantic-note strong { font-size: 13px; color: var(--text-primary); }
+    .type-semantic-note span { color: var(--text-muted); font-size: 13px; }
+    .type-matrix { border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; background: var(--bg-surface); }
+    .type-matrix-head, .type-matrix-row {
+      display: grid; grid-template-columns: 132px 92px minmax(180px, 1fr) 170px minmax(180px, 1fr);
+      gap: 14px; align-items: center; padding: 12px 14px;
+    }
+    .type-matrix-head { background: var(--bg-elevated); border-bottom: 1px solid var(--border); }
+    .type-matrix-head strong { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+    .type-matrix-row { border-bottom: 1px solid var(--border); }
+    .type-matrix-row:last-child { border-bottom: 0; }
+    .type-matrix-row > strong { font-size: 13px; color: var(--text-primary); }
+    .type-matrix-row > span:last-child { color: var(--text-muted); font-size: 12px; }
+    .type-group-chip {
+      display: inline-flex; align-items: center; justify-content: center; width: fit-content;
+      min-height: 22px; padding: 0 8px; border: 1px solid var(--border); border-radius: 999px;
+      background: var(--bg-elevated); color: var(--text-muted); font-size: 12px;
+    }
+    .type-sample-cell { color: var(--text-primary); min-width: 0; }
+    .scale-gallery, .radius-gallery, .elevation-gallery {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;
+    }
+    .scale-card, .radius-card-demo, .elevation-card-demo {
+      border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--bg-elevated);
+      padding: 14px; display: grid; gap: 10px;
+    }
+    .scale-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+    .scale-meta strong { font-size: 14px; color: var(--text-primary); }
+    .scale-visual { min-height: 32px; display: flex; align-items: center; padding: 0 10px; border-radius: var(--radius-control); background: var(--bg-page); border: 1px dashed var(--border); overflow: hidden; }
+    #spacing .scale-visual.spacing-true-scale {
+      min-height: 40px; overflow: visible; justify-content: flex-start; padding: 8px 12px;
+    }
+    .spacing-gap-demo { display: flex; align-items: center; flex-shrink: 0; }
+    .spacing-block {
+      width: 20px; height: 20px; flex-shrink: 0; border-radius: 3px;
+      background: color-mix(in srgb, var(--brand) 72%, var(--bg-elevated));
+      border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--border));
+    }
+    .spacing-gap {
+      flex-shrink: 0; height: 20px; min-width: 0; box-sizing: border-box;
+      background: repeating-linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--brand) 35%, transparent) 0 1px,
+        transparent 1px 4px
+      );
+      border-top: 1px dashed color-mix(in srgb, var(--brand) 55%, var(--border));
+      border-bottom: 1px dashed color-mix(in srgb, var(--brand) 55%, var(--border));
+    }
+    .measure-rich { display: inline-block; height: 14px; min-width: 4px; border-radius: 999px; background: var(--brand); }
+    .measure-rich.text { width: 24px; background: transparent; color: var(--text-muted); }
+    .usage-strip {
+      margin-top: 14px; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-card);
+      background: var(--bg-elevated); display: grid; gap: 10px;
+    }
+    .usage-strip strong { font-size: 13px; color: var(--text-primary); }
+    .usage-strip > div { display: flex; flex-wrap: wrap; gap: 8px; }
+    .mini-pill {
+      display: inline-flex; align-items: center; min-height: 24px; padding: 0 10px;
+      border: 1px solid var(--border); border-radius: 999px; background: var(--bg-surface);
+      color: var(--text-muted); font-size: 12px;
+    }
+    .radius-shape {
+      width: 100%; min-height: 68px; background: color-mix(in srgb, var(--brand) 16%, var(--bg-page));
+      border: 1px solid color-mix(in srgb, var(--brand) 30%, var(--border));
+    }
+    .floating-surface {
+      width: 100%; min-height: 68px; border-radius: var(--radius-control);
+      background: var(--bg-surface); border: 1px solid var(--border);
+    }
+    .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .chip {
+      display: inline-flex; align-items: center; min-height: 26px; padding: 0 10px;
+      border: 1px solid var(--border); border-radius: var(--radius-control);
+      color: var(--text-muted); font-size: 12px;
+    }
+    .chip-primary { color: var(--brand); border-color: color-mix(in srgb, var(--brand) 45%, transparent); background: color-mix(in srgb, var(--brand) 10%, transparent); }
+    .chip-success { color: #389e0d; border-color: rgba(56,158,13,.35); background: rgba(56,158,13,.06); }
+    .chip-warning { color: #d48806; border-color: rgba(212,136,6,.35); background: rgba(212,136,6,.06); }
+    .chip-danger { color: var(--color-danger, var(--brand)); border-color: color-mix(in srgb, var(--color-danger, var(--brand)) 35%, transparent); background: color-mix(in srgb, var(--color-danger, var(--brand)) 8%, transparent); }
+    .chip-info { color: #1677ff; border-color: rgba(22,119,255,.35); background: rgba(22,119,255,.06); }
+    .chip-disabled { opacity: .45; pointer-events: none; }
+    .sample-line { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; align-items: center; }
+    .sample-line .btn-label { font-size: 12px; color: var(--text-muted); min-width: 60px; }
+    .btn-sample {
+      display: inline-flex; align-items: center; justify-content: center;
+      font: 600 13px/1 var(--font-sans); border-radius: var(--radius-control);
+      cursor: default; white-space: nowrap;
+    }
+    .btn-sample.sm { height: 28px; padding: 0 12px; font-size: 12px; }
+    .btn-sample.md { height: 32px; padding: 0 16px; font-size: 13px; }
+    .btn-sample.lg { height: 40px; padding: 0 20px; font-size: 15px; }
+    .btn-sample.primary { background: var(--brand); color: #fff; border: none; }
+    .btn-sample.default { background: var(--bg-page); color: var(--text-primary); border: 1px solid var(--border); }
+    .btn-sample.ghost { background: transparent; color: var(--brand); border: 1px solid var(--brand); }
+    .btn-sample.text { background: transparent; color: var(--brand); border: none; }
+    .btn-sample.danger { background: var(--color-danger, var(--brand)); color: #fff; border: none; }
+    .btn-sample.disabled { opacity: .45; }
+    .input-group { display: grid; gap: 8px; margin-top: 10px; }
+    .input-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .input-demo {
+      height: 32px; border: 1px solid var(--border); border-radius: var(--radius-control);
+      padding: 0 11px; background: var(--bg-page); color: var(--text-primary);
+      font: 13px var(--font-sans); min-width: 0; width: 180px;
+    }
+    .input-demo:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 20%, transparent); }
+    .input-demo.error { border-color: var(--color-danger, var(--brand)); }
+    .input-demo:disabled { opacity: .45; background: var(--bg-elevated); }
+    .table-demo { margin-top: 10px; border: 1px solid var(--border); border-radius: var(--radius-control); overflow: hidden; font-size: 12px; }
+    .table-demo > div { display: grid; grid-template-columns: 1.2fr 0.8fr 0.6fr 0.8fr; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    .table-demo > div:last-child { border-bottom: 0; }
+    .table-demo .header { background: var(--bg-surface); font-weight: 700; }
+    .table-demo .hover:hover { background: color-mix(in srgb, var(--brand) 5%, transparent); }
+    .demarcation { border: 1px dashed var(--border); background: var(--bg-page); border-radius: var(--radius-control); padding: 16px; margin-top: 10px; }
+    .layout-diagram { display: grid; margin-top: 10px; border: 1px solid var(--border); border-radius: var(--radius-control); overflow: hidden; font-size: 12px; text-align: center; }
+    .layout-diagram .region { padding: 14px 10px; }
+    .layout-diagram .header { background: var(--spec-topbar-bg, var(--bg-surface)); color: var(--text-primary); font-weight: 600; }
+    .layout-diagram .sider-content { display: grid; grid-template-columns: 0.25fr 0.75fr; }
+    .layout-diagram .sider { background: var(--spec-sidebar, var(--bg-surface)); color: var(--spec-sidebar-text, var(--text-muted)); padding: 28px 10px; }
+    .layout-diagram .content { background: var(--spec-canvas, var(--bg-surface)); padding: 28px 10px; color: var(--text-muted); }
+    .layout-diagram .tabs { background: color-mix(in srgb, var(--spec-primary, var(--brand)) 10%, transparent); color: var(--text-muted); border-top: 1px solid var(--border); }
+    .radius-box { display: inline-block; width: 52px; height: 32px; background: var(--brand); vertical-align: middle; }
+    .shadow-box { display: inline-block; width: 52px; height: 32px; background: var(--bg-surface); border: 1px solid var(--border); vertical-align: middle; }
+    .measure { display: inline-block; height: 12px; background: var(--brand); border-radius: 999px; min-width: 4px; }
+    .legend { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+    .legend-box { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--border); }
+
+    .specimen { margin: 14px 0; border: 1px solid var(--spec-border); border-radius: var(--radius-card); overflow: hidden; background: var(--spec-canvas); color: var(--spec-text); font-size: 13px; }
+    .spec-topbar { min-height: var(--spec-topbar); display: flex; align-items: center; gap: 20px; padding: 0 16px; background: var(--spec-topbar-bg, var(--spec-primary)); color: white; }
+    .spec-topbar span { color: rgba(255,255,255,.82); }
+    .spec-tags { display: flex; align-items: center; gap: 18px; min-height: var(--spec-tags); padding: 0 16px; border-bottom: 1px solid var(--spec-border); background: color-mix(in srgb, var(--spec-surface) 92%, white); color: var(--spec-muted); }
+    .spec-tags span { display: inline-flex; align-items: center; min-height: calc(var(--spec-tags) - 6px); }
+    .spec-tags .active { color: var(--spec-primary); border-bottom: 2px solid var(--spec-primary); }
+    .spec-app-body { display: grid; grid-template-columns: var(--spec-sidebar-width) minmax(0, 1fr); min-height: 390px; background: var(--spec-canvas); }
+    .spec-sidebar-menu { display: grid; align-content: start; gap: 2px; padding: 8px 0; background: var(--spec-sidebar); color: var(--spec-sidebar-text, var(--spec-muted)); border-right: 1px solid var(--spec-border); box-shadow: inset -1px 0 0 rgba(0,0,0,.02); }
+    .spec-sidebar-menu span { display: flex; align-items: center; min-height: 46px; padding: 0 16px 0 22px; border-right: 4px solid transparent; }
+    .spec-sidebar-menu .active { color: var(--spec-primary); background: var(--spec-sidebar-active-bg, color-mix(in srgb, var(--spec-primary) 10%, transparent)); border-right-color: var(--spec-primary); font-weight: 600; }
+    .spec-workspace { min-width: 0; display: flex; flex-direction: column; }
+    .spec-body { display: grid; grid-template-columns: 72px minmax(156px, var(--spec-sidebar-width)) minmax(0, 1fr); min-height: 390px; }
+    .spec-rail { display: grid; align-content: start; gap: 4px; padding: 10px 0; background: var(--spec-sidebar); color: rgba(255,255,255,.72); }
+    .spec-rail span { display: grid; place-items: center; min-height: 52px; border-left: 3px solid transparent; }
+    .spec-rail .active { border-left-color: var(--spec-primary); color: #fff; background: rgba(0,0,0,.22); }
+    .spec-tree { display: grid; align-content: start; gap: 8px; padding: 16px 12px; background: var(--spec-surface); border-right: 1px solid var(--spec-border); color: var(--spec-muted); }
+    .spec-tree strong { color: var(--spec-text); margin-bottom: 4px; }
+    .spec-tree span { padding: 7px 8px; border-radius: 4px; }
+    .spec-tree .active { color: var(--spec-primary); background: color-mix(in srgb, var(--spec-primary) 10%, transparent); }
+    .spec-main { min-width: 0; padding: 12px; }
+    .spec-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; padding: 12px; background: var(--spec-surface); border: 1px solid var(--spec-border); }
+    .spec-filter label { color: var(--spec-muted); font-size: 12px; }
+    .spec-filter input, .spec-filter select { width: 150px; min-width: 0; height: 30px; border: 1px solid var(--spec-border); border-radius: 4px; padding: 0 8px; }
+    .spec-table a { color: var(--spec-primary); text-decoration: none; font-weight: 600; }
+    .spec-filter button, .spec-title button { height: 30px; border: 1px solid var(--spec-border); border-radius: 4px; background: var(--spec-surface); color: var(--spec-text); padding: 0 10px; }
+    .spec-filter .primary, .spec-title .primary { background: var(--spec-primary); border-color: var(--spec-primary); color: white; }
+    .spec-panel { padding: 12px; background: var(--spec-surface); border: 1px solid var(--spec-border); }
+    .spec-title { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .spec-title strong { border-left: 3px solid var(--spec-primary); padding-left: 8px; }
+    .spec-title span { flex: 1; }
+    .spec-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .spec-table th, .spec-table td { padding: 9px 10px; border-bottom: 1px solid var(--spec-border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .spec-table th { background: var(--spec-table-header-bg); color: var(--spec-table-header-color); text-align: left; }
+    .spec-table td:last-child { color: var(--spec-primary); font-weight: 600; }
+    .spec-table i { display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: #52c41a; }
+    .spec-pagination { display: flex; justify-content: flex-end; gap: 10px; padding-top: 12px; color: var(--spec-muted); }
+    .spec-pagination b { min-width: 24px; display: inline-grid; place-items: center; background: color-mix(in srgb, var(--spec-primary) 12%, transparent); color: var(--spec-primary); border-radius: 4px; }
+    .source-shell { display: grid; grid-template-columns: var(--spec-sidebar-width) minmax(0, 1fr); min-height: 520px; background: var(--spec-canvas); }
+    .source-sidebar { border-right: 0; box-shadow: 2px 0 8px rgba(29,35,41,.05); }
+    .source-logo { display: flex; align-items: center; min-height: var(--spec-topbar); padding: 0 18px 0 22px; color: var(--spec-text); box-shadow: 0 4px 2px -2px rgba(0,21,41,.08); font-weight: 600; }
+    .source-sidebar span { min-height: 40px; margin: 0 18px; padding: 0 16px 0 24px; border-right: 0; border-radius: 8px; }
+    .source-sidebar .active { border-right-color: transparent; font-weight: 400; }
+    .source-topbar { justify-content: flex-end; border-bottom: 0; box-shadow: 0 1px 4px rgba(0,21,41,.08); color: var(--spec-text); }
+    .source-topbar span { color: var(--spec-text); }
+    .source-main { padding: 20px 32px 24px; }
+    .source-split { display: grid; grid-template-columns: 274px minmax(0,1fr); gap: 16px; align-items: start; }
+    .source-tree, .source-content { min-width: 0; background: var(--spec-surface); border-radius: 12px; }
+    .source-tree { display: grid; align-content: start; gap: 8px; min-height: 390px; padding: 16px; color: var(--spec-text); border-right: 0; }
+    .source-tree span { min-height: 32px; display: flex; align-items: center; padding: 0 8px; border-radius: 4px; }
+    .source-tree .active { color: var(--spec-primary); background: color-mix(in srgb, var(--spec-primary) 10%, transparent); }
+    .source-search { height: 32px; display: flex; align-items: center; padding: 0 11px; border: 1px solid var(--spec-border); border-radius: 4px; color: var(--spec-muted); background: var(--spec-surface); }
+    .source-content { padding: 0; background: transparent; }
+    .source-toolbar { min-height: 32px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; color: var(--spec-text); }
+    .source-toolbar strong { margin-right: auto; font-size: 16px; font-weight: 600; color: var(--spec-text); }
+    .source-toolbar input { height: 32px; width: 180px; border: 1px solid var(--spec-border); border-radius: 4px; padding: 0 11px; background: var(--spec-surface); color: var(--spec-text); }
+    .source-toolbar button { height: 32px; border: 1px solid var(--spec-border); border-radius: 4px; padding: 0 15px; background: var(--spec-surface); color: var(--spec-text); }
+    .source-toolbar .primary { border-color: var(--spec-primary); background: var(--spec-primary); color: #fff; }
+    .source-tabs { display: flex; gap: 32px; height: 45px; margin-bottom: 16px; border-bottom: 1px solid var(--spec-border); }
+    .source-tabs span { display: inline-flex; align-items: center; padding: 0 16px; color: var(--spec-muted); }
+    .source-tabs .active { color: var(--spec-primary); border-bottom: 2px solid var(--spec-primary); }
+    .source-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .source-card { min-height: 180px; display: grid; align-content: start; gap: 10px; padding: 16px; border: 1px solid color-mix(in srgb, var(--spec-border) 75%, #fff); border-radius: 12px; background: var(--spec-surface); }
+    .source-card strong { color: var(--spec-text); font-size: 16px; }
+    .source-card p { margin: 0; color: var(--spec-muted); font-size: 13px; }
+    .source-card a, .spec-table a { color: var(--spec-primary); text-decoration: none; }
+    .usage-banner { padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--bg-elevated); color: var(--text-muted); font-size: 12px; margin-top: var(--gap); text-align: center; }
+    .template-summary {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;
+      margin-top: 14px; margin-bottom: 18px;
+    }
+    .template-summary article {
+      border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--bg-elevated);
+      padding: 14px; display: grid; gap: 8px;
+    }
+    .template-summary strong { font-size: 14px; color: var(--text-primary); }
+    .template-summary span { color: var(--text-muted); font-size: 12px; }
+    @media (max-width: 760px) {
+      .layout { grid-template-columns: 1fr; padding: 16px; }
+      .toc { position: static; }
+      .toc-parent { padding: 3px 6px; font-size: 12px; }
+      .toc-child { padding: 2px 6px 2px 8px; font-size: 11px; }
+      .type-showcase { grid-template-columns: 1fr; }
+      .type-ladder-row { grid-template-columns: 1fr; }
+      .type-matrix-head, .type-matrix-row { grid-template-columns: 1fr; gap: 8px; }
+      .type-matrix-head strong:not(:first-child) { display: none; }
+      .comp-grid { grid-template-columns: 1fr; }
+      .colors { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+      .spec-body { grid-template-columns: 1fr; }
+      .spec-rail, .spec-tree { display: none; }
+      .layout-diagram .sider-content { grid-template-columns: 1fr; }
+      .input-demo { width: 140px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top-nav" id="top">
+    <a class="top-nav-title" href="#top">鲁警智算开发与管理中心视觉规范</a>
+    <nav class="top-nav-links">
+      <a href="#style-overview">设计风格概览</a><a href="#ui-specs">基础设计令牌 / UI 规范</a><a href="#component-specs">组件样例 / 组件规范</a><a href="#template-pages">真实页面 / 模板页面样例</a>
+    </nav>
+  </header>
+  <div class="layout">
+    <nav class="toc" aria-label="预览章节">
+      <strong>预览目录</strong>
+      <div class="toc-group"><a class="toc-parent" href="#style-overview">设计风格概览</a></div><div class="toc-group"><a class="toc-parent" href="#ui-specs">基础设计令牌 / UI 规范</a><div class="toc-children"><a class="toc-child" href="#colors">颜色</a><a class="toc-child" href="#typography">字体</a><a class="toc-child" href="#layout-grid">布局 / 栅格</a><a class="toc-child" href="#icons">图标</a><a class="toc-child" href="#spacing">间距</a><a class="toc-child" href="#radius">圆角</a><a class="toc-child" href="#elevation">阴影 / 层级</a></div></div><div class="toc-group"><a class="toc-parent" href="#component-specs">组件样例 / 组件规范</a><div class="toc-children"><a class="toc-child" href="#buttons">频道 Tab / 顶部导航</a><a class="toc-child" href="#cards">文章卡片 / 信息流</a><a class="toc-child" href="#right-rail">快捷入口 / 右侧挂件</a></div></div><div class="toc-group"><a class="toc-parent" href="#template-pages">真实页面 / 模板页面样例</a><div class="toc-children"><a class="toc-child" href="#template-summary">模板摘要</a><a class="toc-child" href="#template-examples">页面样例</a></div></div>
+    </nav>
+  <main class="page">
+    
+
+    <!-- ============ Section 1: Design Style Overview ============ -->
+    <section id="style-overview">
+      <div class="section-head">
+        <div>
+          <h2>设计风格概览</h2>
+          <p>快速理解产品整体设计风格、主色、字体、页面密度、组件体系和典型页面类型。</p>
+        </div>
+      </div>
+      
+    <div class="review-summary">
+      <div>
+        <span>证据模式</span>
+        <strong>source-only</strong>
+      </div>
+      <div>
+        <span>整体置信度</span>
+        <strong>high</strong>
+      </div>
+      <div>
+        <span>待确认项</span>
+        <strong>0</strong>
+      </div>
+      <div>
+        <span>冲突项</span>
+        <strong>0</strong>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px;">
+      <div class="surface-card" style="padding:16px;">
+        <strong style="font-size:14px;">产品名称</strong>
+        <p style="font-size:18px;font-weight:700;color:var(--text-primary);margin-top:8px;">鲁警智算开发与管理中心视觉规范</p>
+      </div>
+      <div class="surface-card" style="padding:16px;">
+        <strong style="font-size:14px;">风格摘要</strong>
+        <p style="font-size:13px;margin-top:8px;color:var(--text-primary);line-height:1.6;">面向公安多警种 AI 资源建设与空间治理的浅色紧凑型管理界面。以 56px 全局顶栏、220/64px 可折叠侧栏、36px 多页签栏和浅灰内容画布构成稳定应用壳；六类资源页统一使用“统计摘要 + 筛选工具栏 + 资源卡片/表格 + 分页”的工作界面，蓝色承担品牌、资源识别和交互重点，状态色只表达业务状态。</p>
+      </div>
+    </div>
+    <div class="comp-grid" style="margin-top:16px;">
+      <div class="surface-card" style="padding:16px;">
+        <strong style="font-size:13px;">主色</strong>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+          <span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:#1677ff;border:1px solid var(--border);"></span>
+          <code>#1677ff</code>
+        </div>
+      </div>
+      <div class="surface-card" style="padding:16px;">
+        <strong style="font-size:13px;">字体</strong>
+        <p style="font-size:13px;margin-top:8px;color:var(--text-primary);word-break:break-all;">&#x27;PingFang SC&#x27;, &#x27;苹方&#x27;, -apple-system, BlinkMacSystemFont, &#x27;Segoe UI&#x27;, Roboto, &#x27;Helvetica Neue&#x27;, Arial, sans-serif</p>
+      </div>
+      <div class="surface-card" style="padding:16px;">
+        <strong style="font-size:13px;">页面密度</strong>
+        <p style="font-size:13px;margin-top:8px;color:var(--text-primary);">紧凑密度</p>
+      </div>
+      <div class="surface-card" style="padding:16px;">
+        <strong style="font-size:13px;">组件体系</strong>
+        <p style="font-size:13px;margin-top:8px;color:var(--text-primary);">Ant Design 6.3.7 / @ant-design/icons 6.2.2 / Recharts 3.8.1</p>
+      </div>
+      <div class="surface-card" style="padding:16px;">
+        <strong style="font-size:13px;">产品类型</strong>
+        <p style="font-size:13px;margin-top:8px;color:var(--text-primary);">government-ai-management-platform</p>
+      </div>
+      <div class="surface-card" style="padding:16px;">
+        <strong style="font-size:13px;">典型页面</strong>
+        <p style="font-size:13px;margin-top:8px;color:var(--text-primary);word-break:break-all;">workspace-switch-flow、resource-management-list、resource-secondary-maintenance、space-analytics-dashboard</p>
+      </div>
+    </div>
+    
+    </section>
+
+    <!-- ============ Section 2: Basic Design Tokens / UI Specs ============ -->
+    <section id="ui-specs" style="padding:0;border:none;background:transparent;box-shadow:none;">
+      <div style="border:1px solid var(--border);border-radius:var(--radius-card);background:var(--bg-surface);padding:clamp(20px,4vw,32px);">
+        <div class="section-head">
+          <div>
+            <h2>基础设计令牌 / UI 规范</h2>
+            <p>核心设计令牌，包括颜色、字体、布局、图标、间距、圆角和阴影。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2.1 Colors -->
+    <section id="colors">
+      <div class="section-head"><div><h3 style="margin:0;">颜色规范</h3><p>语义颜色色块，包含角色标签和使用场景。展示主色、hover、active 状态、背景色、文字色、边框色和语义色。</p></div></div>
+      
+                <div class="token-group">
+                  <h3>Brand</h3>
+                  <div class="grid colors">
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#1677ff"></div>
+                  <div class="swatch-body">
+                    <strong>primary</strong>
+                    <code>#1677ff</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#4096ff"></div>
+                  <div class="swatch-body">
+                    <strong>primaryHover</strong>
+                    <code>#4096ff</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#0958d9"></div>
+                  <div class="swatch-body">
+                    <strong>primaryActive</strong>
+                    <code>#0958d9</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#e6f4ff"></div>
+                  <div class="swatch-body">
+                    <strong>primarySelected</strong>
+                    <code>#e6f4ff</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#69b1ff"></div>
+                  <div class="swatch-body">
+                    <strong>primaryGradientEnd</strong>
+                    <code>#69b1ff</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#1d39c4"></div>
+                  <div class="swatch-body">
+                    <strong>brandDeep</strong>
+                    <code>#1d39c4</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#ffffff"></div>
+                  <div class="swatch-body">
+                    <strong>onPrimary</strong>
+                    <code>#ffffff</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#722ed1"></div>
+                  <div class="swatch-body">
+                    <strong>accentPurple</strong>
+                    <code>#722ed1</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#13c2c2"></div>
+                  <div class="swatch-body">
+                    <strong>accentCyan</strong>
+                    <code>#13c2c2</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#fa8c16"></div>
+                  <div class="swatch-body">
+                    <strong>accentOrange</strong>
+                    <code>#fa8c16</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#eb2f96"></div>
+                  <div class="swatch-body">
+                    <strong>accentMagenta</strong>
+                    <code>#eb2f96</code>
+                    
+                  </div>
+                </article></div>
+                </div>
+
+                <div class="token-group">
+                  <h3>Text</h3>
+                  <div class="grid colors">
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#1D2129"></div>
+                  <div class="swatch-body">
+                    <strong>text</strong>
+                    <code>#1D2129</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#5F6B7A"></div>
+                  <div class="swatch-body">
+                    <strong>textSecondary</strong>
+                    <code>#5F6B7A</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#7A8599"></div>
+                  <div class="swatch-body">
+                    <strong>textMuted</strong>
+                    <code>#7A8599</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#B0B8C8"></div>
+                  <div class="swatch-body">
+                    <strong>textDisabled</strong>
+                    <code>#B0B8C8</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#fafafa"></div>
+                  <div class="swatch-body">
+                    <strong>surfaceMuted</strong>
+                    <code>#fafafa</code>
+                    
+                  </div>
+                </article></div>
+                </div>
+
+                <div class="token-group">
+                  <h3>Surface</h3>
+                  <div class="grid colors">
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#f0f5ff"></div>
+                  <div class="swatch-body">
+                    <strong>primarySurface</strong>
+                    <code>#f0f5ff</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#f5f7fa"></div>
+                  <div class="swatch-body">
+                    <strong>canvas</strong>
+                    <code>#f5f7fa</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#ffffff"></div>
+                  <div class="swatch-body">
+                    <strong>surface</strong>
+                    <code>#ffffff</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#f2f3f5"></div>
+                  <div class="swatch-body">
+                    <strong>neutralSurface</strong>
+                    <code>#f2f3f5</code>
+                    
+                  </div>
+                </article></div>
+                </div>
+
+                <div class="token-group">
+                  <h3>Border</h3>
+                  <div class="grid colors">
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#d6e4ff"></div>
+                  <div class="swatch-body">
+                    <strong>primaryBorder</strong>
+                    <code>#d6e4ff</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#91caff"></div>
+                  <div class="swatch-body">
+                    <strong>primaryBorderHover</strong>
+                    <code>#91caff</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#d9d9d9"></div>
+                  <div class="swatch-body">
+                    <strong>border</strong>
+                    <code>#d9d9d9</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#f0f0f0"></div>
+                  <div class="swatch-body">
+                    <strong>borderSubtle</strong>
+                    <code>#f0f0f0</code>
+                    
+                  </div>
+                </article></div>
+                </div>
+
+                <div class="token-group">
+                  <h3>Semantic</h3>
+                  <div class="grid colors">
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#52c41a"></div>
+                  <div class="swatch-body">
+                    <strong>success</strong>
+                    <code>#52c41a</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#faad14"></div>
+                  <div class="swatch-body">
+                    <strong>warning</strong>
+                    <code>#faad14</code>
+                    
+                  </div>
+                </article>
+                <article class="swatch">
+                  <div class="swatch-color" style="background:#ff4d4f"></div>
+                  <div class="swatch-body">
+                    <strong>danger</strong>
+                    <code>#ff4d4f</code>
+                    
+                  </div>
+                </article></div>
+                </div>
+    </section>
+
+    <!-- 2.2 Typography -->
+    <section id="typography">
+      <div class="section-head"><div><h3 style="margin:0;">字体规范</h3><p>文字角色，包含字号、字重、行高、颜色和使用场景。不只是字体名称，而是文字角色定义。</p></div></div>
+      
+    <div class="type-showcase">
+      <article class="surface-card type-ladder">
+        <div class="type-card-title">
+          <strong>字体层级总览</strong>
+          <span>先看层级差异，再看参数。</span>
+        </div>
+        <div class="type-ladder-list">
+        <div class="type-ladder-row">
+          <span>正文、表格、说明段落</span>
+          <strong style="font-size: 14px; font-weight: 400; line-height: 22px">面向公安多警种 AI 资源建设与空间治理的浅色紧凑型管理界面。以 56px 全局顶栏、220/64px 可折叠侧栏、36px 多页签栏和浅灰内容画布构成稳定应用壳；六类资源页统一使用“统计摘要 + 筛选工具栏 + 资源卡片/表格 + 分页”的工作界面，蓝色承担品牌、资源识别和交互重点，状态色只表达业</strong>
+          <code>body</code>
+        </div>
+        <div class="type-ladder-row">
+          <span>辅助信息与元数据</span>
+          <strong style="font-size: 12px; font-weight: 400; line-height: 20px">最近更新</strong>
+          <code>caption</code>
+        </div>
+        <div class="type-ladder-row">
+          <span>按钮与关键操作</span>
+          <strong style="font-size: 14px; font-weight: 400; line-height: 1">14px/500</strong>
+          <code>button</code>
+        </div>
+        <div class="type-ladder-row">
+          <span>页面主标题</span>
+          <strong style="font-size: 15px; font-weight: 650; line-height: 22px">鲁警智算开发与管理中心视觉规范</strong>
+          <code>cardTitle</code>
+        </div>
+        <div class="type-ladder-row">
+          <span>正文、表格、说明段落</span>
+          <strong style="font-size: 13px; font-weight: 400; line-height: 20px">面向公安多警种 AI 资源建设与空间治理的浅色紧凑型管理界面。以 56px 全局顶栏、220/64px 可折叠侧栏、36px 多页签栏和浅灰内容画布构成稳定应用壳；六类资源页统一使用“统计摘要 + 筛选工具栏 + 资源卡片/表格 + 分页”的工作界面，蓝色承担品牌、资源识别和交互重点，状态色只表达业</strong>
+          <code>compactBody</code>
+        </div></div>
+      </article>
+      <article class="surface-card type-context-demo">
+        <div class="type-card-title">
+          <strong>产品语境小样</strong>
+          <span>把标题、正文、辅助文字和按钮放回真实页面。</span>
+        </div>
+        <div class="type-context-shell">
+          <div class="type-context-head">
+            <strong>鲁警智算开发与管理中心视觉规范</strong>
+            <button>14px/500</button>
+          </div>
+          <div class="type-context-panel">
+            <strong>空间切换与申请流程</strong>
+            <p>面向公安多警种 AI 资源建设与空间治理的浅色紧凑型管理界面。以 56px 全局顶栏、220/64px 可折叠侧栏、36px 多页签栏和浅灰内容画布构成稳定应用壳；六类资源页统一使用“统计摘要 + 筛选工具栏 + 资源卡片/表格 + 分页”的工作界面，蓝色承担品牌、资源识别和交互重点，状态色只表达业</p>
+            <span>最近更新</span>
+          </div>
+        </div>
+      </article>
+    </div>
+    
+    <div class="type-matrix">
+      <div class="type-matrix-head">
+        <strong>角色</strong>
+        <strong>分组</strong>
+        <strong>样例</strong>
+        <strong>规格</strong>
+        <strong>使用场景</strong>
+      </div>
+      
+        <div class="type-matrix-row">
+          <strong>body</strong>
+          <span class="type-group-chip">内容阅读</span>
+          <div class="type-sample-cell" style="font-size: 14px; font-weight: 400; line-height: 22px">面向公安多警种 AI 资源建设与空间治理的浅色紧凑型管理界面。以 56px 全局顶栏、220/64px 可折叠侧栏、36px 多页签栏和浅灰内容画布构成稳定应用壳；六类资源页统一使用“统计摘要 + 筛选工具栏 + 资源卡片/表格 + 分页”的工作界面，蓝色承担品牌、资源识别和交互重点，状态色只表达业</div>
+          <code>14px / 400 / 22px / n/a</code>
+          <span>正文、表格、说明段落</span>
+        </div>
+        <div class="type-matrix-row">
+          <strong>caption</strong>
+          <span class="type-group-chip">内容阅读</span>
+          <div class="type-sample-cell" style="font-size: 12px; font-weight: 400; line-height: 20px">最近更新</div>
+          <code>12px / 400 / 20px / n/a</code>
+          <span>辅助信息与元数据</span>
+        </div>
+        <div class="type-matrix-row">
+          <strong>button</strong>
+          <span class="type-group-chip">交互文本</span>
+          <div class="type-sample-cell" style="font-size: 14px; font-weight: 400; line-height: 1">14px/500</div>
+          <code>14px / 400 / 1 / n/a</code>
+          <span>按钮与关键操作</span>
+        </div>
+        <div class="type-matrix-row">
+          <strong>cardTitle</strong>
+          <span class="type-group-chip">页面结构</span>
+          <div class="type-sample-cell" style="font-size: 15px; font-weight: 650; line-height: 22px">鲁警智算开发与管理中心视觉规范</div>
+          <code>15px / 650 / 22px / n/a</code>
+          <span>页面主标题</span>
+        </div>
+        <div class="type-matrix-row">
+          <strong>compactBody</strong>
+          <span class="type-group-chip">内容阅读</span>
+          <div class="type-sample-cell" style="font-size: 13px; font-weight: 400; line-height: 20px">面向公安多警种 AI 资源建设与空间治理的浅色紧凑型管理界面。以 56px 全局顶栏、220/64px 可折叠侧栏、36px 多页签栏和浅灰内容画布构成稳定应用壳；六类资源页统一使用“统计摘要 + 筛选工具栏 + 资源卡片/表格 + 分页”的工作界面，蓝色承担品牌、资源识别和交互重点，状态色只表达业</div>
+          <code>13px / 400 / 20px / n/a</code>
+          <span>正文、表格、说明段落</span>
+        </div>
+        <div class="type-matrix-row">
+          <strong>heading</strong>
+          <span class="type-group-chip">页面结构</span>
+          <div class="type-sample-cell" style="font-size: 18px; font-weight: 600; line-height: 26px">鲁警智算开发与管理中心视觉规范</div>
+          <code>18px / 600 / 26px / n/a</code>
+          <span>页面主标题</span>
+        </div>
+        <div class="type-matrix-row">
+          <strong>metric</strong>
+          <span class="type-group-chip">页面结构</span>
+          <div class="type-sample-cell" style="font-size: 28px; font-weight: 600; line-height: 36px">设计系统文字样例</div>
+          <code>28px / 600 / 36px / n/a</code>
+          <span>系统内通用文本</span>
+        </div>
+        <div class="type-matrix-row">
+          <strong>resourceMetric</strong>
+          <span class="type-group-chip">页面结构</span>
+          <div class="type-sample-cell" style="font-size: 26px; font-weight: 700; line-height: 32px">设计系统文字样例</div>
+          <code>26px / 700 / 32px / n/a</code>
+          <span>系统内通用文本</span>
+        </div>
+        <div class="type-matrix-row">
+          <strong>sectionTitle</strong>
+          <span class="type-group-chip">页面结构</span>
+          <div class="type-sample-cell" style="font-size: 14px; font-weight: 600; line-height: 22px">空间切换与申请流程</div>
+          <code>14px / 600 / 22px / n/a</code>
+          <span>模块标题与区块切分</span>
+        </div>
+    </div>
+    
+    </section>
+
+    <!-- 2.3 Layout / Grid -->
+    <section id="layout-grid">
+      <div class="section-head"><div><h3 style="margin:0;">布局 / 栅格</h3><p>页面框架、栅格规则和响应式行为。</p></div></div>
+      
+    <div class="section-note">以下布局示意图严格来自 DESIGN.md 的 layout.appShell / pageTemplates / sampleContent；未使用通用企业后台 fallback。</div>
+    
+    <div class="legend" data-layout-source="design-md">
+      <div class="legend-item"><span class="legend-box" style="background:#ffffff;border-color:var(--border);"></span>顶栏：来自 layout.appShell.topbar</div>
+      <div class="legend-item"><span class="legend-box" style="background:#ffffff;border-color:var(--border);"></span>侧栏：来自 layout.appShell.sidebar</div>
+      <div class="legend-item"><span class="legend-box" style="background:#f5f7fa;border-color:var(--border);"></span>内容画布：来自 layout.appShell.content</div>
+    </div>
+    
+    <div class="layout-diagram" data-layout-source="design-md" style="--diagram-topbar-bg:#ffffff;--diagram-topbar-text:#1D2129;--diagram-sidebar-bg:#ffffff;--diagram-sidebar-text:#1D2129;--diagram-content-bg:#f5f7fa;--diagram-surface-bg:#ffffff;">
+      <div class="region header" style="height:56px;display:flex;align-items:center;justify-content:flex-end;background:#ffffff;color:#1D2129;border-bottom:1px solid var(--border);box-shadow:var(--shadow-card);padding:0 18px;">64px 白色顶栏 / 用户工具区</div>
+      <div class="sider-content" style="grid-template-columns:220px minmax(0,1fr);">
+        <div class="region sider" style="display:grid;align-content:start;gap:8px;padding:12px 18px;background:#ffffff;color:#1D2129;border-right:1px solid var(--border);box-shadow:2px 0 8px rgba(29,35,41,0.05);text-align:left;">
+          <div style="height:40px;display:flex;align-items:center;font-weight:600;color:var(--text-primary);">鲁警智算开发与管理中心视觉规范</div>
+          <div style="min-height:32px;display:flex;align-items:center;padding:4px 12px;border-radius:6px;background:transparent;color:#1D2129;font-weight:400;text-align:left;">空间切换与申请流程</div><div style="min-height:32px;display:flex;align-items:center;padding:4px 12px;border-radius:6px;background:#e6f4ff;color:var(--brand);font-weight:600;text-align:left;">资源管理列表页</div><div style="min-height:32px;display:flex;align-items:center;padding:4px 12px;border-radius:6px;background:transparent;color:#1D2129;font-weight:400;text-align:left;">资源二级维护页</div><div style="min-height:32px;display:flex;align-items:center;padding:4px 12px;border-radius:6px;background:transparent;color:#1D2129;font-weight:400;text-align:left;">空间统计分析页</div>
+        </div>
+        <div class="region content" style="display:grid;gap:12px;padding:16px;background:#f5f7fa;text-align:left;">
+          <div style="height:32px;background:#ffffff;border:1px solid var(--border);border-radius:4px;display:flex;align-items:center;padding:0 12px;color:var(--text-muted);">空间切换与申请流程</div>
+          <div style="height:92px;background:#ffffff;border:1px solid var(--border);border-radius:4px;display:grid;place-items:center;color:var(--text-muted);">资源管理列表页</div>
+        </div>
+      </div>
+    </div>
+    <div class="comp-grid" style="margin-top:16px;">
+      <div class="surface-card" style="padding:14px;">
+        <strong style="font-size:13px;">标准画板宽度</strong>
+        <p style="font-size:13px;margin-top:4px;color:var(--text-primary);">1440px</p>
+      </div>
+      <div class="surface-card" style="padding:14px;">
+        <strong style="font-size:13px;">页面安全边距</strong>
+        <p style="font-size:13px;margin-top:4px;color:var(--text-primary);">16px</p>
+      </div>
+      <div class="surface-card" style="padding:14px;">
+        <strong style="font-size:13px;">栅格间距 (Gutter)</strong>
+        <p style="font-size:13px;margin-top:4px;color:var(--text-primary);">12px</p>
+      </div>
+      <div class="surface-card" style="padding:14px;">
+        <strong style="font-size:13px;">适配说明</strong>
+        <p style="font-size:13px;margin-top:4px;color:var(--text-primary);">宽度 &gt;=1280px 使用完整应用壳；1024-1279px 默认折叠侧栏至 64px，表格启用横向滚动，图表保持双栏；低于 1024px 将双栏图表与三列卡片改为单列，并保持 16px 页面水平内边距。源码未提供移动端导航，不推断底部导航。</p>
+      </div>
+    </div>
+    
+    </section>
+
+    <!-- 2.4 Icons -->
+    <section id="icons">
+      <div class="section-head"><div><h3 style="margin:0;">图标</h3><p>图标风格、默认尺寸、常用尺寸和使用场景。</p></div></div>
+      
+    <div class="comp-grid" style="margin-top:10px;">
+      <div class="surface-card" style="padding:14px;">
+        <strong style="font-size:13px;">图标风格</strong>
+        <p style="font-size:13px;margin-top:4px;color:var(--text-primary);">线性 / 面性混合</p>
+      </div>
+      <div class="surface-card" style="padding:14px;">
+        <strong style="font-size:13px;">默认尺寸</strong>
+        <p style="font-size:13px;margin-top:4px;color:var(--text-primary);">16×16px</p>
+      </div>
+      <div class="surface-card" style="padding:14px;">
+        <strong style="font-size:13px;">导航尺寸</strong>
+        <p style="font-size:13px;margin-top:4px;color:var(--text-primary);">18×18px</p>
+      </div>
+      <div class="surface-card" style="padding:14px;">
+        <strong style="font-size:13px;">提示尺寸</strong>
+        <p style="font-size:13px;margin-top:4px;color:var(--text-primary);">24×24px</p>
+      </div>
+      <div class="surface-card" style="padding:14px;">
+        <strong style="font-size:13px;">格式</strong>
+        <p style="font-size:13px;margin-top:4px;color:var(--text-primary);">SVG</p>
+      </div>
+      <div class="surface-card" style="padding:14px;">
+        <strong style="font-size:13px;">默认颜色</strong>
+        <p style="font-size:13px;margin-top:4px;color:var(--text-primary);">跟随文字颜色</p>
+      </div>
+    </div>
+    
+    </section>
+
+    <!-- 2.5 Spacing -->
+    <section id="spacing">
+      <div class="section-head"><div><h3 style="margin:0;">间距</h3><p>核心间距令牌及其使用场景。</p></div></div>
+      
+    <div class="section-note">间距示意按 1:1 屏幕像素：中间透明区域宽度即令牌数值（8px 在屏幕上仅为 8 个 CSS 像素）。</div>
+    <div class="scale-gallery">
+            <article class="scale-card">
+              <div class="scale-meta"><strong>xs</strong><code>4px</code></div>
+              <div class="scale-visual spacing-true-scale"><div class="spacing-gap-demo" title="4px"><span class="spacing-block" aria-hidden="true"></span><span class="spacing-gap" style="width:4px;" aria-hidden="true"></span><span class="spacing-block" aria-hidden="true"></span></div></div>
+              <p>表单控件、按钮组、紧邻元素</p>
+            </article>
+            <article class="scale-card">
+              <div class="scale-meta"><strong>sm</strong><code>8px</code></div>
+              <div class="scale-visual spacing-true-scale"><div class="spacing-gap-demo" title="8px"><span class="spacing-block" aria-hidden="true"></span><span class="spacing-gap" style="width:8px;" aria-hidden="true"></span><span class="spacing-block" aria-hidden="true"></span></div></div>
+              <p>表单控件、按钮组、紧邻元素</p>
+            </article>
+            <article class="scale-card">
+              <div class="scale-meta"><strong>md</strong><code>12px</code></div>
+              <div class="scale-visual spacing-true-scale"><div class="spacing-gap-demo" title="12px"><span class="spacing-block" aria-hidden="true"></span><span class="spacing-gap" style="width:12px;" aria-hidden="true"></span><span class="spacing-block" aria-hidden="true"></span></div></div>
+              <p>卡片内边距、分组之间</p>
+            </article>
+            <article class="scale-card">
+              <div class="scale-meta"><strong>lg</strong><code>16px</code></div>
+              <div class="scale-visual spacing-true-scale"><div class="spacing-gap-demo" title="16px"><span class="spacing-block" aria-hidden="true"></span><span class="spacing-gap" style="width:16px;" aria-hidden="true"></span><span class="spacing-block" aria-hidden="true"></span></div></div>
+              <p>卡片内边距、分组之间</p>
+            </article>
+            <article class="scale-card">
+              <div class="scale-meta"><strong>cardInset</strong><code>20px</code></div>
+              <div class="scale-visual spacing-true-scale"><div class="spacing-gap-demo" title="20px"><span class="spacing-block" aria-hidden="true"></span><span class="spacing-gap" style="width:20px;" aria-hidden="true"></span><span class="spacing-block" aria-hidden="true"></span></div></div>
+              <p>通用间距尺度</p>
+            </article>
+            <article class="scale-card">
+              <div class="scale-meta"><strong>xl</strong><code>24px</code></div>
+              <div class="scale-visual spacing-true-scale"><div class="spacing-gap-demo" title="24px"><span class="spacing-block" aria-hidden="true"></span><span class="spacing-gap" style="width:24px;" aria-hidden="true"></span><span class="spacing-block" aria-hidden="true"></span></div></div>
+              <p>页面区块、模块纵向节奏</p>
+            </article>
+            <article class="scale-card">
+              <div class="scale-meta"><strong>xxl</strong><code>32px</code></div>
+              <div class="scale-visual spacing-true-scale"><div class="spacing-gap-demo" title="32px"><span class="spacing-block" aria-hidden="true"></span><span class="spacing-gap" style="width:32px;" aria-hidden="true"></span><span class="spacing-block" aria-hidden="true"></span></div></div>
+              <p>页面区块、模块纵向节奏</p>
+            </article></div>
+    <div class="usage-strip">
+      <strong>典型组合</strong>
+      <div><span class="mini-pill"><span>xs · 4px</span></span><span class="mini-pill"><span>sm · 8px</span></span><span class="mini-pill"><span>md · 12px</span></span><span class="mini-pill"><span>lg · 16px</span></span><span class="mini-pill"><span>cardInset · 20px</span></span><span class="mini-pill"><span>xl · 24px</span></span></div>
+      <p>按钮组、表单区、内容面板与页面段落应分别使用不同节奏，避免全页只有一种留白。</p>
+    </div>
+    
+    </section>
+
+    <!-- 2.6 Radius -->
+    <section id="radius">
+      <div class="section-head"><div><h3 style="margin:0;">圆角</h3><p>常用圆角值及适用场景。</p></div></div>
+      
+    <div class="section-note">圆角要直接对应组件族，而不是只记住数值。</div>
+    <div class="radius-gallery">
+            <article class="radius-card-demo">
+              <div class="radius-shape" style="border-radius:4px;"></div>
+              <div class="scale-meta"><strong>tag</strong><code>4px</code></div>
+              <p>卡片、面板、弹窗容器</p>
+            </article>
+            <article class="radius-card-demo">
+              <div class="radius-shape" style="border-radius:6px;"></div>
+              <div class="scale-meta"><strong>control</strong><code>6px</code></div>
+              <p>卡片、面板、弹窗容器</p>
+            </article>
+            <article class="radius-card-demo">
+              <div class="radius-shape" style="border-radius:8px;"></div>
+              <div class="scale-meta"><strong>container</strong><code>8px</code></div>
+              <p>卡片、面板、弹窗容器</p>
+            </article>
+            <article class="radius-card-demo">
+              <div class="radius-shape" style="border-radius:12px;"></div>
+              <div class="scale-meta"><strong>identity</strong><code>12px</code></div>
+              <p>卡片、面板、弹窗容器</p>
+            </article>
+            <article class="radius-card-demo">
+              <div class="radius-shape" style="border-radius:999px;"></div>
+              <div class="scale-meta"><strong>pill</strong><code>999</code></div>
+              <p>标签、胶囊态控件</p>
+            </article></div>
+    
+    </section>
+
+    <!-- 2.7 Shadows -->
+    <section id="elevation">
+      <div class="section-head"><div><h3 style="margin:0;">阴影 / 层级</h3><p>卡片、弹窗、下拉菜单等悬浮表面的阴影样式。</p></div></div>
+      
+    <div class="section-note">本区块用于判断“什么该浮起来，什么只需边框”。</div>
+    <div class="elevation-gallery">
+            <article class="elevation-card-demo">
+              <div class="floating-surface" style="box-shadow:none;"></div>
+              <div class="scale-meta"><strong>card</strong><code>none</code></div>
+              <p>弹窗、下拉、强悬浮层</p>
+            </article>
+            <article class="elevation-card-demo">
+              <div class="floating-surface" style="box-shadow:0 4px 12px rgba(0,0,0,0.08);"></div>
+              <div class="scale-meta"><strong>cardHover</strong><code>0 4px 12px rgba(0,0,0,0.08)</code></div>
+              <p>弹窗、下拉、强悬浮层</p>
+            </article>
+            <article class="elevation-card-demo">
+              <div class="floating-surface" style="box-shadow:0 2px 8px rgba(0,0,0,0.06);"></div>
+              <div class="scale-meta"><strong>popover</strong><code>0 2px 8px rgba(0,0,0,0.06)</code></div>
+              <p>弹窗、下拉、强悬浮层</p>
+            </article></div>
+    
+    </section>
+
+    
+    <!-- ============ Section 3: Component Examples / Specifications ============ -->
+    <section id="component-specs" style="padding:0;border:none;background:transparent;box-shadow:none;">
+      <div style="border:1px solid var(--border);border-radius:var(--radius-card);background:var(--bg-surface);padding:clamp(20px,4vw,32px);">
+        <div class="section-head">
+          <div>
+            <h2>组件样例 / 组件规范</h2>
+            <p>视觉样例，包含尺寸、状态、颜色和使用场景。组件应贴近目标产品的真实组件体系。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- 3.1 Content Navigation -->
+    <section id="buttons">
+      <span id="tabs" class="toc-anchor"></span>
+      <div class="section-head"><div><h3 style="margin:0;">频道 Tab / 顶部导航</h3><p>仅展示内容门户中实际需要的组件，避免把后台表格、抽屉、开关等通用管理组件误写入该设计系统。</p></div></div>
+      
+    <div class="component-demo" style="background:#f5f7fa;padding:16px;">
+      <div style="height:60px;background:#ffffff;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border);">
+        <strong style="font-size:16px;color:#1D2129;">鲁警智算开发与管理中心视觉规范</strong>
+        <span style="padding:6px 14px;border-radius:4px;background:#1677ff;color:#fff;font-size:14px;">发布</span>
+      </div>
+      <nav style="margin-top:12px;display:flex;align-items:stretch;background:#ffffff;border-radius:10px;box-shadow:0 1px 1px rgba(0,0,0,.05);overflow:hidden;"><span style="position:relative;padding:0 14px;line-height:50px;font-size:16px;color:#1D2129;">推荐<i style="position:absolute;left:0;right:0;top:0;height:3px;background:#1677ff;"></i></span><span style="position:relative;padding:0 14px;line-height:50px;font-size:16px;color:#7A8599;">最新<i style="position:absolute;left:0;right:0;top:0;height:0px;background:#1677ff;"></i></span><span style="position:relative;padding:0 14px;line-height:50px;font-size:16px;color:#7A8599;">热门<i style="position:absolute;left:0;right:0;top:0;height:0px;background:#1677ff;"></i></span><span style="position:relative;padding:0 14px;line-height:50px;font-size:16px;color:#7A8599;">知识体系<i style="position:absolute;left:0;right:0;top:0;height:0px;background:#1677ff;"></i></span><span style="position:relative;padding:0 14px;line-height:50px;font-size:16px;color:#7A8599;">推荐作者<i style="position:absolute;left:0;right:0;top:0;height:0px;background:#1677ff;"></i></span><span style="position:relative;padding:0 14px;line-height:50px;font-size:16px;color:#7A8599;">热门问答<i style="position:absolute;left:0;right:0;top:0;height:0px;background:#1677ff;"></i></span></nav>
+    </div>
+    </section>
+
+    <!-- 3.2 Article Cards -->
+    <section id="cards">
+      <div class="section-head"><div><h3 style="margin:0;">文章卡片 / 信息流</h3><p>横向图文卡片、分类角标、作者元信息和标签是核心组件。</p></div></div>
+      
+    <div class="component-demo" style="background:#f5f7fa;padding:16px;">
+      <article style="display:grid;grid-template-columns:236px 1fr;gap:15px;padding:15px;background:#ffffff;border-radius:10px;box-shadow:0 1px 1px rgba(0,0,0,.05);">
+        <div style="width:236px;height:143px;border-radius:5px;position:relative;background:#eef0f4;">
+          <span style="position:absolute;left:10px;top:10px;padding:2px 8px;border-radius:5px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;">公开课</span>
+        </div>
+        <div style="display:grid;gap:8px;align-content:start;">
+          <h4 style="margin:0;font-size:20px;line-height:1.4;font-weight:400;color:#1D2129;">内容标题占位</h4>
+          <p style="margin:0;font-size:14px;line-height:1.8;color:#7A8599;">摘要最多两行，辅助用户扫读内容价值。</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+          <div style="font-size:12px;color:#7A8599;">作者占位</div>
+        </div>
+      </article>
+    </div>
+    </section>
+
+    <!-- 3.3 Quick Entry and Right Rail -->
+    <section id="right-rail">
+      <div class="section-head"><div><h3 style="margin:0;">快捷入口 / 右侧挂件</h3><p>用于热门导航、百宝箱、推荐文章和运营位。</p></div></div>
+      
+    <div class="component-demo" style="background:#f5f7fa;padding:16px;display:grid;grid-template-columns:1fr 335px;gap:20px;">
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;"><article style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:14px;box-shadow:0 1px 1px rgba(0,0,0,.05);"><strong style="font-size:14px;color:#1D2129;">热门导航</strong><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;"><span style="font-size:12px;padding:2px 8px;background:color-mix(in srgb,#1677ff 10%,#fff);border-radius:4px;color:#1677ff;">热门专题</span><span style="font-size:12px;padding:2px 8px;background:color-mix(in srgb,#1677ff 10%,#fff);border-radius:4px;color:#1677ff;">热门作者</span><span style="font-size:12px;padding:2px 8px;background:color-mix(in srgb,#1677ff 10%,#fff);border-radius:4px;color:#1677ff;">优选企服</span></div></article><article style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:14px;box-shadow:0 1px 1px rgba(0,0,0,.05);"><strong style="font-size:14px;color:#1D2129;">百宝箱</strong><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;"><span style="font-size:12px;padding:2px 8px;background:color-mix(in srgb,#1677ff 10%,#fff);border-radius:4px;color:#1677ff;">书单</span><span style="font-size:12px;padding:2px 8px;background:color-mix(in srgb,#1677ff 10%,#fff);border-radius:4px;color:#1677ff;">AI产品导航</span><span style="font-size:12px;padding:2px 8px;background:color-mix(in srgb,#1677ff 10%,#fff);border-radius:4px;color:#1677ff;">行业快讯</span></div></article></div>
+      <aside style="background:#ffffff;border-radius:10px;padding:14px;box-shadow:0 1px 1px rgba(0,0,0,.05);display:grid;gap:10px;">
+        <strong style="font-size:13px;color:#1D2129;">右侧推荐</strong>
+        <div style="height:56px;background:#F2F4F6;border-radius:5px;"></div>
+        <div style="height:56px;background:#F2F4F6;border-radius:5px;"></div>
+      </aside>
+    </div>
+    </section>
+    
+
+    <!-- ============ Section 4: Real Pages / Template Page Examples ============ -->
+    <section id="template-pages" style="padding:0;border:none;background:transparent;box-shadow:none;">
+      <div style="border:1px solid var(--border);border-radius:var(--radius-card);background:var(--bg-surface);padding:clamp(20px,4vw,32px);">
+        <div class="section-head">
+          <div>
+            <h2>真实页面 / 模板页面样例</h2>
+            <p>根据产品类型展示代表性页面样例。展示令牌和组件如何组合成真实页面。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <section>
+      <div class="section-head"><div><h3 style="margin:0;">媒体内容 / 内容流模板页面</h3><p>以下样例严格由 DESIGN.md.pageTemplates 与 sampleContent 生成；缺少样例内容时不会套用内置通用页面。</p></div></div>
+      
+    <div id="template-summary" class="section-note toc-anchor">先识别应复用的页面模板，再查看下方具体页面样例。</div>
+    <div class="template-summary">
+        <article>
+          <strong>空间切换与申请流程</strong>
+          <span>侧栏顶部空间触发器 · 680px 切换空间弹窗：标题说明、搜索框、可滚动空间列表、底部双入口 · 申请空间抽屉或我的申请抽屉</span>
+        </article>
+        <article>
+          <strong>资源管理列表页</strong>
+          <span>PageHeader · 三至四项 resourceStatCards 摘要，首次进入无选中项 · 白色主面板</span>
+        </article>
+        <article>
+          <strong>资源二级维护页</strong>
+          <span>保留完整应用壳与多页签上下文 · PageHeader 使用二级页面标题 · 白色主内容容器</span>
+        </article></div>
+    
+
+      <div id="template-examples" class="toc-anchor"></div>
+      <h4 style="margin-top:16px;">切换工作空间</h4>
+      
+      <div class="specimen source-matched media-content" style="--spec-primary:#1677ff;--spec-surface:#ffffff;--spec-canvas:#f5f7fa;--spec-border:#d9d9d9;--spec-text:#1D2129;--spec-muted:#7A8599;">
+        <main class="source-main" style="background:var(--spec-canvas);">
+          <div class="source-toolbar">
+            <strong>切换工作空间</strong>
+            
+          </div>
+          
+          
+          <div class="chip-row" style="margin-bottom:12px;"><span>侧栏顶部空间触发器</span><span>680px 切换空间弹窗：标题说明、搜索框、可滚动空间列表、底部双入口</span><span>申请空间抽屉或我的申请抽屉</span></div>
+          <div class="source-card-grid"><article><strong>entities</strong><p>我的空间、反诈专项空间、交通治理空间</p></article></div>
+        </main>
+      </div>
+    </section>
+    
+
+    <!-- Lightweight usage note -->
+    <div class="usage-banner">本页面用于预览设计规范和页面样例。用于 AI 编程工具生成页面时，请使用同目录下的 DESIGN.md。</div>
+
+  </main>
+  </div>
+</body>
+</html>

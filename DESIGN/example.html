@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="zh-CN" data-example-source="design-md" data-example-archetype="enterprise-admin" data-example-pattern="resource-management-list" data-example-pattern-source="pageTemplates.resource-management-list">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>鲁警智算 - 工具管理卡片规范示例</title>
+  <style>
+    :root {
+      --primary: #1677ff;
+      --primary-hover: #4096ff;
+      --primary-selected: #e6f4ff;
+      --primary-surface: #f0f5ff;
+      --primary-border: #d6e4ff;
+      --primary-border-hover: #91caff;
+      --primary-gradient-end: #69b1ff;
+      --brand-deep: #1d39c4;
+      --text: #1d2129;
+      --text-secondary: #5f6b7a;
+      --text-muted: #7a8599;
+      --canvas: #f5f7fa;
+      --surface: #fff;
+      --surface-muted: #fafafa;
+      --neutral-surface: #f2f3f5;
+      --border: #d9d9d9;
+      --border-subtle: #f0f0f0;
+      --success: #52c41a;
+      --warning: #faad14;
+      --danger: #ff4d4f;
+      --radius-tag: 4px;
+      --radius-control: 6px;
+      --radius-container: 8px;
+      --radius-identity: 12px;
+      font-family: 'PingFang SC', '苹方', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      color: var(--text);
+      background: var(--canvas);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-width: 1024px; height: 100%; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; display: flex; flex-direction: column; background: var(--canvas); }
+    .topbar {
+      height: 56px; padding: 0 20px; flex: 0 0 56px; background: var(--surface);
+      border-bottom: 1px solid var(--border-subtle); display: grid; grid-template-columns: 220px 1fr 280px;
+      align-items: center; position: relative; z-index: 2;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-mark {
+      width: 36px; height: 36px; border-radius: var(--radius-identity); display: grid; place-items: center;
+      background: var(--primary); color: #fff; font-size: 18px; font-weight: 700;
+    }
+    .brand-name { color: var(--brand-deep); font-size: 15px; font-weight: 700; line-height: 18px; }
+    .brand-sub { color: rgba(0,0,0,.35); font-size: 10px; line-height: 14px; }
+    .topnav { justify-self: center; display: flex; gap: 2px; }
+    .topnav-item {
+      padding: 5px 12px; border-radius: var(--radius-container); color: rgba(0,0,0,.55); font-size: 13px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .topnav-item.active { color: var(--primary); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .user-tools { justify-self: end; display: flex; align-items: center; gap: 10px; color: var(--text-secondary); font-size: 12px; }
+    .portal { color: var(--brand-deep); border: 1px solid var(--primary-border); background: var(--primary-surface); padding: 5px 10px; border-radius: var(--radius-container); }
+    .circle-button { width: 32px; height: 32px; border-radius: var(--radius-container); display: grid; place-items: center; background: transparent; border: 0; color: var(--text-muted); }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: var(--primary); font-weight: 600; }
+    .body { height: calc(100vh - 56px); display: flex; overflow: hidden; }
+    .sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border-subtle); flex: 0 0 220px; display: flex; flex-direction: column; }
+    .workspace { padding: 8px 16px; min-height: 41px; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; }
+    .workspace-main { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .workspace-mark { width: 24px; height: 24px; border-radius: var(--radius-control); background: var(--primary-selected); color: var(--primary); display: grid; place-items: center; font-size: 11px; font-weight: 700; }
+    .workspace-name { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .menu { padding: 12px 8px; overflow: auto; }
+    .menu-group { padding: 10px 16px 6px; font-size: 12px; color: rgba(0,0,0,.45); }
+    .menu-item { height: 40px; padding: 0 16px; border-radius: var(--radius-container); display: flex; align-items: center; gap: 10px; color: rgba(0,0,0,.65); font-size: 14px; margin-bottom: 2px; }
+    .menu-item.active { color: var(--primary); background: var(--primary-selected); font-weight: 500; }
+    .sidebar-foot { margin-top: auto; height: 32px; display: grid; place-items: center; border-top: 1px solid var(--border-subtle); color: #999; }
+    .workspace-area { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+    .tabbar { height: 36px; flex: 0 0 36px; background: var(--surface); border-bottom: 1px solid var(--border-subtle); display: flex; align-items: stretch; padding-left: 4px; }
+    .tab { padding: 0 12px; display: flex; align-items: center; gap: 6px; color: rgba(0,0,0,.55); font-size: 12px; border-bottom: 2px solid transparent; }
+    .tab.active { color: var(--primary); font-weight: 600; border-color: var(--primary); }
+    .tab-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+    .content { flex: 1; overflow: auto; padding: 16px 24px; }
+    .page-header { min-height: 50px; padding: 12px 0; display: flex; align-items: flex-start; justify-content: space-between; }
+    .page-title { font-size: 18px; line-height: 26px; font-weight: 600; color: var(--text); }
+    .page-hint { color: rgba(0,0,0,.25); margin-left: 6px; font-size: 14px; }
+    .request-note { color: var(--text-muted); font-size: 12px; line-height: 20px; margin-top: 2px; }
+    .space-strip { padding: 12px 16px; margin-bottom: 16px; border: 1px solid var(--primary-border); border-radius: var(--radius-container); background: linear-gradient(135deg,var(--primary-surface),var(--primary-selected)); display: flex; align-items: center; gap: 12px; }
+    .space-avatar { width: 44px; height: 44px; border-radius: var(--radius-identity); background: linear-gradient(135deg,var(--primary),var(--primary-gradient-end)); color: #fff; display: grid; place-items: center; font-size: 20px; font-weight: 700; }
+    .space-title { font-size: 16px; font-weight: 600; }
+    .space-meta { color: #8c8c8c; font-size: 12px; margin-top: 3px; }
+    .tag { display: inline-flex; align-items: center; height: 22px; padding: 0 7px; border-radius: var(--radius-tag); font-size: 12px; border: 1px solid transparent; white-space: nowrap; }
+    .tag.blue { color: var(--primary); background: #e6f4ff; border-color: #91caff; }
+    .tag.green { color: #389e0d; background: #f6ffed; border-color: #b7eb8f; }
+    .tag.orange { color: #d46b08; background: #fff7e6; border-color: #ffd591; }
+    .tag.gray { color: #595959; background: #fafafa; border-color: #d9d9d9; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; margin-bottom: 12px; }
+    .metric { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-container); padding: 12px 16px; min-height: 88px; }
+    .metric-label { color: rgba(0,0,0,.45); font-size: 14px; }
+    .metric-value { font-size: 28px; line-height: 36px; font-weight: 600; margin-top: 4px; }
+    .panel { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-container); overflow: hidden; min-height: 390px; }
+    .toolbar { min-height: 58px; padding: 12px 24px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .filters, .actions { display: flex; align-items: center; gap: 8px; }
+    .control { height: 32px; padding: 0 11px; border-radius: var(--radius-control); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 14px; }
+    input.control { width: 230px; }
+    select.control { min-width: 120px; }
+    .button { height: 32px; border-radius: var(--radius-control); border: 1px solid var(--border); padding: 0 14px; background: var(--surface); color: var(--text); }
+    .button.primary { color: #fff; background: var(--primary); border-color: var(--primary); }
+    .button.primary:hover { background: var(--primary-hover); }
+    .table-wrap { padding: 12px 24px 16px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 900px; }
+    th { height: 46px; padding: 0 12px; text-align: left; color: var(--text); background: var(--surface-muted); border-bottom: 1px solid var(--border-subtle); font-weight: 600; white-space: nowrap; }
+    td { height: 58px; padding: 0 12px; border-bottom: 1px solid var(--border-subtle); color: var(--text); }
+    .model-name { font-weight: 500; color: var(--text); }
+    .model-id { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+    .quota { display: flex; align-items: center; gap: 8px; min-width: 150px; }
+    .quota-track { width: 88px; height: 6px; border-radius: 999px; background: var(--border-subtle); overflow: hidden; }
+    .quota-fill { height: 100%; border-radius: inherit; background: var(--primary); }
+    .quota-fill.warn { background: var(--warning); }
+    .quota-fill.danger { background: var(--danger); }
+    .link { color: var(--primary); background: transparent; border: 0; padding: 3px 6px; }
+    .pagination { display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding-top: 16px; color: var(--text-secondary); font-size: 13px; }
+    .page-number { width: 30px; height: 30px; border: 1px solid var(--primary); border-radius: var(--radius-control); color: var(--primary); background: var(--surface); }
+    .metric { display: flex; align-items: center; gap: 14px; cursor: pointer; }
+    .metric-icon { width: 44px; height: 44px; flex: 0 0 44px; border-radius: var(--radius-identity); display: grid; place-items: center; color: var(--primary); background: var(--primary-selected); font-size: 20px; }
+    .metric-label { font-size: 12px; }
+    .metric-value { color: var(--primary); font-size: 26px; line-height: 32px; font-weight: 700; margin-top: 0; }
+    .view-switch { display: inline-flex; margin-left: 8px; }
+    .view-button { width: 36px; height: 32px; border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); }
+    .view-button:first-child { border-radius: var(--radius-control) 0 0 var(--radius-control); }
+    .view-button:last-child { border-radius: 0 var(--radius-control) var(--radius-control) 0; margin-left: -1px; }
+    .view-button.active { color: var(--primary); border-color: var(--primary); position: relative; z-index: 1; }
+    .card-list { min-height: 510px; }
+    .card-grid { padding: 12px 24px 16px; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; align-content: start; }
+    .resource-card { min-height: 204px; padding: 20px 20px 16px; border: 1px solid var(--border-subtle); border-radius: var(--radius-container); background: var(--surface); display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+    .resource-card::before { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: var(--primary); }
+    .resource-card:hover { border-color: var(--primary-border-hover); box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+    .card-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .resource-icon { width: 40px; height: 40px; flex: 0 0 40px; border-radius: var(--radius-identity); display: grid; place-items: center; background: var(--primary-selected); color: var(--primary); font-size: 18px; }
+    .card-identity { min-width: 0; flex: 1; }
+    .card-title { color: var(--text); font-size: 15px; line-height: 22px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-meta { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 2px; }
+    .type-tag { height: 20px; padding: 0 6px; border: 0; color: var(--primary); background: var(--primary-selected); font-size: 11px; }
+    .provider { min-width: 0; color: var(--text-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-description { height: 40px; color: var(--text-secondary); font-size: 13px; line-height: 20px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .card-footer { margin-top: auto; color: var(--text-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-pagination { padding: 0 24px 16px; }
+    @media (max-width: 1200px) {
+      .topbar { grid-template-columns: 180px 1fr 230px; }
+      .topnav-item { padding-inline: 8px; }
+      .sidebar { width: 64px; flex-basis: 64px; }
+      .workspace { justify-content: center; padding-inline: 0; }
+      .workspace-name, .workspace-arrow, .menu-group, .menu-label { display: none; }
+      .menu-item { justify-content: center; padding: 0; }
+      .metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .card-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><div class="brand-mark">鲁</div><div><div class="brand-name">鲁警智算</div><div class="brand-sub">开发平台</div></div></div>
+      <nav class="topnav" aria-label="一级导航">
+        <div class="topnav-item">⌂ 首页</div><div class="topnav-item">▦ 应用中心</div><div class="topnav-item active">⌘ 开发中心</div><div class="topnav-item">▥ 运维中心</div><div class="topnav-item">⚙ 管理中心</div>
+      </nav>
+      <div class="user-tools"><span class="portal">◇ 鲁警门户</span><button class="circle-button" title="消息通知">◉</button><div class="avatar">演</div><span>演示用户<br><small>科信大队</small></span></div>
+    </header>
+    <div class="body">
+      <aside class="sidebar">
+        <div class="workspace"><div class="workspace-main"><div class="workspace-mark">反</div><span class="workspace-name">反诈专项空间</span></div><span class="workspace-arrow">▾</span></div>
+        <div class="menu">
+          <div class="menu-item"><span>▣</span><span class="menu-label">工作台</span></div>
+          <div class="menu-group">智能体开发</div><div class="menu-item"><span>⌘</span><span class="menu-label">智能体构建</span></div><div class="menu-item"><span>◎</span><span class="menu-label">智能体管理</span></div>
+          <div class="menu-group">组件管理</div><div class="menu-item"><span>◫</span><span class="menu-label">模型</span></div><div class="menu-item active"><span>⌁</span><span class="menu-label">工具</span></div><div class="menu-item"><span>◇</span><span class="menu-label">连接器</span></div><div class="menu-item"><span>▤</span><span class="menu-label">数据连接</span></div>
+          <div class="menu-group">空间运营</div><div class="menu-item"><span>⌁</span><span class="menu-label">统计分析</span></div><div class="menu-item"><span>⚙</span><span class="menu-label">空间管理</span></div>
+        </div>
+        <div class="sidebar-foot">‹</div>
+      </aside>
+      <main class="workspace-area">
+        <div class="tabbar"><div class="tab">模型管理 ×</div><div class="tab active"><span class="tab-dot"></span>工具管理 ×</div></div>
+        <section class="content">
+          <div class="page-header"><div><div><span class="page-title">工具管理</span><span class="page-hint">?</span></div><div class="request-note">示例生成请求：为开发中心生成统一的工具资源卡片页，支持工具类型与来源筛选、插件管理入口和整卡查看详情。</div></div></div>
+          <div class="metrics" data-section-type="metrics">
+            <div class="metric"><div class="metric-icon">⌁</div><div><div class="metric-label">工具总数</div><div class="metric-value">8</div></div></div>
+            <div class="metric"><div class="metric-icon">◇</div><div><div class="metric-label">插件工具</div><div class="metric-value">4</div></div></div>
+            <div class="metric"><div class="metric-icon">↗</div><div><div class="metric-label">API 工具</div><div class="metric-value">2</div></div></div>
+            <div class="metric"><div class="metric-icon">◎</div><div><div class="metric-label">工作流</div><div class="metric-value">2</div></div></div>
+          </div>
+          <div class="panel card-list" data-section-type="card-list-gallery">
+            <div class="toolbar">
+              <div class="filters">
+                <input class="control" placeholder="⌕ 搜索工具名称或描述" />
+                <select class="control"><option>工具类型</option><option>插件</option><option>API</option><option>工作流</option></select>
+                <select class="control"><option>来源</option><option>默认</option><option>自定义</option><option>广场资源</option></select>
+                <button class="button primary">搜索</button><button class="button">↻ 重置</button>
+                <span class="view-switch"><button class="view-button">☷</button><button class="view-button active">▦</button></span>
+              </div>
+              <div class="actions"><button class="button">⚙ 插件管理</button><button class="button">◇ 从广场获取</button><button class="button primary">＋ 创建工具</button></div>
+            </div>
+            <div class="card-grid">
+              <article class="resource-card" role="button" tabindex="0">
+                <div class="card-head"><div class="resource-icon">↗</div><div class="card-identity"><div class="card-title">人口信息查询</div><div class="card-meta"><span class="tag type-tag">API</span><span class="provider">全国人口基础信息库 · 4 个工具</span></div></div></div>
+                <div class="card-description">根据身份证号、姓名等要素检索人员基本信息、户籍信息和居住证信息。</div>
+                <div class="card-footer">自定义 · 系统初始化 · 2026-01-10</div>
+              </article>
+              <article class="resource-card" role="button" tabindex="0">
+                <div class="card-head"><div class="resource-icon">↗</div><div class="card-identity"><div class="card-title">车辆轨迹查询</div><div class="card-meta"><span class="tag type-tag">API</span><span class="provider">交通缉查布控系统 · 3 个工具</span></div></div></div>
+                <div class="card-description">基于车牌号查询辖区卡口过车记录和通行轨迹聚合分析。</div>
+                <div class="card-footer">自定义 · 系统初始化 · 2026-01-15</div>
+              </article>
+              <article class="resource-card" role="button" tabindex="0">
+                <div class="card-head"><div class="resource-icon">◇</div><div class="card-identity"><div class="card-title">人像比对</div><div class="card-meta"><span class="tag type-tag">插件</span><span class="provider">人像多维比对引擎</span></div></div></div>
+                <div class="card-description">集成多种人脸识别算法，提供照片比对、视频流人脸检索及身份确认服务。</div>
+                <div class="card-footer">自定义 · 张警官 · 2026-02-01</div>
+              </article>
+              <article class="resource-card" role="button" tabindex="0">
+                <div class="card-head"><div class="resource-icon">◎</div><div class="card-identity"><div class="card-title">涉诈基站分析</div><div class="card-meta"><span class="tag type-tag">工作流</span><span class="provider">反诈中心</span></div></div></div>
+                <div class="card-description">解析电信诈骗嫌疑号码的基站漫游数据，辅助研判窝点和移动轨迹。</div>
+                <div class="card-footer">广场资源 · 资源广场 · 2026-03-10</div>
+              </article>
+              <article class="resource-card" role="button" tabindex="0">
+                <div class="card-head"><div class="resource-icon">◇</div><div class="card-identity"><div class="card-title">文书智能解析</div><div class="card-meta"><span class="tag type-tag">插件</span><span class="provider">文书解析引擎</span></div></div></div>
+                <div class="card-description">自动解析 PDF、Word 格式法律文书和报案材料，提取结构化信息。</div>
+                <div class="card-footer">默认 · 系统初始化 · 2026-01-20</div>
+              </article>
+              <article class="resource-card" role="button" tabindex="0">
+                <div class="card-head"><div class="resource-icon">◇</div><div class="card-identity"><div class="card-title">关系图谱生成</div><div class="card-meta"><span class="tag type-tag">插件</span><span class="provider">图谱分析引擎</span></div></div></div>
+                <div class="card-description">基于人员、通话、资金流水数据自动生成多维关系拓扑图。</div>
+                <div class="card-footer">广场资源 · 资源广场 · 2026-02-15</div>
+              </article>
+              <article class="resource-card" role="button" tabindex="0">
+                <div class="card-head"><div class="resource-icon">◎</div><div class="card-identity"><div class="card-title">警情统计分析</div><div class="card-meta"><span class="tag type-tag">工作流</span><span class="provider">指挥中心</span></div></div></div>
+                <div class="card-description">按辖区、时段、警情类别统计趋势并生成可视化图表。</div>
+                <div class="card-footer">自定义 · 李警官 · 2026-04-01</div>
+              </article>
+              <article class="resource-card" role="button" tabindex="0">
+                <div class="card-head"><div class="resource-icon">◇</div><div class="card-identity"><div class="card-title">图像识别</div><div class="card-meta"><span class="tag type-tag">插件</span><span class="provider">图侦中心</span></div></div></div>
+                <div class="card-description">对监控截图和现场照片进行目标检测、行为识别和场景分类。</div>
+                <div class="card-footer">自定义 · 王警官 · 2026-03-20</div>
+              </article>
+            </div>
+            <div class="pagination card-pagination"><span>共 8 条</span><button class="page-number">1</button><span>12 条/页</span></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script type="application/json" id="example-generation-input">{"source":"inferred-validation-request-from-design-md","userRequest":"为开发中心生成统一的工具资源卡片页，支持工具类型与来源筛选、插件管理入口和整卡查看详情。","targetPage":"开发中心 / 工具管理","selectedPageTemplate":"resource-management-list","reason":"该页面能同时验证六类资源页共用的统计卡、筛选栏、卡片信息层级、次级入口、分页和工具卡专属交互。","expectedPatterns":["固定应用壳","统计卡默认无选中","筛选工具栏","统一蓝灰卡片","单标签与提供方同行","来源/创建人/创建时间","工具卡无更多菜单"],"requiredCapabilities":["按工具类型与来源筛选","进入插件管理","从广场获取","创建工具","整卡查看详情"]}</script>
+</body>
+</html>

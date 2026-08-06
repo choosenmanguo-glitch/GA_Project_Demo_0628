@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { App as AntdApp, Avatar, Badge, Button, DatePicker, Drawer, Empty, Form, Input, Popconfirm, Radio, Select, Space, Table, Tabs, Tag, Tooltip } from 'antd';
+import { App as AntdApp, Avatar, Badge, Button, Card, DatePicker, Descriptions, Drawer, Empty, Form, Input, Popconfirm, Radio, Select, Space, Table, Tabs, Tag, Tooltip } from 'antd';
 import { PlusOutlined, SafetyCertificateOutlined, UserOutlined } from '@ant-design/icons';
 import PageHeader from '@/components/PageHeader';
 import FilterBar, { type FilterField } from '@/components/FilterBar';
@@ -7,7 +7,7 @@ import PaginationBar, { tablePagination } from '@/components/PaginationBar';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useResourceCenter } from '@/features/resource-center/ResourceCenterContext';
 import type { ApplicationStatus, ResourceApplication, ResourceType } from '@/features/resource-center/types';
-import { typeConfig } from '@/features/resource-center/ui';
+import { strategyConfig, typeConfig } from '@/features/resource-center/ui';
 
 // V3色系映射（与原型一致）
 const v3Color: Record<string, { bg: string; color: string }> = {
@@ -59,6 +59,11 @@ export default function ResourcePermissionsPage() {
 
   // 权限管理子标签
   const [permissionSubTab, setPermissionSubTab] = useState<'pending' | 'history' | 'audit'>('pending');
+
+  // --- 待审批详情抽屉 ---
+  const [pendingDetailApp, setPendingDetailApp] = useState<ResourceApplication | null>(null);
+  const [pendingDetailOpen, setPendingDetailOpen] = useState(false);
+  const [pendingOpinion, setPendingOpinion] = useState('');
 
   // --- 待审批筛选 ---
   const [pendingFilterValues, setPendingFilterValues] = useState<Record<string, any>>({ nameSearch: '', typeFilter: 'all', applicantSearch: '' });
@@ -179,9 +184,13 @@ export default function ResourcePermissionsPage() {
           style={{ marginTop: 12 }}
           pagination={tablePagination()}
           locale={{ emptyText: <Empty description="当前没有待审批的资源申请" style={{ padding: '60px 0' }} /> }}
+          onRow={(rec) => ({
+            onClick: () => { setPendingDetailApp(rec); setPendingDetailOpen(true); },
+            style: { cursor: 'pointer' },
+          })}
           columns={[
             {
-              title: '申请资源名称 / 属性', key: 'resource', width: '24%',
+              title: '申请资源名称 / 属性', key: 'resource', width: '22%',
               render: (_, rec: ResourceApplication) => {
                 const res = getResource(rec.resourceId);
                 const type = res?.type;
@@ -198,7 +207,7 @@ export default function ResourcePermissionsPage() {
               },
             },
             {
-              title: '申请人信息', key: 'applicant', width: '18%',
+              title: '申请人信息', key: 'applicant', width: '16%',
               render: (_, rec: ResourceApplication) => (
                 <Space size={8}>
                   <Avatar size="small" icon={<UserOutlined />} style={{ backgroundColor: '#1677ff' }} />
@@ -213,14 +222,14 @@ export default function ResourcePermissionsPage() {
               ),
             },
             {
-              title: '发起申请时间', dataIndex: 'applyTime', key: 'time', width: '16%',
+              title: '发起申请时间', dataIndex: 'applyTime', key: 'time', width: '14%',
               render: (t: string) => <span style={{ fontSize: 12, color: '#595959' }}>{t}</span>,
             },
             {
-              title: '设定期限', dataIndex: 'duration', key: 'duration', width: '14%',
+              title: '使用期限', dataIndex: 'duration', key: 'duration', width: '12%',
               render: (val: string, rec: ResourceApplication) => {
                 const label = val === 'permanent' ? '永久有效' : rec.expireDate;
-                return <Tag color={val === 'permanent' ? 'blue' : 'warning'} style={{ borderRadius: 4, fontSize: 11 }}>{label}</Tag>;
+                return <span style={{ fontSize: 12, color: '#595959' }}>{label}</span>;
               },
             },
             {
@@ -228,9 +237,13 @@ export default function ResourcePermissionsPage() {
               render: (text: string) => <span style={{ color: '#595959', fontSize: 12 }}>{text || '未填写理由'}</span>,
             },
             {
-              title: '审批控制', key: 'action', width: '14%',
+              title: '操作', key: 'action', width: 220,
               render: (_, rec: ResourceApplication) => (
-                <Space size={12}>
+                <Space size={8} onClick={e => e.stopPropagation()}>
+                  <Button type="link" size="small" style={{ fontWeight: 600, padding: 0 }}
+                    onClick={() => { setPendingDetailApp(rec); setPendingDetailOpen(true); }}>
+                    详情
+                  </Button>
                   <Button type="link" size="small" style={{ color: '#52c41a', fontWeight: 600, padding: 0 }}
                     onClick={() => {
                       approveApplication(rec.id, '同意直接开通调用权限');
@@ -264,6 +277,107 @@ export default function ResourcePermissionsPage() {
           ]}
         />
       </div>
+
+      {/* 待审批详情 Drawer */}
+      <Drawer
+        title="待审批详情"
+        open={pendingDetailOpen}
+        onClose={() => { setPendingDetailOpen(false); setPendingDetailApp(null); setPendingOpinion(''); }}
+        size="large"
+        styles={{ body: { background: '#f5f7fa' } }}
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+            <Button onClick={() => { setPendingDetailOpen(false); setPendingDetailApp(null); setPendingOpinion(''); }}>取消</Button>
+            <Button danger onClick={() => {
+              if (!pendingOpinion.trim()) { message.warning('请填写审批意见'); return; }
+              rejectApplication(pendingDetailApp!.id, pendingOpinion.trim());
+              message.info(`已成功驳回用户 [${pendingDetailApp!.applicant}] 的使用申请。`);
+              setPendingDetailOpen(false);
+              setPendingDetailApp(null);
+              setPendingOpinion('');
+            }}>驳回</Button>
+            <Button type="primary" onClick={() => {
+              approveApplication(pendingDetailApp!.id, pendingOpinion.trim() || '同意直接开通调用权限');
+              message.success(`已审核通过 [${pendingDetailApp!.applicant}] 的申请`);
+              setPendingDetailOpen(false);
+              setPendingDetailApp(null);
+              setPendingOpinion('');
+            }}>通过</Button>
+          </div>
+        }
+      >
+        {pendingDetailApp && (() => {
+          const app = pendingDetailApp;
+          const res = getResource(app.resourceId);
+          const type = res?.type ? typeConfig[res.type] : null;
+          const strategy = res?.publicStrategy ? strategyConfig[res.publicStrategy] : null;
+          return (
+            <>
+              {res ? (
+                <Card styles={{ body: { padding: 20 } }} style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
+                    {type && (
+                      <div style={{ width: 52, height: 52, borderRadius: 10, background: type.bg, color: type.color, display: 'grid', placeItems: 'center', fontSize: 26 }}>
+                        {type.icon}
+                      </div>
+                    )}
+                    <div>
+                      <div style={{ fontSize: 20, fontWeight: 650 }}>{res.name}</div>
+                      <Space size={4} style={{ marginTop: 6 }}>
+                        {type && <Tag color={type.color}>{type.label}</Tag>}
+                        {strategy && <Tag color={strategy.color}>{strategy.label}</Tag>}
+                      </Space>
+                    </div>
+                  </div>
+                  <Descriptions column={2} size="small" items={[
+                    { key: 'owner', label: '所有权人', children: res.owner },
+                    { key: 'date', label: '更新时间', children: res.updateTime },
+                    { key: 'key', label: '资源 Key', children: res.resourceKey || '-' },
+                    { key: 'deploy', label: '部署方式', children: res.deployment || '-' },
+                    { key: 'desc', label: '资源描述', span: 2, children: res.description },
+                  ]} />
+                </Card>
+              ) : (
+                <Card styles={{ body: { padding: 20 } }} style={{ marginBottom: 16 }}>
+                  <Empty description="被申请的资源已不存在" />
+                </Card>
+              )}
+
+              <Card title="申请信息" styles={{ body: { padding: 20 } }}>
+                <Descriptions column={2} size="small" items={[
+                  {
+                    key: 'applicant', label: '申请人',
+                    children: (
+                      <Space size={8}>
+                        <Avatar size="small" icon={<UserOutlined />} style={{ backgroundColor: '#1677ff' }} />
+                        <span style={{ fontWeight: 500 }}>{app.applicant}</span>
+                        <span style={{ color: '#8c8c8c' }}>{app.dept}</span>
+                      </Space>
+                    ),
+                  },
+                  { key: 'space', label: '申请空间', children: getSpaceName(app.spaceId) },
+                  { key: 'time', label: '申请时间', children: app.applyTime },
+                  {
+                    key: 'duration', label: '使用期限',
+                    children: app.duration === 'permanent' ? '永久有效' : app.expireDate,
+                  },
+                  { key: 'reason', label: '申请理由', span: 2, children: <span style={{ whiteSpace: 'pre-wrap' }}>{app.reason || '未填写理由'}</span> },
+                ]} />
+              </Card>
+
+              <Card title="审批意见" styles={{ body: { padding: 20 } }} style={{ marginTop: 16 }}>
+                <Input.TextArea
+                  value={pendingOpinion}
+                  onChange={e => setPendingOpinion(e.target.value)}
+                  placeholder="请输入审批意见（驳回时必填）"
+                  rows={4}
+                  style={{ width: '100%' }}
+                />
+              </Card>
+            </>
+          );
+        })()}
+      </Drawer>
     </div>
   );
 
@@ -361,8 +475,19 @@ export default function ResourcePermissionsPage() {
             placeholder="请选择要审计的空间"
             value={selectedAuditSpaceId || undefined}
             onChange={setSelectedAuditSpaceId}
-            options={spaces.map(s => ({ value: s.id, label: s.name }))}
-          />
+            optionFilterProp="label"
+            allowClear
+          >
+            {spaces.map(s => (
+              <Select.Option key={s.id} value={s.id} label={`${s.name} (${s.type})`}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <UserOutlined style={{ color: '#1677ff' }} />
+                  <span>{s.name}</span>
+                  <span style={{ color: '#8c8c8c', fontSize: 12 }}>({s.type})</span>
+                </div>
+              </Select.Option>
+            ))}
+          </Select>
           {selectedSpace && (
             <div style={{ fontSize: 13, color: '#8c8c8c' }}>
               当前拥有的资源授权数: <strong style={{ color: '#1677ff' }}>{filteredAuditResources.length}</strong> 项
