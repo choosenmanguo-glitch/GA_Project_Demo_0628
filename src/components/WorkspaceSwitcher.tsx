@@ -35,9 +35,11 @@ interface Props {
   inline?: boolean;
   /** 浅色主题：用于深色 banner 背景，文字和箭头变白 */
   light?: boolean;
+  /** 独立页面模式：仅显示用户所有者的空间，隐藏申请入口 */
+  standalone?: boolean;
 }
 
-const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline, light }) => {
+const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline, light, standalone }) => {
   const { currentSpace, spaces, switchSpace } = useWorkspace();
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -61,13 +63,17 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline, light }) => {
   const iconChar = currentSpace.name.charAt(0);
 
   const filteredSpaces = useMemo(() => {
-    const available = spaces.filter(s => s.status !== '归档');
+    let available = spaces.filter(s => s.status !== '归档');
+    // 独立页面模式：仅显示当前用户所有者的空间
+    if (standalone) {
+      available = available.filter(s => s.creator === currentUserName);
+    }
     if (!search.trim()) return available;
     const kw = search.trim().toLowerCase();
     return available.filter(s =>
       s.name.toLowerCase().includes(kw)
     );
-  }, [spaces, search]);
+  }, [spaces, search, standalone]);
 
   const currentIndex = useMemo(
     () => filteredSpaces.findIndex(s => s.id === currentSpace.id),
@@ -193,7 +199,10 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline, light }) => {
             切换工作空间
           </div>
           <Text style={{ fontSize: 13, color: '#7A8599' }}>
-            选择您要进入的工作空间，当前共有 {spaces.filter(s => s.status !== '归档').length} 个可用空间
+            {standalone
+              ? `选择您要进入的工作空间，仅显示您担任所有者的空间（共 ${filteredSpaces.length} 个）`
+              : `选择您要进入的工作空间，当前共有 ${spaces.filter(s => s.status !== '归档').length} 个可用空间`
+            }
           </Text>
         </div>
 
@@ -403,7 +412,8 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline, light }) => {
           )}
         </div>
 
-        {/* ── 底部操作区：申请新的空间 + 我的申请 ── */}
+        {/* ── 底部操作区：申请新的空间 + 我的申请（独立页面不显示）── */}
+        {!standalone && (
         <div style={{ flexShrink: 0, paddingTop: 16, marginTop: 16, borderTop: '1px solid #f0f0f0', display: 'flex', alignItems: 'center' }}>
           <div
             onClick={() => {
@@ -452,6 +462,7 @@ const WorkspaceSwitcher: React.FC<Props> = ({ collapsed, inline, light }) => {
             <span>我的申请</span>
           </div>
         </div>
+        )}
       </Modal>
 
       {/* ── 申请新空间抽屉 ── */}

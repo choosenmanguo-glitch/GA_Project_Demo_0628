@@ -256,6 +256,8 @@ export const mockSpaces: SpaceItem[] = [
   { id: '8', name: '科技信息化大队', description: '公安科技信息化建设、系统运维与数据治理管理空间', dept: '科信大队', type: '工作空间', status: '启用', memberCount: 12, agentCount: 2, knowledgeCount: 4, promptCount: 3, toolCount: 5, modelCount: 2, connectorCount: 3, creator: '技术员', createTime: '2025-12-01', updateTime: '2026-06-24' },
   { id: '9', name: '电信诈骗专项小组', description: '涉诈案件集中攻坚、资金穿透及嫌疑人落地研判专案空间', dept: '刑侦大队', type: '专案空间', status: '启用', memberCount: 15, agentCount: 4, knowledgeCount: 6, promptCount: 9, toolCount: 5, modelCount: 3, connectorCount: 2, creator: '陈队长', createTime: '2026-04-15', updateTime: '2026-06-26' },
   { id: '10', name: '跨境赌博专案组', description: '跨境网络赌博案件侦查、资金链路分析与嫌疑人抓捕协同', dept: '治安支队', type: '专案空间', status: '启用', memberCount: 10, agentCount: 3, knowledgeCount: 5, promptCount: 7, toolCount: 3, modelCount: 2, connectorCount: 1, creator: '张警官', createTime: '2026-05-20', updateTime: '2026-06-27' },
+  { id: '11', name: '网络安全管理空间', description: '网络安全监测、漏洞扫描及安全事件响应协同空间', dept: '科信大队', type: '工作空间', status: '启用', memberCount: 8, agentCount: 4, knowledgeCount: 7, promptCount: 6, toolCount: 5, modelCount: 3, connectorCount: 2, creator: '演示用户', createTime: '2026-03-05', updateTime: '2026-06-28' },
+  { id: '12', name: '政务数据分析专案', description: '政务大数据分析、专题研判及可视化报告输出专案空间', dept: '科信大队', type: '专案空间', status: '启用', memberCount: 6, agentCount: 3, knowledgeCount: 4, promptCount: 5, toolCount: 4, modelCount: 2, connectorCount: 2, creator: '演示用户', createTime: '2026-06-01', updateTime: '2026-07-10' },
 ];
 
 // ==================== 空间审核记录 ====================

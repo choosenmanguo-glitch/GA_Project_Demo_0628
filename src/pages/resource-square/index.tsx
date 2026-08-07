@@ -130,7 +130,7 @@ export default function ResourceSquarePage() {
           ]}
         />
         {isStandalone ? (
-          <WorkspaceSwitcher inline />
+          <WorkspaceSwitcher inline standalone />
         ) : (
           <Tag style={{
             color: 'rgba(0,0,0,0.65)', border: '1px solid #d9d9d9',

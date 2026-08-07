@@ -330,7 +330,7 @@ export default function ResourcePermissionsPage() {
                     </div>
                   </div>
                   <Descriptions column={2} size="small" items={[
-                    { key: 'owner', label: '所有权人', children: res.owner },
+                    { key: 'owner', label: '创建人', children: res.owner },
                     { key: 'date', label: '更新时间', children: res.updateTime },
                     { key: 'key', label: '资源 Key', children: res.resourceKey || '-' },
                     { key: 'deploy', label: '部署方式', children: res.deployment || '-' },
