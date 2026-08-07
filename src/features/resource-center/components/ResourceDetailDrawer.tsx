@@ -18,6 +18,7 @@ interface ResourceDetailDrawerProps {
 const ResourceDetailDrawer: React.FC<ResourceDetailDrawerProps> = ({ open, resource, access, spaceName, onClose, onAcquire, onApply }) => {
   if (!resource || !access) return null;
   const type = typeConfig[resource.type];
+  const subtitle = resource.modelType || resource.knowledgeType || resource.deployment;
   const callUrl = `http://10.193.0.41:8080${resource.gatewayPath || '/gateway/placeholder'}${resource.type === 'model' ? `/v1${resource.path || '/chat/completions'}` : ''}`;
 
   return (
@@ -28,16 +29,16 @@ const ResourceDetailDrawer: React.FC<ResourceDetailDrawerProps> = ({ open, resou
           <div>
             <div style={{ fontSize: 20, fontWeight: 650 }}>{resource.name}</div>
             <Space size={4} style={{ marginTop: 6 }}>
-              <Tag color={type.color}>{type.label}</Tag>
-              <Tag color={strategyConfig[resource.publicStrategy].color}>{strategyConfig[resource.publicStrategy].label}</Tag>
+              <Tag className="resource-tag-primary" style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{type.label}</Tag>
+              {subtitle && <Tag style={{ borderRadius: 4, margin: 0, fontSize: 11, color: '#5f6b7a', background: '#f2f3f5', border: 'none' }}>{subtitle}</Tag>}
             </Space>
           </div>
         </div>
         <Descriptions column={2} size="small" items={[
-          { key: 'owner', label: '所有权人', children: resource.owner },
+          { key: 'owner', label: '创建人', children: resource.owner },
           { key: 'date', label: '更新时间', children: resource.updateTime },
-          { key: 'key', label: '资源 Key', children: resource.resourceKey || '—' },
-          { key: 'deploy', label: '部署方式', children: resource.deployment || '—' },
+          { key: 'key', label: '资源标识', children: resource.resourceKey || '—' },
+          { key: 'strategy', label: '公开策略', children: <Tag color={strategyConfig[resource.publicStrategy].color}>{strategyConfig[resource.publicStrategy].label}</Tag> },
           { key: 'desc', label: '资源描述', span: 2, children: resource.description },
         ]} />
       </Card>
