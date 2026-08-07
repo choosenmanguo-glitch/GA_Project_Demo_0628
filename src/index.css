@@ -163,6 +163,17 @@ html, body, #root {
   padding-top: 16px !important;
 }
 
+/* 资源广场主 Tabs - 隐藏选中下划线，改用图标+颜色+加粗区分 */
+.resource-main-tabs .ant-tabs-ink-bar {
+  display: none !important;
+}
+
+/* 资源广场类型 Tabs - 隐藏导航底部边框线与选中下划线，避免与外层 divider 叠加 */
+.resource-type-tabs .ant-tabs-nav::before,
+.resource-type-tabs .ant-tabs-ink-bar {
+  display: none !important;
+}
+
 /* Markdown 渲染样式 */
 .resource-markdown h2 {
   font-size: 15px;

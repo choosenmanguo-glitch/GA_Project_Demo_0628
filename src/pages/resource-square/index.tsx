@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { App as AntdApp, Input, Tag, Tabs } from 'antd';
-import { AppstoreOutlined, SearchOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, SearchOutlined, StarOutlined } from '@ant-design/icons';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
 import PaginationBar from '@/components/PaginationBar';
@@ -111,21 +111,43 @@ export default function ResourceSquarePage() {
         </div>
       </div>
 
-      {/* Main Tabs Row — outside white container */}
+      {/* Main Tabs Row */}
       <div style={{
         margin: '0 24px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         flexShrink: 0,
       }}>
         <Tabs
+          className="resource-main-tabs"
           activeKey={mainTab}
           onChange={key => setMainTab(key as 'all' | 'mine')}
           tabBarStyle={{ marginBottom: 0, paddingTop: 4, paddingBottom: 4 }}
           items={[
-            { key: 'all', label: '全部资源' },
+            {
+              key: 'all',
+              label: (
+                <span style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  color: mainTab === 'all' ? '#1677ff' : undefined,
+                  fontWeight: mainTab === 'all' ? 600 : undefined,
+                }}>
+                  <AppstoreOutlined />
+                  全部资源
+                </span>
+              ),
+            },
             {
               key: 'mine',
-              label: '我的资源',
+              label: (
+                <span style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  color: mainTab === 'mine' ? '#1677ff' : undefined,
+                  fontWeight: mainTab === 'mine' ? 600 : undefined,
+                }}>
+                  <StarOutlined />
+                  我的资源
+                </span>
+              ),
             },
           ]}
         />
@@ -144,7 +166,7 @@ export default function ResourceSquarePage() {
 
       {/* Main Content */}
       <div style={{
-        flex: 1, margin: '12px 24px 24px', display: 'flex', flexDirection: 'column',
+        flex: 1, margin: '0 24px 24px', display: 'flex', flexDirection: 'column',
         background: '#fff', borderRadius: 12, overflow: 'hidden',
         boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
       }}>
@@ -157,13 +179,14 @@ export default function ResourceSquarePage() {
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             }}>
               <Tabs
+                className="resource-type-tabs"
                 activeKey={activeType}
                 onChange={key => { setActiveType(key as 'all' | ResourceType); setCardPage(1); }}
                 tabBarStyle={{ marginBottom: 0, paddingTop: 4, paddingBottom: 4 }}
                 items={tabKeys.map(item => ({
                   key: item.key,
                   label: (
-                    <span>
+                    <span style={{ fontWeight: activeType === item.key ? 600 : undefined }}>
                       {item.label}{' '}
                       <Tag variant="filled" style={{ marginInlineEnd: 0, fontSize: 11, minWidth: 20, textAlign: 'center' }}>
                         {typeCounts[item.key]}
