@@ -127,7 +127,7 @@ export default function MyResourcesPage({ compact }: MyResourcesPageProps) {
           )}
         </FilterBar>
         <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px', display: 'flex', flexDirection: 'column' }}>
-          <div className="resource-card-grid" style={{ marginTop: 12 }}>
+          <div className="resource-card-grid" style={{ marginTop: 16 }}>
             {(batchMode ? items.filter(r => !getAccess(r.id, currentSpace.id).invalidReason) : items).slice((cardPage - 1) * cardPageSize, cardPage * cardPageSize).map(resource => {
               const access = getAccess(resource.id, currentSpace.id);
               return (

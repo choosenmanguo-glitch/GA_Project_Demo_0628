@@ -14,6 +14,7 @@ import {
   SafetyCertificateOutlined, DashboardOutlined, FileTextOutlined, MoreOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import { tablePagination } from '@/components/PaginationBar';
 import PageHeader from '@/components/PageHeader';
 import FilterBar from '@/components/FilterBar';
 import StatCards from '@/components/StatCards';
@@ -212,7 +213,7 @@ const taskFilterFields: FilterField[] = [
         />
         <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px' }}>
           <Table rowKey="id" columns={taskColumns} dataSource={filtered} size="middle"
-            pagination={{ defaultPageSize: 10, showSizeChanger: true, showTotal: (t) => `共 ${t} 条` }}
+            pagination={tablePagination()}
             style={{ marginTop: 12 }} locale={{ emptyText: '暂无评测任务' }} />
         </div>
       </div>
@@ -319,7 +320,7 @@ const taskFilterFields: FilterField[] = [
                         </Radio.Group>
                         <Input size="small" placeholder="搜索内容…" prefix={<SearchOutlined />} style={{ width: 200 }} />
                       </div>
-                      <Table rowKey="id" size="middle" pagination={{ pageSize: 20 }}
+                      <Table rowKey="id" size="middle" pagination={tablePagination()}
                         dataSource={MOCK_DETAIL_RESULTS.filter(i => detailFilter === 'all' ? true : detailFilter === 'passed' ? i.pass : !i.pass)}
                         columns={[
                           { title: '', dataIndex: 'pass', width: 40, render: (p) => p ? <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 16 }} /> : <CloseCircleOutlined style={{ color: '#ff4d4f', fontSize: 16 }} /> },
@@ -412,7 +413,7 @@ const DatasetTab: React.FC = () => {
         />
         <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px' }}>
           <Table rowKey="id" columns={dsColumns} dataSource={datasets} size="middle"
-            pagination={{ defaultPageSize: 10, showTotal: (t) => `共 ${t} 条` }} style={{ marginTop: 12 }} locale={{ emptyText: '暂无评测集' }} />
+            pagination={tablePagination()} style={{ marginTop: 12 }} locale={{ emptyText: '暂无评测集' }} />
         </div>
       </div>
 
@@ -563,7 +564,7 @@ const DatasetTab: React.FC = () => {
                     </Space>
                     <span style={{ fontSize: 12, color: '#999' }}>共 {MOCK_DATA_ITEMS.length} 条</span>
                   </div>
-                  <Table rowKey="id" size="middle" dataSource={MOCK_DATA_ITEMS} pagination={{ pageSize: 10, showTotal: (t) => `共 ${t} 条` }}
+                  <Table rowKey="id" size="middle" dataSource={MOCK_DATA_ITEMS} pagination={tablePagination()}
                     columns={[
                       { title: '录入问题', key: 'query', width: '30%', render: (_: any, r: any) => <Tooltip title={r.query}><span className="ellipsis" style={{ fontSize: 12 }}>{r.query}</span></Tooltip> },
                       { title: '背景上下文', key: 'context', width: '25%', render: (_: any, r: any) => <span style={{ fontSize: 12, color: '#999', fontStyle: r.context ? 'normal' : 'italic' }}>{r.context || '–'}</span> },
@@ -697,7 +698,7 @@ const EvaluatorTab: React.FC = () => {
         />
         <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px' }}>
           <Table rowKey="id" columns={evColumns} dataSource={evaluators} size="middle"
-            pagination={{ defaultPageSize: 10, showTotal: (t) => `共 ${t} 条` }} style={{ marginTop: 12 }} locale={{ emptyText: '暂无评估器' }} />
+            pagination={tablePagination()} style={{ marginTop: 12 }} locale={{ emptyText: '暂无评估器' }} />
         </div>
       </div>
 

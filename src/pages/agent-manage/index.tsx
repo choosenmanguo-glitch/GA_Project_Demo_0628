@@ -7,6 +7,7 @@ import PageHeader from '@/components/PageHeader';
 import FilterBar from '@/components/FilterBar';
 import PaginationBar from '@/components/PaginationBar';
 import type { FilterField } from '@/components/FilterBar';
+import IconPicker, { type IconPickerValue } from '@/components/IconPicker';
 import { mockAgents, type AgentItem, type AgentType, type PublishType } from '@/mock/data';
 
 const { TextArea } = Input;
@@ -16,6 +17,7 @@ const typeColorMap: Record<AgentType, string> = {
   '标准智能体': 'blue',
   '流程智能体': 'purple',
   '自主智能体': 'geekblue',
+  '外部智能体': 'orange',
 };
 
 const statusColorMap: Record<string, string> = {
@@ -35,6 +37,7 @@ const filterFields: FilterField[] = [
     { label: '标准智能体', value: '标准智能体' },
     { label: '流程智能体', value: '流程智能体' },
     { label: '自主智能体', value: '自主智能体' },
+    { label: '外部智能体', value: '外部智能体' },
   ]},
   { type: 'select', key: 'status', placeholder: '发布状态', width: 110, options: [
     { label: '未发布', value: '未发布' },
@@ -59,8 +62,12 @@ export default function AgentManagePage() {
   const [configTab, setConfigTab] = useState('info');
   const [createMethod, setCreateMethod] = useState<'blank' | 'template' | 'import' | null>(null);
   const [form] = Form.useForm();
+  const [externalAgentOpen, setExternalAgentOpen] = useState(false);
+  const [externalForm] = Form.useForm();
+  const [externalIcon, setExternalIcon] = useState<IconPickerValue>({ mode: 'text' });
+  const externalName = Form.useWatch('name', externalForm);
 
-  const activeStatIndex = activeStat === 'all' ? 0 : activeStat === '标准智能体' ? 1 : activeStat === '流程智能体' ? 2 : activeStat === '自主智能体' ? 3 : -1;
+  const activeStatIndex = activeStat === 'all' ? 0 : activeStat === '标准智能体' ? 1 : activeStat === '流程智能体' ? 2 : activeStat === '自主智能体' ? 3 : activeStat === '外部智能体' ? 4 : -1;
 
   const filteredData = useMemo(() => {
     return data.filter((item) => {
@@ -82,6 +89,7 @@ export default function AgentManagePage() {
     { key: '标准智能体', title: '标准智能体', value: data.filter(d => d.type === '标准智能体').length, color: '#1677ff', icon: <FileTextOutlined />, bg: '#e6f4ff' },
     { key: '流程智能体', title: '流程智能体', value: data.filter(d => d.type === '流程智能体').length, color: '#722ed1', icon: <ApartmentOutlined />, bg: '#f9f0ff' },
     { key: '自主智能体', title: '自主智能体', value: data.filter(d => d.type === '自主智能体').length, color: '#2f54eb', icon: <ThunderboltOutlined />, bg: '#f0f5ff' },
+    { key: '外部智能体', title: '外部智能体', value: data.filter(d => d.type === '外部智能体').length, color: '#fa8c16', icon: <ApiOutlined />, bg: '#fff7e6' },
   ];
 
   const tableColumns: ColumnsType<AgentItem> = useMemo(() => [
@@ -92,8 +100,8 @@ export default function AgentManagePage() {
       </Space>
     )},
     { title: '描述', dataIndex: 'description', ellipsis: true, width: 200 },
-    { title: '类型', width: 160, render: (_: unknown, r: AgentItem) => <Tag color={typeColorMap[r.type]}>{r.type}{r.subType !== r.type ? `-${r.subType}` : ''}</Tag> },
-    { title: '绑定模型', dataIndex: 'modelName', width: 140 },
+    { title: '类型', width: 160, render: (_: unknown, r: AgentItem) => <Tag color={typeColorMap[r.type]}>{r.type}{r.subType && r.subType !== r.type ? `-${r.subType}` : ''}</Tag> },
+    { title: '绑定模型', dataIndex: 'modelName', width: 140, render: (modelName: string, r: AgentItem) => r.type === '外部智能体' ? <Tag>外部接入</Tag> : modelName },
     { title: '发布状态', width: 200, render: (_: unknown, r: AgentItem) => {
       if (r.status === '未发布') return <Tag color="default">未发布</Tag>;
       return (
@@ -113,8 +121,8 @@ export default function AgentManagePage() {
       return (
         <Space size={0}>
           <Button type="link" size="small" icon={<EditOutlined />} onClick={() => setViewingAgent(r)}>编辑</Button>
-          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => navigate('/dev/agent-config')}>配置</Button>
-          <Button type="link" size="small" icon={<CopyOutlined />}>复制</Button>
+          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => navigate(`/dev/agent-config${r.type === '外部智能体' ? '?external=true' : ''}`)}>配置</Button>
+          {r.type !== '外部智能体' && <Button type="link" size="small" icon={<CopyOutlined />}>复制</Button>}
           <Dropdown menu={{
             items: moreItems.map(item => ({
               key: item.key,
@@ -177,7 +185,7 @@ export default function AgentManagePage() {
               {agent.name}
             </div>
             <Space size={4}>
-              <Tag color={typeColorMap[agent.type]} style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{agent.type}{agent.subType !== agent.type ? `-${agent.subType}` : ''}</Tag>
+              <Tag color={typeColorMap[agent.type]} style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>{agent.type}{agent.subType && agent.subType !== agent.type ? `-${agent.subType}` : ''}</Tag>
               {agent.status === '未发布'
                 ? <Tag color="default" style={{ borderRadius: 4, margin: 0, fontSize: 11 }}>未发布</Tag>
                 : agent.publishTypes.map((pt) => (
@@ -207,7 +215,7 @@ export default function AgentManagePage() {
             menu={{
               items: [
                 { key: 'view', icon: <EyeOutlined />, label: '编辑', onClick: ({ domEvent }) => { domEvent.stopPropagation(); onView(); } },
-                { key: 'copy', icon: <CopyOutlined />, label: '复制', onClick: ({ domEvent }) => { domEvent.stopPropagation(); message.success('已复制'); } },
+                ...(agent.type !== '外部智能体' ? [{ key: 'copy', icon: <CopyOutlined />, label: '复制', onClick: ({ domEvent }: any) => { domEvent.stopPropagation(); message.success('已复制'); } }] : []),
                 { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, onClick: ({ domEvent }) => { domEvent.stopPropagation(); message.success('已删除'); } },
               ],
             }}
@@ -249,7 +257,7 @@ export default function AgentManagePage() {
               }
             };
             return (
-              <Col span={6} key={item.key}>
+              <Col key={item.key} style={{ flex: '1 1 0', minWidth: 0 }}>
                 <Card
                   size="small"
                   onClick={handleClick}
@@ -293,6 +301,7 @@ export default function AgentManagePage() {
             onViewModeChange={(mode) => setViewMode(mode)}
             onCreate={() => navigate('/dev/agent-build')}
             createText="创建智能体"
+            extra={<Button icon={<ApiOutlined />} onClick={() => setExternalAgentOpen(true)}>接入外部智能体</Button>}
           />
           <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px', display: 'flex', flexDirection: 'column' }}>
             {viewMode === 'table' ? (
@@ -304,7 +313,7 @@ export default function AgentManagePage() {
                     <AgentCard
                       key={item.id}
                       agent={item}
-                      onConfig={() => navigate('/dev/agent-config')}
+                      onConfig={() => navigate(`/dev/agent-config${item.type === '外部智能体' ? '?external=true' : ''}`)}
                       onView={() => setViewingAgent(item)}
                     />
                   ))}
@@ -322,17 +331,17 @@ export default function AgentManagePage() {
         onClose={() => setDrawerOpen(false)}
         size={activePane === 'config' ? '80%' as any : 560}
         destroyOnClose
-        extra={activePane === 'create' ? (
-          <Space>
+        footer={activePane === 'create' ? (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
             <Button onClick={() => setDrawerOpen(false)}>取消</Button>
             <Button type="primary" disabled={!createMethod} onClick={() => { if (createMethod === 'blank') { setActivePane('config'); setConfigTab('info'); } else { message.info('模板/导入功能开发中'); } }}>下一步：配置</Button>
-          </Space>
+          </div>
         ) : (
-          <Space>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
             <Button onClick={() => setDrawerOpen(false)}>取消</Button>
             <Button onClick={() => { message.success('已保存草稿'); setDrawerOpen(false); }}>保存草稿</Button>
             <Button type="primary" icon={<RocketOutlined />}>发布智能体</Button>
-          </Space>
+          </div>
         )}
         styles={{ body: { padding: 0 } }}
       >
@@ -411,6 +420,71 @@ export default function AgentManagePage() {
         )}
       </Drawer>
 
+      {/* 接入外部智能体抽屉 */}
+      <Drawer
+        title="接入外部智能体"
+        open={externalAgentOpen}
+        onClose={() => { setExternalAgentOpen(false); externalForm.resetFields(); setExternalIcon({ mode: 'text' }); }}
+        size={560}
+        destroyOnClose
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <Button onClick={() => { setExternalAgentOpen(false); externalForm.resetFields(); setExternalIcon({ mode: 'text' }); }}>取消</Button>
+            <Button type="primary" onClick={async () => {
+              try {
+                const values = await externalForm.validateFields();
+                const newId = String(data.length + 1);
+                const now = new Date().toISOString().slice(0, 10);
+                const newAgent: AgentItem = {
+                  id: newId,
+                  name: values.name,
+                  type: '外部智能体',
+                  subType: '',
+                  status: '未发布',
+                  publishTypes: [],
+                  description: values.description || '',
+                  spaceName: values.space,
+                  modelName: '',
+                  creator: '当前用户',
+                  createTime: now,
+                  updateTime: now,
+                  callCount: 0,
+                  successRate: 0,
+                  activeUsers: 0,
+                  tokenConsumption: 0,
+                  externalUrl: values.externalUrl,
+                  sourceType: 'external',
+                };
+                setData(prev => [newAgent, ...prev]);
+                message.success('外部智能体接入成功');
+                setExternalAgentOpen(false);
+                externalForm.resetFields();
+                setExternalIcon({ mode: 'text' });
+                navigate('/dev/agent-config?external=true');
+              } catch {}
+            }}>确认接入</Button>
+          </div>
+        }
+      >
+        <Form form={externalForm} layout="vertical">
+          <Form.Item label="智能体名称" name="name" rules={[{ required: true, message: '请输入名称' }, { max: 50, message: '不超过50个字符' }]}>
+            <Input placeholder="请输入外部智能体名称" />
+          </Form.Item>
+          <Form.Item label="智能体描述" name="description" rules={[{ max: 200, message: '不超过200个字符' }]}>
+            <TextArea rows={3} placeholder="描述外部智能体的功能和用途" />
+          </Form.Item>
+          <Form.Item label="智能体图标">
+            <IconPicker value={externalIcon} onChange={setExternalIcon} size={64} defaultName={externalName} />
+          </Form.Item>
+          <Form.Item label="外部链接" name="externalUrl" rules={[{ required: true, message: '请输入外部链接' }, { type: 'url', message: '请输入有效的URL地址' }]}>
+            <Input placeholder="https://example.com/agent" />
+          </Form.Item>
+          <Form.Item label="所属空间" name="space" rules={[{ required: true, message: '请选择空间' }]}>
+            <Select placeholder="选择空间" options={[...new Set(data.map(a => a.spaceName))].map(s => ({ label: s, value: s }))} />
+          </Form.Item>
+        </Form>
+      </Drawer>
+
       {/* 查看详情抽屉 */}
       <Drawer title="智能体详情" open={!!viewingAgent} onClose={() => setViewingAgent(null)} size={560} destroyOnClose>
         {viewingAgent && (
@@ -429,7 +503,7 @@ export default function AgentManagePage() {
             <Text style={{ display: 'block', marginBottom: 24, textAlign: 'center' }}>{viewingAgent.description}</Text>
             <Row gutter={[16, 16]}>
               {[
-                { label: '所属空间', value: viewingAgent.spaceName }, { label: '绑定模型', value: viewingAgent.modelName },
+                { label: '所属空间', value: viewingAgent.spaceName }, { label: viewingAgent.type === '外部智能体' ? '外部链接' : '绑定模型', value: viewingAgent.type === '外部智能体' ? viewingAgent.externalUrl : viewingAgent.modelName },
                 { label: '创建人', value: viewingAgent.creator }, { label: '创建时间', value: viewingAgent.createTime },
                 { label: '发布时间', value: viewingAgent.publishTime || '-' }, { label: '更新时间', value: viewingAgent.updateTime },
               ].map((item) => (

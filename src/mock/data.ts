@@ -182,7 +182,7 @@ export const mockFileStores: FileStoreItem[] = [
 ];
 
 // ==================== 智能体管理 ====================
-export type AgentType = '标准智能体' | '流程智能体' | '自主智能体';
+export type AgentType = '标准智能体' | '流程智能体' | '自主智能体' | '外部智能体';
 export type AgentStatus = '未发布' | '已发布';
 export type PublishType = '广场' | '集成' | 'API';
 
@@ -208,6 +208,9 @@ export interface AgentItem {
   /** 关联资源 */
   knowledgeBases?: string[];
   tools?: string[];
+  /** 外部智能体 */
+  externalUrl?: string;
+  sourceType?: 'builtin' | 'external';
 }
 
 export const mockAgents: AgentItem[] = [
@@ -219,6 +222,9 @@ export const mockAgents: AgentItem[] = [
   { id: '6', name: '巡逻路线智能规划', type: '自主智能体', subType: '自主智能体', status: '未发布', publishTypes: [], description: '基于历史案发数据和实时警情分布，智能推荐最优巡逻路线', spaceName: '巡特警支队', modelName: 'GLM-4-Flash', creator: '刘队长', createTime: '2026-06-15', updateTime: '2026-06-24', callCount: 120, successRate: 89.0, activeUsers: 3, tokenConsumption: 45000, tools: ['警情统计分析'] },
   { id: '7', name: '笔录文书智能校对', type: '标准智能体', subType: '文件审核', status: '已发布', publishTypes: ['广场', '集成', 'API'], description: '对笔录文书进行语法纠错、格式规范和法条引用校验', spaceName: '法制大队', modelName: 'GPT-4o', creator: '周科长', createTime: '2026-03-10', publishTime: '2026-04-15', updateTime: '2026-06-20', callCount: 15200, successRate: 99.1, activeUsers: 56, tokenConsumption: 5200000, knowledgeBases: ['法律法规库', '文书规范库'], tools: ['文书智能解析'] },
   { id: '8', name: '社区警务工作台', type: '标准智能体', subType: '普通助手', status: '已发布', publishTypes: ['广场', '集成'], description: '辅助社区民警完成人员信息管理、重点人口走访记录和矛盾调解记录', spaceName: '派出所', modelName: 'Qwen-72B-Chat', creator: '管理员', createTime: '2026-04-01', publishTime: '2026-05-01', updateTime: '2026-06-21', callCount: 23400, successRate: 98.2, activeUsers: 128, tokenConsumption: 7800000, knowledgeBases: ['户籍信息库', '社区管理规范'], tools: ['人口信息查询'] },
+  // 外部智能体
+  { id: '9', name: '讯飞星火警务助手', type: '外部智能体', subType: '', status: '未发布', publishTypes: [], description: '科大讯飞星火大模型驱动的智能警务问答助手，支持语音交互和多轮对话', spaceName: '指挥中心', modelName: '', creator: '管理员', createTime: '2026-07-15', updateTime: '2026-07-15', callCount: 0, successRate: 0, activeUsers: 0, tokenConsumption: 0, externalUrl: 'https://xinghuo.xfyun.cn/chat/police', sourceType: 'external' },
+  { id: '10', name: '百度文心一言案件分析', type: '外部智能体', subType: '', status: '未发布', publishTypes: [], description: '百度文心大模型驱动的案件智能分析工具，支持案情摘要生成与法条匹配', spaceName: '刑警大队', modelName: '', creator: '陈队长', createTime: '2026-07-20', updateTime: '2026-07-20', callCount: 0, successRate: 0, activeUsers: 0, tokenConsumption: 0, externalUrl: 'https://yiyan.baidu.com/chat/case-analysis', sourceType: 'external' },
 ];
 
 // ==================== 空间运营 / 运维 ====================

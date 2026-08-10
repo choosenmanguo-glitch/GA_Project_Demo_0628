@@ -14,7 +14,6 @@ import {
   InputNumber,
   Modal,
   Pagination,
-  Popconfirm,
   Row,
   Select,
   Space,
@@ -38,7 +37,6 @@ import {
   FileTextOutlined,
   LoadingOutlined,
   MoreOutlined,
-  PlusOutlined,
   QuestionCircleOutlined,
   SettingOutlined,
   ShoppingOutlined,
@@ -90,6 +88,7 @@ interface KnowledgeBase {
     autoMetadata: boolean;
   };
   apiEndpoint?: string;
+  apiKey?: string;
   externalKbId?: string;
   avatar?: IconPickerValue;
   llmModelId?: string;
@@ -103,14 +102,6 @@ interface KnowledgeFile {
   size: string;
   status: string;
   updatedAt: string;
-}
-
-interface ExternalApiConfig {
-  id: string;
-  name: string;
-  endpoint: string;
-  apiKey: string;
-  remark?: string;
 }
 
 const categoryConfig: Record<KBCategory, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
@@ -406,150 +397,6 @@ const LabelWithTip: React.FC<{ label: string; tip: string }> = ({ label, tip }) 
   </Space>
 );
 
-const ExternalApiFormDrawer: React.FC<{
-  open: boolean;
-  editingId: string | null;
-  initialData: ExternalApiConfig | null;
-  onClose: () => void;
-  onSave: (config: ExternalApiConfig) => void;
-}> = ({ open, editingId, initialData, onClose, onSave }) => {
-  const [form] = Form.useForm();
-  const isEdit = editingId !== null;
-
-  useEffect(() => {
-    if (open) {
-      if (isEdit && initialData) {
-        form.setFieldsValue(initialData);
-      } else {
-        form.resetFields();
-      }
-    }
-  }, [open, isEdit, initialData, form]);
-
-  const handleSubmit = async () => {
-    const values = await form.validateFields();
-    const config: ExternalApiConfig = {
-      id: isEdit ? editingId! : `ext-api-${Date.now()}`,
-      name: values.name,
-      endpoint: values.endpoint,
-      apiKey: values.apiKey,
-      remark: values.remark,
-    };
-    onSave(config);
-    form.resetFields();
-    onClose();
-  };
-
-  return (
-    <Drawer
-      title={isEdit ? '编辑外部知识库 API' : '添加外部知识库 API'}
-      width={500}
-      open={open}
-      onClose={onClose}
-      destroyOnClose
-      footer={
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-          <Button onClick={onClose}>取消</Button>
-          <Button type="primary" onClick={handleSubmit}>确定</Button>
-        </div>
-      }
-    >
-      <Form form={form} layout="vertical" style={{ paddingTop: 8 }}>
-        <Form.Item name="name" label="外部知识库名称" rules={[{ required: true, message: '请输入外部知识库名称' }]}>
-          <Input placeholder="例如：反诈数据检索 API" maxLength={50} />
-        </Form.Item>
-        <Form.Item name="endpoint" label="API Endpoint" rules={[{ required: true, message: '请输入 API Endpoint' }]}>
-          <Input placeholder="https://api.example.com/v1/retrieval" />
-        </Form.Item>
-        <Form.Item name="apiKey" label="API Key" rules={[{ required: true, message: '请输入 API Key' }]}>
-          <Input.Password placeholder="输入 API Key" />
-        </Form.Item>
-        <Form.Item name="remark" label="备注">
-          <Input.TextArea rows={3} placeholder="备注信息（可选）" />
-        </Form.Item>
-      </Form>
-    </Drawer>
-  );
-};
-
-const ExternalApiManageDrawer: React.FC<{
-  open: boolean;
-  externalApiList: ExternalApiConfig[];
-  kbList: KnowledgeBase[];
-  onClose: () => void;
-  onAdd: () => void;
-  onEdit: (api: ExternalApiConfig) => void;
-  onDelete: (apiId: string) => void;
-}> = ({ open, externalApiList, kbList, onClose, onAdd, onEdit, onDelete }) => {
-  const [keyword, setKeyword] = useState('');
-
-  useEffect(() => {
-    if (!open) setKeyword('');
-  }, [open]);
-
-  const filteredList = useMemo(() => {
-    if (!keyword) return externalApiList;
-    const word = keyword.toLowerCase();
-    return externalApiList.filter((api) =>
-      api.name.toLowerCase().includes(word) || (api.remark || '').toLowerCase().includes(word)
-    );
-  }, [externalApiList, keyword]);
-
-  const getRefCount = (api: ExternalApiConfig) => {
-    return kbList.filter((kb) => kb.category === 'external' && kb.apiEndpoint === api.endpoint).length;
-  };
-
-  const columns: ColumnsType<ExternalApiConfig> = [
-    { title: '名称', dataIndex: 'name', width: 180 },
-    { title: 'Endpoint', dataIndex: 'endpoint', ellipsis: true },
-    { title: '备注', dataIndex: 'remark', width: 160, ellipsis: true, render: (v) => v || <Text type="secondary">-</Text> },
-    { title: '操作', key: 'action', width: 140, render: (_, record) => {
-      const refCount = getRefCount(record);
-      return (
-        <Space size={2}>
-          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => onEdit(record)}>编辑</Button>
-          <Popconfirm
-            title={refCount > 0 ? `该 API 正被 ${refCount} 个知识库使用，删除后可能影响知识库检索功能，确定删除？` : '确定删除该 API 配置？'}
-            onConfirm={() => onDelete(record.id)}
-          >
-            <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
-          </Popconfirm>
-        </Space>
-      );
-    }},
-  ];
-
-  return (
-    <Drawer
-      title="外部 API 管理"
-      open={open}
-      onClose={onClose}
-      width={720}
-      placement="right"
-      destroyOnClose
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <FilterBar
-          placeholder="搜索名称或备注"
-          onSubmit={() => {}}
-          onReset={() => setKeyword('')}
-          onCreate={onAdd}
-          createText="添加外部 API"
-          style={{ borderTop: 'none', paddingLeft: 0, paddingRight: 0 }}
-        />
-        <div style={{ flex: 1, overflow: 'auto', padding: '12px 0' }}>
-          <Table
-            columns={columns}
-            dataSource={filteredList}
-            rowKey="id"
-            pagination={tablePagination()}
-          />
-        </div>
-      </div>
-    </Drawer>
-  );
-};
-
 const ProfessionalCreateDrawer: React.FC<{
   open: boolean;
   onClose: () => void;
@@ -619,16 +466,10 @@ const SimpleCreateDrawer: React.FC<{
   defaultSubType?: KBSubType;
   onClose: () => void;
   onSubmit: (values: Record<string, unknown>, avatar: IconPickerValue) => void;
-  externalApiList: ExternalApiConfig[];
-  onOpenApiCreate: () => void;
-}> = ({ open, category, defaultSubType, onClose, onSubmit, externalApiList, onOpenApiCreate }) => {
+}> = ({ open, category, defaultSubType, onClose, onSubmit }) => {
   const [form] = Form.useForm();
   const [avatar, setAvatar] = useState<IconPickerValue>({ mode: 'text', text: '', textBgColor: '#1677ff', textColor: '#fff' });
   const isExternal = category === 'external';
-
-  const externalApiOptions = useMemo(() => {
-    return externalApiList.map((api) => ({ label: api.name, value: api.id }));
-  }, [externalApiList]);
 
   useEffect(() => {
     if (open) {
@@ -694,24 +535,11 @@ const SimpleCreateDrawer: React.FC<{
         )}
         {isExternal ? (
           <>
-            <Form.Item name="apiEndpoint" label={<LabelWithTip label="外部知识库 API" tip="选择已创建的外部知识库 API 连接配置，也可新建 API" />} rules={[{ required: true, message: '请选择外部知识库 API' }]}>
-              <Select
-                placeholder="选择已创建的 API"
-                style={{ width: '100%' }}
-                dropdownRender={(menu) => (
-                  <>
-                    {menu}
-                    <Divider style={{ margin: '8px 0' }} />
-                    <Button type="link" icon={<PlusOutlined />} onClick={onOpenApiCreate} style={{ padding: '0 12px 8px', height: 32 }}>
-                      新建外部知识库 API
-                    </Button>
-                  </>
-                )}
-              >
-                {externalApiOptions.map((opt) => (
-                  <Select.Option key={opt.value} value={opt.value}>{opt.label}</Select.Option>
-                ))}
-              </Select>
+            <Form.Item name="apiEndpoint" label={<LabelWithTip label="API Endpoint" tip="第三方知识库的检索接口地址" />} rules={[{ required: true, message: '请输入 API Endpoint' }]}>
+              <Input placeholder="https://api.example.com/v1/retrieval" />
+            </Form.Item>
+            <Form.Item name="apiKey" label={<LabelWithTip label="API Key" tip="用于鉴权调用的密钥" />} rules={[{ required: true, message: '请输入 API Key' }]}>
+              <Input.Password placeholder="输入 API Key" />
             </Form.Item>
             <Form.Item name="externalKbId" label={<LabelWithTip label="外部知识库 ID" tip="第三方知识库系统中对应的唯一标识，用于关联检索" />} rules={[{ required: true, message: '请输入外部知识库 ID' }]}>
               <Input placeholder="输入外部知识库的唯一标识" />
@@ -1039,15 +867,8 @@ const KnowledgeBasePage: React.FC = () => {
   const [activeKB, setActiveKB] = useState<KnowledgeBase | null>(null);
   const [filterValues, setFilterValues] = useState<Record<string, any>>({ keyword: '', category: undefined, status: undefined, source: undefined });
   const [viewMode, setViewMode] = useState<'table' | 'card'>('card');
-  const [externalApiList, setExternalApiList] = useState<ExternalApiConfig[]>([
-    { id: 'ext-api-mock-1', name: '反诈数据检索 API', endpoint: 'https://antifraud.police.cn/v1/retrieval', apiKey: 'sk-mock-********' },
-    { id: 'ext-api-mock-2', name: '户籍信息知识库 API', endpoint: 'https://household.police.cn/api/kb/query', apiKey: 'sk-mock-********' },
-  ]);
-  const [externalApiManageOpen, setExternalApiManageOpen] = useState(false);
-  const [externalApiFormOpen, setExternalApiFormOpen] = useState(false);
-  const [editingApiId, setEditingApiId] = useState<string | null>(null);
 
-  const pageSize = 8;
+  const pageSize = 10;
   const categoryKeys: ('all' | KBCategory)[] = ['all', 'easy', 'professional', 'external'];
 
   const statCards = useMemo(() => [
@@ -1127,11 +948,8 @@ const KnowledgeBasePage: React.FC = () => {
       fileCount: isExternal ? null : 0,
       active: true,
       ragflowSyncStatus: 'none',
-      apiEndpoint: (() => {
-        const selectedId = String(values.apiEndpoint || '');
-        const found = externalApiList.find((a) => a.id === selectedId);
-        return found ? found.endpoint : selectedId;
-      })(),
+      apiEndpoint: isExternal ? String(values.apiEndpoint || '') : undefined,
+      apiKey: isExternal ? String(values.apiKey || '') : undefined,
       externalKbId: String(values.externalKbId || ''),
       topK: isExternal ? Number(values.topK || 3) : undefined,
       scoreThreshold: isExternal ? Number(values.scoreThreshold || 0.5) : undefined,
@@ -1211,37 +1029,6 @@ const KnowledgeBasePage: React.FC = () => {
     }
     setKbList((prev) => prev.map((item) => (item.id === kb.id ? updated : item)));
     message.success('知识库已更新');
-  };
-
-  // 外部 API 管理 CRUD
-  const editingApiData = useMemo(() => {
-    if (!editingApiId) return null;
-    return externalApiList.find((a) => a.id === editingApiId) || null;
-  }, [editingApiId, externalApiList]);
-
-  const handleSaveApi = (config: ExternalApiConfig) => {
-    if (editingApiId) {
-      setExternalApiList((prev) => prev.map((a) => (a.id === editingApiId ? config : a)));
-      message.success('外部 API 已更新');
-    } else {
-      setExternalApiList((prev) => [...prev, config]);
-      message.success('外部 API 已创建');
-    }
-  };
-
-  const handleEditApi = (api: ExternalApiConfig) => {
-    setEditingApiId(api.id);
-    setExternalApiFormOpen(true);
-  };
-
-  const handleDeleteApi = (id: string) => {
-    setExternalApiList((prev) => prev.filter((a) => a.id !== id));
-    message.success('外部 API 已删除');
-  };
-
-  const handleOpenAddApi = () => {
-    setEditingApiId(null);
-    setExternalApiFormOpen(true);
   };
 
   const handleReset = () => {
@@ -1357,7 +1144,6 @@ const KnowledgeBasePage: React.FC = () => {
             createText="创建知识库"
             extra={
               <Space size={8}>
-                <Button icon={<SettingOutlined />} onClick={() => setExternalApiManageOpen(true)}>外部 API 管理</Button>
                 <Button icon={<ShoppingOutlined />} onClick={() => window.open('/standalone/resource-square?tab=knowledge', '_blank')}>
                   从广场获取
                 </Button>
@@ -1476,7 +1262,7 @@ const KnowledgeBasePage: React.FC = () => {
                   rowKey="id"
                   dataSource={pagedList}
                   style={{ marginTop: 16 }}
-                  pagination={{ current: page, pageSize, total: filteredList.length, showTotal: (total) => `共 ${total} 条`, showSizeChanger: true, onChange: setPage, pageSizeOptions: ['8', '12', '16', '24'] }}
+                  pagination={{ ...tablePagination(), current: page, pageSize, total: filteredList.length, onChange: setPage }}
                   onRow={(record) => ({
                     onClick: () => setActiveKB(record),
                     style: { cursor: 'pointer' },
@@ -1593,26 +1379,8 @@ const KnowledgeBasePage: React.FC = () => {
           defaultSubType={defaultSubType}
           onClose={() => setSimpleDrawerCategory(null)}
           onSubmit={handleSimpleSubmit}
-          externalApiList={externalApiList}
-          onOpenApiCreate={() => { setEditingApiId(null); setExternalApiFormOpen(true); }}
         />
       )}
-      <ExternalApiManageDrawer
-        open={externalApiManageOpen}
-        externalApiList={externalApiList}
-        kbList={kbList}
-        onClose={() => setExternalApiManageOpen(false)}
-        onAdd={handleOpenAddApi}
-        onEdit={handleEditApi}
-        onDelete={handleDeleteApi}
-      />
-      <ExternalApiFormDrawer
-        open={externalApiFormOpen}
-        editingId={editingApiId}
-        initialData={editingApiData}
-        onClose={() => { setExternalApiFormOpen(false); setEditingApiId(null); }}
-        onSave={handleSaveApi}
-      />
       <EditDrawer
         kb={editingKB}
         onClose={() => setEditingKB(null)}

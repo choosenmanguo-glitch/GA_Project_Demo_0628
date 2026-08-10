@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Button, Input, Tag, Space, Typography, Switch, Select, InputNumber,
   Divider, Drawer, message, Radio, Dropdown, MenuProps, Tooltip, Modal, Empty,
@@ -55,6 +55,7 @@ const { Text, Title, Paragraph } = Typography;
 
 import { mockAgentSessions, type SessionLog, type SessionMessage } from '@/mock/data';
 import { SessionDetailDrawer } from '@/components/SessionDetailDrawer';
+import { tablePagination } from '@/components/PaginationBar';
 
 // ════════════════════════════════════════════════
 // Design System
@@ -1256,7 +1257,7 @@ const AgentLogsPanel: React.FC<AgentLogsPanelProps> = ({ agentId }) => {
                 columns={columns}
                 dataSource={filteredSessions}
                 size="middle"
-                pagination={{ defaultPageSize: 20, showSizeChanger: true, showTotal: (t) => `共 ${t} 条` }}
+                pagination={tablePagination()}
                 style={{ margin: 0 }}
                 locale={{ emptyText: <Empty description="暂无对话记录" /> }}
               />
@@ -2510,11 +2511,43 @@ const DifyPlaceholder: React.FC<{ agentType: AgentType }> = ({ agentType }) => (
 );
 
 // ════════════════════════════════════════════════
+// External Agent Config Panel
+// ════════════════════════════════════════════════
+
+const ExternalConfigPanel: React.FC = () => {
+  const [name, setName] = useState('讯飞星火警务助手');
+  const [externalUrl, setExternalUrl] = useState('https://xinghuo.xfyun.cn/chat/police');
+  const [description, setDescription] = useState('科大讯飞星火大模型驱动的智能警务问答助手，支持语音交互和多轮对话');
+
+  return (
+    <div style={{ padding: '24px 32px', overflow: 'auto', height: '100%' }}>
+      <div style={{ maxWidth: 480 }}>
+        <div style={{ ...DS.label, marginBottom: 6 }}>智能体名称</div>
+        <Input value={name} onChange={e => setName(e.target.value)}
+          style={{ borderRadius: DS.radiusXs, marginBottom: 20 }} />
+        <div style={{ ...DS.label, marginBottom: 6 }}>外部链接</div>
+        <Input value={externalUrl} onChange={e => setExternalUrl(e.target.value)}
+          placeholder="https://example.com/agent"
+          style={{ borderRadius: DS.radiusXs, marginBottom: 20 }} />
+        <div style={{ ...DS.label, marginBottom: 6 }}>描述</div>
+        <Input.TextArea rows={3} value={description} onChange={e => setDescription(e.target.value)}
+          style={{ borderRadius: DS.radiusXs, marginBottom: 20 }} />
+        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>
+          外部智能体不涉及模型选择、提示词编排、知识库关联及工具挂载等配置
+        </Text>
+      </div>
+    </div>
+  );
+};
+
+// ════════════════════════════════════════════════
 // Main Page
 // ════════════════════════════════════════════════
 
 export default function AgentConfigPage() {
   const nav = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isExternal = searchParams.get('external') === 'true';
   const [activeNav, setActiveNav] = useState<NavKey>('config');
   const [agent, setAgent] = useState<AgentInfo>(MOCK_AGENT);
   const [hasUnsaved, setHasUnsaved] = useState(false);
@@ -2584,6 +2617,7 @@ export default function AgentConfigPage() {
             background: st.bg, color: st.color,
             fontWeight: 500, fontSize: 12, padding: '0 10px', lineHeight: '22px',
           }}>{st.label}</Tag>
+          {isExternal && <Tag color="orange" style={{ borderRadius: 4, fontWeight: 500, fontSize: 12 }}>外部智能体</Tag>}
         </Space>
         <Button type="text" size="small" icon={<EditOutlined />} onClick={openEdit}
           style={{ color: DS.textSec, fontSize: 12 }}>编辑信息</Button>
@@ -2604,8 +2638,8 @@ export default function AgentConfigPage() {
               {agent.description}
             </Text>
             <div style={{ marginTop: 10 }}>
-              <Tag style={{ margin: 0, borderRadius: 4, fontSize: 11 }}>{typeLabel[agent.type]}</Tag>
-              {agent.subTypeLabel && <Tag style={{ margin: '0 0 0 4px', borderRadius: 4, fontSize: 11 }} color="blue">{agent.subTypeLabel}</Tag>}
+              <Tag style={{ margin: 0, borderRadius: 4, fontSize: 11 }}>{isExternal ? '外部智能体' : typeLabel[agent.type]}</Tag>
+              {!isExternal && agent.subTypeLabel && <Tag style={{ margin: '0 0 0 4px', borderRadius: 4, fontSize: 11 }} color="blue">{agent.subTypeLabel}</Tag>}
             </div>
           </div>
 
@@ -2636,8 +2670,8 @@ export default function AgentConfigPage() {
 
         {/* ──── Content Area ──── */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
-          {/* Toolbar — only in config tab */}
-          {activeNav === 'config' && (
+          {/* Toolbar — only in config tab, not for external */}
+          {activeNav === 'config' && !isExternal && (
             <ConfigToolbar
               agent={agent}
               hasUnsaved={hasUnsaved}
@@ -2657,20 +2691,26 @@ export default function AgentConfigPage() {
           <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
             <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
               {activeNav === 'config' ? (
-                agent.type === 'standard'
-                  ? <StandardConfigPanel />
-                  : <DifyPlaceholder agentType={agent.type} />
+                isExternal
+                  ? <ExternalConfigPanel />
+                  : agent.type === 'standard'
+                    ? <StandardConfigPanel />
+                    : <DifyPlaceholder agentType={agent.type} />
               ) : activeNav === 'publish' ? (
                 <div style={{ flex: 1, overflow: 'auto' }}><PublishPanel agent={agent} currentVersion={currentVersion} onPublishSuccess={(note: string) => { setAgent(prev => ({ ...prev, status: 'published' })); if (note) message.success('发布成功！'); }} /></div>
               ) : activeNav === 'logs' ? (
-                <AgentLogsPanel agentId={agent.id} />
+                isExternal
+                  ? <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Text type="secondary">外部智能体不产生平台内运行数据</Text></div>
+                  : <AgentLogsPanel agentId={agent.id} />
               ) : (
-                <div style={{ flex: 1, overflow: 'auto' }}><StatsPanel /></div>
+                isExternal
+                  ? <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Text type="secondary">外部智能体不产生平台内运行数据</Text></div>
+                  : <div style={{ flex: 1, overflow: 'auto' }}><StatsPanel /></div>
               )}
             </div>
 
             {/* Test Panel */}
-            <TestPanel agent={agent} visible={testPanelOpen && activeNav === 'config'}
+            <TestPanel agent={agent} visible={testPanelOpen && activeNav === 'config' && !isExternal}
               onClose={() => setTestPanelOpen(false)} />
           </div>
         </div>
@@ -2685,8 +2725,14 @@ export default function AgentConfigPage() {
           </div>
           <div>
             <div style={{ ...DS.label, marginBottom: 6 }}>类型</div>
-            <Input value={typeLabel[agent.type]} disabled style={{ borderRadius: DS.radiusXs }} />
+            <Input value={isExternal ? '外部智能体' : typeLabel[agent.type]} disabled style={{ borderRadius: DS.radiusXs }} />
           </div>
+          {isExternal && (
+            <div>
+              <div style={{ ...DS.label, marginBottom: 6 }}>外部链接</div>
+              <Input value="https://xinghuo.xfyun.cn/chat/police" disabled style={{ borderRadius: DS.radiusXs }} />
+            </div>
+          )}
           <div>
             <div style={{ ...DS.label, marginBottom: 6 }}>描述</div>
             <Input.TextArea rows={3} value={editDesc} onChange={e => setEditDesc(e.target.value)} style={{ borderRadius: DS.radiusXs }} />

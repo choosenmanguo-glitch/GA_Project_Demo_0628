@@ -71,7 +71,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
                 <Tooltip title={resource.name}>
                   <span style={{ fontSize: 15, fontWeight: 650, color: 'rgba(0,0,0,0.88)', lineHeight: '22px', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{resource.name}</span>
                 </Tooltip>
-                {resource.isPinned && <Tag icon={<FireFilled />} color="orange" style={{ margin: 0, fontSize: 11, borderRadius: 4, flexShrink: 0 }}>置顶</Tag>}
+                {resource.isPinned && mode !== 'mine' && <Tag icon={<FireFilled />} color="orange" style={{ margin: 0, fontSize: 11, borderRadius: 4, flexShrink: 0 }}>置顶</Tag>}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Text type="secondary" style={{ fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{resource.resourceKey || resource.id}</Text>
