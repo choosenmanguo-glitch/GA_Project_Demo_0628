@@ -84,14 +84,9 @@ const ResourcePermissionDrawer: React.FC<ResourcePermissionDrawerProps> = ({ ope
       onClose();
       return;
     }
-    if (resource.publishStatus === 'published') {
-      updateResource(resource.id, { publishStatus: 'publishing', pendingStrategy: strategy });
-      message.info('策略变更已提交审核，审核通过前将维持原策略');
-    } else {
-      setStrategy(resource.id, strategy);
-      updateResource(resource.id, { pendingStrategy: undefined });
-      message.success('权限配置方案已保存');
-    }
+    setStrategy(resource.id, strategy);
+    updateResource(resource.id, { pendingStrategy: undefined });
+    message.success('权限配置方案已保存');
     onClose();
   };
 
@@ -120,7 +115,6 @@ const ResourcePermissionDrawer: React.FC<ResourcePermissionDrawerProps> = ({ ope
       <div style={{ width: 48, height: 48, marginRight: 16, borderRadius: 8, background: strategyColors[value], color: '#fff', display: 'grid', placeItems: 'center', fontSize: 24 }}>{strategyIcons[value]}</div>
       <div><div style={{ fontWeight: 600, fontSize: 16 }}>{strategyConfig[value].label}</div><div style={{ color: '#8c8c8c', fontSize: 13, marginTop: 4 }}>{descriptions[value]}</div></div>
     </div>)}
-    {resource.pendingStrategy && resource.publishStatus === 'publishing' && <Alert type="warning" showIcon title={`存在待审核策略：${strategyConfig[resource.pendingStrategy].label}`} description="审核通过前资源仍按当前公开策略运行。" />}
     <div style={{ marginTop: 32, textAlign: 'right' }}><Space><Button onClick={onClose}>取消</Button><Button type="primary" onClick={saveStrategy}>保存</Button></Space></div>
   </div>;
 

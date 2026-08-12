@@ -2,7 +2,7 @@ import React from 'react';
 import {
   ApiOutlined, CodeSandboxOutlined, ControlOutlined, FolderOutlined,
 } from '@ant-design/icons';
-import type { InstallStatus, PublicStrategy, ResourceStatus, ResourceType } from './types';
+import type { InstallStatus, PublicStrategy, PublishStatus, ResourceStatus, ResourceType } from './types';
 
 export const typeConfig: Record<ResourceType, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
   model: { label: '模型', color: '#1677ff', bg: '#e6f4ff', icon: <CodeSandboxOutlined /> },
@@ -29,6 +29,14 @@ export const statusConfig: Record<ResourceStatus, { label: string; color: string
   view_only: { label: '仅可见', color: 'warning' },
   reviewing: { label: '审核中', color: 'processing' },
   revoked: { label: '已撤销', color: 'error' },
+};
+
+export const publishConfig: Record<PublishStatus, { label: string; color: string }> = {
+  pending: { label: '待上架', color: 'warning' },
+  reviewing: { label: '发布审批中', color: 'processing' },
+  published: { label: '已上架', color: 'success' },
+  unpublishing: { label: '下架审批中', color: 'processing' },
+  offline: { label: '已下架', color: 'default' },
 };
 
 export const pageContainerStyle: React.CSSProperties = {

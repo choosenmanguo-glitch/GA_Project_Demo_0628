@@ -111,12 +111,12 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
 
   const finish = async () => {
     const values = await form.validateFields();
-    onSubmit({ ...values, ...technicalValues, type: resourceType, owner: resource?.owner || '演示用户' });
+    onSubmit({ ...values, ...technicalValues, type: resourceType, owner: resource?.owner || '演示用户', visibleTargets: visibleObjects });
   };
 
   const saveEdit = async () => {
     const values = await form.validateFields(['name', 'description', 'markdownIntro']);
-    onSubmit({ ...resource!, ...values, ...technicalValues, type: resource!.type, owner: resource!.owner, resourceKey: resource!.resourceKey || '' });
+    onSubmit({ ...resource!, ...values, ...technicalValues, type: resource!.type, owner: resource!.owner, resourceKey: resource!.resourceKey || '', visibleTargets: visibleObjects });
   };
 
   const technicalCard = (

@@ -32,10 +32,10 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
   const subtitle = resource.modelType || resource.knowledgeType || resource.deployment;
 
   const publishLabel: Record<string, string> = {
-    published: '已上架', publishing: '发布审核中', pending: '待上架', offline: '已下架',
+    pending: '待上架', reviewing: '发布审批中', published: '已上架', unpublishing: '下架审批中', offline: '已下架',
   };
   const publishColor: Record<string, string> = {
-    published: 'success', publishing: 'processing', pending: 'warning', offline: 'default',
+    pending: 'warning', reviewing: 'processing', published: 'success', unpublishing: 'processing', offline: 'default',
   };
 
   return (
@@ -79,7 +79,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
               </div>
             </div>
           </div>
-          {mode === 'manage' && (
+          {mode !== 'mine' && (
             <Tag color={publishColor[resource.publishStatus]} style={{ borderRadius: 4, margin: 0, fontSize: 11, flexShrink: 0 }}>
               {publishLabel[resource.publishStatus]}
             </Tag>

@@ -1,4 +1,4 @@
-import type { ResourceApplication, ResourceAuditLog, ResourceItem, SpaceResourceGrant } from './types';
+import type { PublishApproval, ResourceApplication, ResourceAuditLog, ResourceItem, SpaceResourceGrant } from './types';
 
 const intro = (name: string, usage: string) => `## ${name}\n\n${usage}\n\n### 接入说明\n\n1. 在资源广场获取资源。\n2. 前往“我的资源”完成安装。\n3. API Key 请在空间管理中查看。`;
 
@@ -66,6 +66,7 @@ export const initialResources: ResourceItem[] = [
     id: '15', type: 'knowledge', name: '自备工作笔记本', description: '这是一个新建发布到广场使用的自用工作笔记本。',
     owner: '演示用户', updateTime: '2026-05-14', heat: 0, status: 'authorized', publishStatus: 'offline',
     publicStrategy: 'whitelist', resourceKey: 'work-notebook', gatewayPath: '/gateway/work-notebook', knowledgeType: '文档知识库',
+    visibleTargets: [{ id: 'v1', name: '行政部' }, { id: 'v2', name: '李想' }],
     markdownIntro: intro('自备工作笔记本', '用于演示仅授权对象可见资源。'),
   },
   {
@@ -82,6 +83,35 @@ export const initialResources: ResourceItem[] = [
     id: 'invalid-3', type: 'mcp', name: '收回授权的内部工具', description: '管理员已主动移除了您的授权。',
     owner: '安全部', updateTime: '2026-06-20', heat: 5, status: 'revoked', publishStatus: 'offline',
     publicStrategy: 'whitelist',
+  },
+  {
+    id: 'pub-approval-demo', type: 'api', name: '用户发布的天气API',
+    description: '普通用户提交发布审批的示例资源，用于演示审批流程。',
+    owner: '演示用户', updateTime: '2026-06-25', heat: 0, status: 'authorized', publishStatus: 'reviewing',
+    publicStrategy: 'public', resourceKey: 'weather-api-v2', gatewayPath: '/gateway/weather-api-v2',
+    apiEndpoint: '/v1/weather', method: 'GET', authType: 'API Key',
+  },
+  {
+    id: 'unpub-demo', type: 'knowledge', name: '待下架的业务文档',
+    description: '演示用户申请下架的示例资源，当前处于下架审批中状态。',
+    owner: '演示用户', updateTime: '2026-06-28', heat: 5, status: 'authorized', publishStatus: 'unpublishing',
+    publicStrategy: 'visible', resourceKey: 'legacy-docs', gatewayPath: '/gateway/legacy-docs', knowledgeType: '文档知识库',
+  },
+  {
+    id: 'pending-user-demo', type: 'model', name: '用户私有模型',
+    description: '管理员创建但未上架的模型资源，待上架状态。',
+    owner: '演示用户', updateTime: '2026-07-01', heat: 0, status: 'authorized', publishStatus: 'pending',
+    publicStrategy: 'whitelist', resourceKey: 'private-model', gatewayPath: '/gateway/private-model',
+    visibleTargets: [{ id: 'v1', name: '产品部' }, { id: 'v2', name: '技术部' }],
+    modelType: 'LargeModel', deployment: 'Local', gatewayMode: 'builtin',
+  },
+  {
+    id: 'pub-whitelist-demo', type: 'api', name: '仅授权可见的内部API',
+    description: '普通用户创建的白名单资源，发布审批中，用于演示仅授权对象可见的审批流程。',
+    owner: '演示用户', updateTime: '2026-07-05', heat: 0, status: 'authorized', publishStatus: 'reviewing',
+    publicStrategy: 'whitelist', resourceKey: 'internal-whitelist-api', gatewayPath: '/gateway/internal-whitelist-api',
+    visibleTargets: [{ id: 'v1', name: '产品部' }, { id: 'v2', name: '研发部' }],
+    apiEndpoint: '/v1/internal', method: 'GET', authType: 'API Key',
   },
 ];
 
@@ -109,6 +139,10 @@ export const initialApplications: ResourceApplication[] = [
   { id: 'my-app-1', resourceId: '14', spaceId: '0', applicant: '演示用户', dept: '研发中心', applyTime: '2026-07-20 09:15', duration: 'permanent', reason: '需要参考开发文档进行环境配置和问题排查。', status: 'approved', operator: '管理员', opinion: '业务需要，审批通过', approvalTime: '2026-07-20 14:30' },
   { id: 'my-app-2', resourceId: '10', spaceId: '0', applicant: '演示用户', dept: '研发中心', applyTime: '2026-07-25 10:30', duration: 'custom', expireDate: '2026-12-31', reason: '项目需要集成GitHub代码库读取能力。', status: 'pending' },
   { id: 'my-app-3', resourceId: '4', spaceId: '0', applicant: '演示用户', dept: '研发中心', applyTime: '2026-07-18 16:00', duration: 'permanent', reason: '需要使用BGE-M3向量模型进行语义检索实验。', status: 'rejected', operator: '管理员', opinion: '向量模型资源暂不对个人开放，请使用团队共享资源。', approvalTime: '2026-07-19 09:00' },
+  // 创建人审批节点上的使用申请（演示用户作为资源创建者需要审批的）
+  { id: 'creator-app-1', resourceId: '13', spaceId: '2', applicant: '张三', dept: '反诈中心', applyTime: '2026-06-26 10:00', duration: 'permanent', reason: '需要使用此模型进行特定代码生成任务。', status: 'pending', currentNode: 'creator' },
+  { id: 'creator-app-2', resourceId: '14', spaceId: '3', applicant: '李四', dept: '交警支队', applyTime: '2026-06-27 14:30', duration: 'custom', expireDate: '2026-12-31', reason: '用于团队开发环境搭建参考。', status: 'pending', currentNode: 'creator' },
+  { id: 'creator-app-history', resourceId: '13', spaceId: '4', applicant: '王五', dept: '刑警大队', applyTime: '2026-06-20 09:00', duration: 'permanent', reason: '项目预训练模型需求。', status: 'approved', operator: '演示用户', opinion: '业务明确，同意授权', approvalTime: '2026-06-20 15:00', currentNode: 'creator' },
 ];
 
 export const initialAuditLogs: ResourceAuditLog[] = [
@@ -116,5 +150,31 @@ export const initialAuditLogs: ResourceAuditLog[] = [
   { id: 'log-2', resourceId: '1', time: '2026-06-04 14:15', operator: '系统管理员', action: '权限审计批量授权', detail: '向指定工作空间批量下发资源使用权。' },
   { id: 'log-3', resourceId: '13', time: '2026-05-15 14:20', operator: '张三', action: '公开策略变更', detail: '仅授权可见变更为全员可见。' },
   { id: 'log-4', resourceId: '5', time: '2026-05-10 10:00', operator: '王五', action: '提交发布申请', detail: '申请发布至资源广场。' },
+];
+
+export const initialPublishApprovals: PublishApproval[] = [
+  {
+    id: 'pub-pending-1', resourceId: 'pub-approval-demo', applicant: '演示用户',
+    applyType: 'publish', applyTime: '2026-06-25 09:00', status: 'pending',
+  },
+  {
+    id: 'pub-pending-2', resourceId: 'unpub-demo', applicant: '演示用户',
+    applyType: 'offline', applyTime: '2026-06-28 11:00', status: 'pending',
+    reason: '该文档内容已过时，不再维护。',
+  },
+  {
+    id: 'pub-pending-3', resourceId: 'pub-whitelist-demo', applicant: '演示用户',
+    applyType: 'publish', applyTime: '2026-07-05 14:30', status: 'pending',
+  },
+  {
+    id: 'pub-history-1', resourceId: '13', applicant: '演示用户',
+    applyType: 'publish', applyTime: '2026-05-12 08:30', status: 'approved',
+    operator: '管理员', opinion: '内容合规，同意发布', approvalTime: '2026-05-12 12:00',
+  },
+  {
+    id: 'pub-history-2', resourceId: '15', applicant: '演示用户',
+    applyType: 'publish', applyTime: '2026-05-13 10:00', status: 'rejected',
+    operator: '管理员', opinion: '描述不够清晰，请完善后重新提交', approvalTime: '2026-05-13 14:00',
+  },
 ];
 

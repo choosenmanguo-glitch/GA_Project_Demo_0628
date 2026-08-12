@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
-import { initialApplications, initialAuditLogs, initialGrants, initialResources } from './mock';
+import { initialApplications, initialAuditLogs, initialGrants, initialPublishApprovals, initialResources } from './mock';
 import type {
-  CreateResourceInput, InstallStatus, PublicStrategy, ResourceAccessView,
+  CreateResourceInput, InstallStatus, PublicStrategy, PublishApproval, ResourceAccessView,
   ResourceApplication, ResourceAuditLog, ResourceItem, SpaceResourceGrant,
 } from './types';
 
@@ -20,6 +20,7 @@ interface ResourceCenterValue {
   grants: SpaceResourceGrant[];
   applications: ResourceApplication[];
   auditLogs: ResourceAuditLog[];
+  publishApprovals: PublishApproval[];
   getAccess: (resourceId: string, spaceId: string) => ResourceAccessView;
   acquire: (resourceId: string, spaceId: string, source?: SpaceResourceGrant['source']) => boolean;
   applyForResource: (input: ApplyInput) => boolean;
@@ -29,13 +30,21 @@ interface ResourceCenterValue {
   batchInstall: (resourceIds: string[], spaceId: string) => void;
   removeGrant: (resourceId: string, spaceId: string) => void;
   revokeGrant: (resourceId: string, spaceId: string) => void;
-  createResource: (input: CreateResourceInput) => ResourceItem;
+  createResource: (input: CreateResourceInput, asUser?: boolean) => ResourceItem;
   updateResource: (id: string, patch: Partial<ResourceItem>) => void;
   togglePublish: (id: string) => void;
   togglePinned: (id: string) => void;
   setStrategy: (id: string, strategy: PublicStrategy) => void;
   deleteResource: (id: string) => void;
   transferResource: (id: string, owner: string) => void;
+  submitPublish: (resourceId: string) => void;
+  approvePublish: (approvalId: string, opinion: string) => void;
+  rejectPublish: (approvalId: string, reason: string) => void;
+  submitOffline: (resourceId: string, reason: string) => void;
+  approveOffline: (approvalId: string, opinion: string) => void;
+  rejectOffline: (approvalId: string, reason: string) => void;
+  getMyPublishedResources: () => ResourceItem[];
+  getPendingApprovalsForMyResources: () => ResourceApplication[];
 }
 
 const ResourceCenterContext = createContext<ResourceCenterValue | null>(null);
@@ -47,6 +56,7 @@ export const ResourceCenterProvider: React.FC<{ children: React.ReactNode }> = (
   const [grants, setGrants] = useState<SpaceResourceGrant[]>(initialGrants);
   const [applications, setApplications] = useState<ResourceApplication[]>(initialApplications);
   const [auditLogs, setAuditLogs] = useState<ResourceAuditLog[]>(initialAuditLogs);
+  const [publishApprovals, setPublishApprovals] = useState<PublishApproval[]>(initialPublishApprovals);
 
   const appendLog = useCallback((resourceId: string, action: string, detail: string, operator = '演示用户') => {
     setAuditLogs(prev => [{ id: `log-${Date.now()}-${Math.random()}`, resourceId, time: nowText(), operator, action, detail }, ...prev]);
@@ -125,13 +135,23 @@ export const ResourceCenterProvider: React.FC<{ children: React.ReactNode }> = (
     appendLog(resourceId, '撤销授权', `撤销空间 ${spaceId} 的资源使用权`);
   }, [appendLog]);
 
-  const createResource = useCallback((input: CreateResourceInput) => {
+  const createResource = useCallback((input: CreateResourceInput, asUser = false) => {
+    const initialStatus = asUser ? 'reviewing' : 'pending';
+    const statusText = asUser ? '发布审批中' : '待上架';
     const item: ResourceItem = {
       ...input, id: `resource-${Date.now()}`, updateTime: new Date().toISOString().slice(0, 10), heat: 0,
-      status: 'authorized', publishStatus: 'pending', gatewayPath: input.gatewayPath || `/gateway/${input.resourceKey}`,
+      status: 'authorized', publishStatus: initialStatus, gatewayPath: input.gatewayPath || `/gateway/${input.resourceKey}`,
+      visibleTargets: input.visibleTargets || [],
     };
     setResources(prev => [item, ...prev]);
-    appendLog(item.id, '创建资源', `创建 ${item.name}，初始状态为待上架`);
+    appendLog(item.id, '创建资源', `创建 ${item.name}，初始状态为${statusText}`);
+    // 用户创建时自动创建发布审批记录
+    if (asUser) {
+      setPublishApprovals(prev => [{
+        id: `pub-${Date.now()}`, resourceId: item.id, applicant: item.owner,
+        applyType: 'publish', applyTime: nowText(), status: 'pending',
+      }, ...prev]);
+    }
     return item;
   }, [appendLog]);
 
@@ -144,8 +164,16 @@ export const ResourceCenterProvider: React.FC<{ children: React.ReactNode }> = (
     let action = '';
     setResources(prev => prev.map(item => {
       if (item.id !== id) return item;
-      const publishStatus = item.publishStatus === 'published' ? 'offline' : 'published';
-      action = publishStatus === 'published' ? '上架资源' : '下架资源';
+      let publishStatus: ResourceItem['publishStatus'];
+      if (item.publishStatus === 'published') {
+        publishStatus = 'offline';
+        action = '下架资源';
+      } else if (item.publishStatus === 'offline' || item.publishStatus === 'pending') {
+        publishStatus = 'published';
+        action = '上架资源';
+      } else {
+        return item;
+      }
       return { ...item, publishStatus, updateTime: new Date().toISOString().slice(0, 10) };
     }));
     if (action) appendLog(id, action, action);
@@ -171,14 +199,83 @@ export const ResourceCenterProvider: React.FC<{ children: React.ReactNode }> = (
     appendLog(id, '转移所有权', `资源所有权转移至 ${owner}`);
   }, [appendLog]);
 
+  // --- 发布审批状态机 ---
+
+  const submitPublish = useCallback((resourceId: string) => {
+    const resource = resources.find(r => r.id === resourceId);
+    if (!resource || !(resource.publishStatus === 'pending' || resource.publishStatus === 'offline')) return;
+    setResources(prev => prev.map(r => r.id === resourceId ? { ...r, publishStatus: 'reviewing', updateTime: new Date().toISOString().slice(0, 10) } : r));
+    setPublishApprovals(prev => [{
+      id: `pub-${Date.now()}`, resourceId, applicant: resource.owner,
+      applyType: 'publish', applyTime: nowText(), status: 'pending',
+    }, ...prev]);
+    appendLog(resourceId, '提交发布审批', `${resource.owner} 提交资源发布审批`);
+  }, [resources, appendLog]);
+
+  const approvePublish = useCallback((approvalId: string, opinion: string) => {
+    const approval = publishApprovals.find(a => a.id === approvalId);
+    if (!approval) return;
+    setPublishApprovals(prev => prev.map(a => a.id === approvalId ? { ...a, status: 'approved', opinion, operator: '管理员', approvalTime: nowText() } : a));
+    setResources(prev => prev.map(r => r.id === approval.resourceId ? { ...r, publishStatus: 'published', updateTime: new Date().toISOString().slice(0, 10) } : r));
+    appendLog(approval.resourceId, '发布审批通过', `管理员审批通过发布申请：${opinion}`);
+  }, [publishApprovals, appendLog]);
+
+  const rejectPublish = useCallback((approvalId: string, reason: string) => {
+    const approval = publishApprovals.find(a => a.id === approvalId);
+    if (!approval) return;
+    setPublishApprovals(prev => prev.map(a => a.id === approvalId ? { ...a, status: 'rejected', opinion: reason, operator: '管理员', approvalTime: nowText() } : a));
+    setResources(prev => prev.map(r => r.id === approval.resourceId ? { ...r, publishStatus: 'pending', updateTime: new Date().toISOString().slice(0, 10) } : r));
+    appendLog(approval.resourceId, '发布审批驳回', `管理员驳回发布申请：${reason}`);
+  }, [publishApprovals, appendLog]);
+
+  const submitOffline = useCallback((resourceId: string, reason: string) => {
+    const resource = resources.find(r => r.id === resourceId);
+    if (!resource || resource.publishStatus !== 'published') return;
+    setResources(prev => prev.map(r => r.id === resourceId ? { ...r, publishStatus: 'unpublishing', updateTime: new Date().toISOString().slice(0, 10) } : r));
+    setPublishApprovals(prev => [{
+      id: `pub-${Date.now()}`, resourceId, applicant: resource.owner,
+      applyType: 'offline', applyTime: nowText(), status: 'pending', reason,
+    }, ...prev]);
+    appendLog(resourceId, '提交下架审批', `${resource.owner} 提交资源下架审批，原因：${reason}`);
+  }, [resources, appendLog]);
+
+  const approveOffline = useCallback((approvalId: string, opinion: string) => {
+    const approval = publishApprovals.find(a => a.id === approvalId);
+    if (!approval) return;
+    setPublishApprovals(prev => prev.map(a => a.id === approvalId ? { ...a, status: 'approved', opinion, operator: '管理员', approvalTime: nowText() } : a));
+    setResources(prev => prev.map(r => r.id === approval.resourceId ? { ...r, publishStatus: 'offline', updateTime: new Date().toISOString().slice(0, 10) } : r));
+    appendLog(approval.resourceId, '下架审批通过', `管理员审批通过下架申请：${opinion}`);
+  }, [publishApprovals, appendLog]);
+
+  const rejectOffline = useCallback((approvalId: string, reason: string) => {
+    const approval = publishApprovals.find(a => a.id === approvalId);
+    if (!approval) return;
+    setPublishApprovals(prev => prev.map(a => a.id === approvalId ? { ...a, status: 'rejected', opinion: reason, operator: '管理员', approvalTime: nowText() } : a));
+    setResources(prev => prev.map(r => r.id === approval.resourceId ? { ...r, publishStatus: 'published', updateTime: new Date().toISOString().slice(0, 10) } : r));
+    appendLog(approval.resourceId, '下架审批驳回', `管理员驳回下架申请：${reason}`);
+  }, [publishApprovals, appendLog]);
+
+  const getMyPublishedResources = useCallback(() => {
+    return resources.filter(r => r.owner === '演示用户' && !r.isDeleted);
+  }, [resources]);
+
+  const getPendingApprovalsForMyResources = useCallback(() => {
+    const myResourceIds = resources.filter(r => r.owner === '演示用户' && !r.isDeleted).map(r => r.id);
+    return applications.filter(a => a.status === 'pending' && myResourceIds.includes(a.resourceId) && a.currentNode === 'creator');
+  }, [resources, applications]);
+
   const value = useMemo<ResourceCenterValue>(() => ({
-    resources, grants, applications, auditLogs, getAccess, acquire, applyForResource,
+    resources, grants, applications, auditLogs, publishApprovals, getAccess, acquire, applyForResource,
     approveApplication, rejectApplication, installResource, batchInstall, removeGrant, revokeGrant,
     createResource, updateResource, togglePublish, togglePinned, setStrategy, deleteResource, transferResource,
+    submitPublish, approvePublish, rejectPublish, submitOffline, approveOffline, rejectOffline,
+    getMyPublishedResources, getPendingApprovalsForMyResources,
   }), [
-    resources, grants, applications, auditLogs, getAccess, acquire, applyForResource,
+    resources, grants, applications, auditLogs, publishApprovals, getAccess, acquire, applyForResource,
     approveApplication, rejectApplication, installResource, batchInstall, removeGrant, revokeGrant,
     createResource, updateResource, togglePublish, togglePinned, setStrategy, deleteResource, transferResource,
+    submitPublish, approvePublish, rejectPublish, submitOffline, approveOffline, rejectOffline,
+    getMyPublishedResources, getPendingApprovalsForMyResources,
   ]);
 
   return <ResourceCenterContext.Provider value={value}>{children}</ResourceCenterContext.Provider>;

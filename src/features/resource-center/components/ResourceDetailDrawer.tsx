@@ -16,7 +16,7 @@ interface ResourceDetailDrawerProps {
 }
 
 const ResourceDetailDrawer: React.FC<ResourceDetailDrawerProps> = ({ open, resource, access, spaceName, onClose, onAcquire, onApply }) => {
-  if (!resource || !access) return null;
+  if (!resource) return null;
   const type = typeConfig[resource.type];
   const subtitle = resource.modelType || resource.knowledgeType || resource.deployment;
   const callUrl = `http://10.193.0.41:8080${resource.gatewayPath || '/gateway/placeholder'}${resource.type === 'model' ? `/v1${resource.path || '/chat/completions'}` : ''}`;
@@ -43,19 +43,21 @@ const ResourceDetailDrawer: React.FC<ResourceDetailDrawerProps> = ({ open, resou
         ]} />
       </Card>
 
-      <Card title="使用权授权状态" style={{ marginBottom: 16 }}>
-        {access.status === 'authorized' && access.isAcquired && (
-          <Alert type="success" showIcon title="已获取资源" description={<div>当前空间“{spaceName}”已获取该资源。<br />调用地址：{callUrl}<br />API Key：请前往空间管理查看。</div>} />
-        )}
-        {access.status === 'authorized' && !access.isAcquired && (
-          <Alert type="info" showIcon title="未获取" description={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}><span>该资源对当前空间开放，获取后会进入“我的资源”。</span><Button type="primary" icon={<SafetyCertificateOutlined />} onClick={onAcquire}>获取资源</Button></div>} />
-        )}
-        {access.status === 'view_only' && (
-          <Alert type="warning" showIcon title="未授权" description={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}><span>当前空间仅可查看资源信息，需要提交使用申请。</span><Button type="primary" icon={<SafetyCertificateOutlined />} onClick={onApply}>申请使用</Button></div>} />
-        )}
-        {access.status === 'reviewing' && <Alert type="warning" showIcon title="审批中" description="申请已提交，审批完成前无需重复申请。" />}
-        {access.status === 'revoked' && <Alert type="error" showIcon title="资源不可获取" description="该资源已撤销、过期或被删除。" />}
-      </Card>
+      {access && (
+        <Card title="使用权授权状态" style={{ marginBottom: 16 }}>
+          {access.status === 'authorized' && access.isAcquired && (
+            <Alert type="success" showIcon title="已获取资源" description={<div>当前空间"{spaceName}"已获取该资源。<br />调用地址：{callUrl}<br />API Key：请前往空间管理查看。</div>} />
+          )}
+          {access.status === 'authorized' && !access.isAcquired && (
+            <Alert type="info" showIcon title="未获取" description={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}><span>该资源对当前空间开放，获取后会进入"我的资源"。</span><Button type="primary" icon={<SafetyCertificateOutlined />} onClick={onAcquire}>获取资源</Button></div>} />
+          )}
+          {access.status === 'view_only' && (
+            <Alert type="warning" showIcon title="未授权" description={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}><span>当前空间仅可查看资源信息，需要提交使用申请。</span><Button type="primary" icon={<SafetyCertificateOutlined />} onClick={onApply}>申请使用</Button></div>} />
+          )}
+          {access.status === 'reviewing' && <Alert type="warning" showIcon title="审批中" description="申请已提交，审批完成前无需重复申请。" />}
+          {access.status === 'revoked' && <Alert type="error" showIcon title="资源不可获取" description="该资源已撤销、过期或被删除。" />}
+        </Card>
+      )}
 
       <Card title="资源介绍">
         <div className="resource-markdown"><ReactMarkdown>{resource.markdownIntro || resource.description}</ReactMarkdown></div>

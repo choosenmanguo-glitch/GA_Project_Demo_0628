@@ -1,9 +1,11 @@
 export type ResourceType = 'model' | 'api' | 'mcp' | 'knowledge';
 export type ResourceStatus = 'authorized' | 'view_only' | 'reviewing' | 'revoked';
-export type PublishStatus = 'published' | 'offline' | 'publishing' | 'pending';
+export type PublishStatus = 'pending' | 'reviewing' | 'published' | 'unpublishing' | 'offline';
 export type InstallStatus = 'installed' | 'not_installed' | 'failed' | 'installing';
 export type PublicStrategy = 'public' | 'visible' | 'whitelist';
 export type ApplicationStatus = 'pending' | 'approved' | 'rejected';
+export type PublishApprovalType = 'publish' | 'offline';
+export type PublishApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export interface RequestParameter {
   paraName: string;
@@ -45,6 +47,7 @@ export interface ResourceItem {
   pendingStrategy?: PublicStrategy;
   isPinned?: boolean;
   isDeleted?: boolean;
+  visibleTargets?: { id: string; name: string }[];
   resourceKey?: string;
   gatewayPath?: string;
   deployment?: string;
@@ -102,6 +105,21 @@ export interface ResourceApplication {
   operator?: string;
   opinion?: string;
   approvalTime?: string;
+  workflowInstanceId?: string;
+  currentNode?: string;
+}
+
+export interface PublishApproval {
+  id: string;
+  resourceId: string;
+  applicant: string;
+  applyType: PublishApprovalType;
+  applyTime: string;
+  status: PublishApprovalStatus;
+  opinion?: string;
+  operator?: string;
+  approvalTime?: string;
+  reason?: string;
 }
 
 export interface ResourceAuditLog {
@@ -129,6 +147,7 @@ export interface CreateResourceInput {
   resourceKey: string;
   gatewayPath?: string;
   publicStrategy: PublicStrategy;
+  visibleTargets?: { id: string; name: string }[];
   deployment?: string;
   deploymentMode?: ResourceItem['deploymentMode'];
   modelType?: ResourceItem['modelType'];
