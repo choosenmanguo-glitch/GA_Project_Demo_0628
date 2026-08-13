@@ -314,4 +314,40 @@ const IconPicker: React.FC<IconPickerProps> = ({
   );
 };
 
+export interface IconAvatarProps {
+  value?: IconPickerValue;
+  size?: number;
+  defaultName?: string;
+  shape?: 'square' | 'circle';
+}
+
+/** 只读渲染 IconPickerValue（用于列表/卡片/详情等展示场景） */
+export const IconAvatar: React.FC<IconAvatarProps> = ({ value, size = 40, defaultName, shape = 'square' }) => {
+  const mode = value?.mode ?? 'text';
+  if (mode === 'image' && value?.imageSrc) {
+    return <Avatar size={size} src={value.imageSrc} shape={shape} style={{ flexShrink: 0 }} />;
+  }
+  if (mode === 'icon') {
+    const preset = ICON_PRESETS.find(p => p.key === (value?.iconKey ?? ICON_PRESETS[0].key));
+    return (
+      <Avatar
+        size={size}
+        shape={shape}
+        style={{ backgroundColor: value?.iconBgColor ?? defaultColors.iconBg, color: value?.iconColor ?? defaultColors.icon, fontSize: size * 0.45, flexShrink: 0 }}
+      >
+        {preset?.icon}
+      </Avatar>
+    );
+  }
+  return (
+    <Avatar
+      size={size}
+      shape={shape}
+      style={{ backgroundColor: value?.textBgColor ?? defaultColors.textBg, color: value?.textColor ?? defaultColors.text, fontWeight: 600, fontSize: size * 0.38, flexShrink: 0 }}
+    >
+      {value?.text || defaultName?.charAt(0) || '?'}
+    </Avatar>
+  );
+};
+
 export default IconPicker;

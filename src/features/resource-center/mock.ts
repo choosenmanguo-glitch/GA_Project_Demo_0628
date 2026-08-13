@@ -113,6 +113,32 @@ export const initialResources: ResourceItem[] = [
     visibleTargets: [{ id: 'v1', name: '产品部' }, { id: 'v2', name: '研发部' }],
     apiEndpoint: '/v1/internal', method: 'GET', authType: 'API Key',
   },
+  {
+    id: 'skill-1', type: 'skill', name: '警情分类与分级',
+    description: '根据警情描述自动分类并判定紧急等级，支持多级分类标签。',
+    owner: '演示用户', updateTime: '2026-08-01', heat: 320, status: 'authorized', publishStatus: 'published',
+    publicStrategy: 'public', resourceKey: 'police-classifier', gatewayPath: '/gateway/police-classifier',
+    skillConfig: {
+      inputSchema: { type: 'object', properties: { text: { type: 'string' } } },
+      outputSchema: { type: 'object', properties: { category: { type: 'string' }, level: { type: 'string' } } },
+      timeout: 30, retryCount: 0,
+      skillMd: '# 警情分类与分级\n\n## 使用场景\n\n适用于 110 接处警、线索核查等场景。\n\n## 用法\n\n- 输入：警情描述文本\n- 输出：警情类别与紧急等级',
+    },
+    markdownIntro: intro('警情分类与分级', '根据警情描述自动分类并判定紧急等级。'),
+  },
+  {
+    id: 'skill-2', type: 'skill', name: '身份证信息核验',
+    description: '调用人口信息查询接口，核验身份证号与姓名的匹配性。',
+    owner: '张三', updateTime: '2026-08-10', heat: 150, status: 'authorized', publishStatus: 'published',
+    publicStrategy: 'visible', resourceKey: 'id-card-verify', gatewayPath: '/gateway/id-card-verify',
+    skillConfig: {
+      inputSchema: { type: 'object', properties: { idNo: { type: 'string' }, name: { type: 'string' } } },
+      outputSchema: { type: 'object', properties: { matched: { type: 'boolean' } } },
+      timeout: 10, retryCount: 1,
+      skillMd: '# 身份证信息核验\n\n## 使用场景\n\n人员身份核验、实名认证等场景。\n\n## 用法\n\n- 输入：身份证号 + 姓名\n- 输出：是否匹配',
+    },
+    markdownIntro: intro('身份证信息核验', '核验身份证号与姓名的匹配性。'),
+  },
 ];
 
 export const initialGrants: SpaceResourceGrant[] = [

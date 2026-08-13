@@ -28,6 +28,7 @@ const cardFilterFields: FilterField[] = [
     { label: '模型', value: 'model' },
     { label: 'API', value: 'api' },
     { label: 'MCP', value: 'mcp' },
+    { label: '技能', value: 'skill' },
   ]},
   { type: 'select', key: 'status', placeholder: '发布状态', width: 130, options: [
     { label: '已上架', value: 'published' },
@@ -64,6 +65,7 @@ const renderTypeIcon = (type: string) => {
     api: { bg: '#e6f7ff', color: '#1890ff' },
     mcp: { bg: '#fff7e6', color: '#fa8c16' },
     knowledge: { bg: '#f6ffed', color: '#52c41a' },
+    skill: { bg: '#fff0f6', color: '#eb2f96' },
   };
   const c = colors[type] || { bg: '#f0f0f0', color: '#8c8c8c' };
   return (
@@ -185,7 +187,7 @@ export default function ResourceManagePage() {
 
   const statCards = [
     { key: 'all', title: '资源总数', value: activeResources.length, color: '#1677ff', bg: '#e6f4ff', icon: <AppstoreOutlined /> },
-    ...(['knowledge', 'model', 'api', 'mcp'] as ResourceType[]).map(type => ({
+    ...(['knowledge', 'model', 'api', 'mcp', 'skill'] as ResourceType[]).map(type => ({
       key: type, title: typeConfig[type].label,
       value: activeResources.filter(resource => resource.type === type).length,
       color: '#1677ff', bg: '#e6f4ff', icon: typeConfig[type].icon,
@@ -304,7 +306,7 @@ export default function ResourceManagePage() {
                 const res = getResource(rec.resourceId);
                 const type = res?.type;
                 const typeLabel = type ? typeConfig[type]?.label : '';
-                const colors: Record<string, string> = { model: '#722ed1', api: '#1890ff', mcp: '#fa8c16', knowledge: '#52c41a' };
+                const colors: Record<string, string> = { model: '#722ed1', api: '#1890ff', mcp: '#fa8c16', knowledge: '#52c41a', skill: '#eb2f96' };
                 return (
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                     {type && renderTypeIcon(type)}
@@ -593,7 +595,7 @@ export default function ResourceManagePage() {
                     {type && renderTypeIcon(type)}
                     <div>
                       <div style={{ fontWeight: 600, color: '#262626', fontSize: 13 }}>{res?.name || '资源不存在'}</div>
-                      {type && <Tag color={type === 'model' ? '#722ed1' : type === 'api' ? '#1890ff' : type === 'mcp' ? '#fa8c16' : '#52c41a'} style={{ marginTop: 2, borderRadius: 4, fontSize: 10, margin: 0, padding: '0 4px', height: 16, lineHeight: '14px' }}>{typeLabel}</Tag>}
+                      {type && <Tag color={type === 'model' ? '#722ed1' : type === 'api' ? '#1890ff' : type === 'mcp' ? '#fa8c16' : type === 'skill' ? '#eb2f96' : '#52c41a'} style={{ marginTop: 2, borderRadius: 4, fontSize: 10, margin: 0, padding: '0 4px', height: 16, lineHeight: '14px' }}>{typeLabel}</Tag>}
                     </div>
                   </div>
                 );

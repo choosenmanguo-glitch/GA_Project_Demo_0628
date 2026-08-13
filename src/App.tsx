@@ -28,8 +28,10 @@ import AgentTemplateMarket from './pages/agent-template';
 import AgentConfigPage from './pages/agent-config';
 import PlaceholderPage from './pages/Placeholder';
 import KnowledgeBasePage from './pages/knowledge';
+import SkillsPage from './pages/skills';
 import FileStorePage from './pages/filestore';
 import FileStoreDetailPage from './pages/filestore-detail';
+import SystemConfigPage from './pages/system-config';
 
 const ResourceSquarePage = lazy(() => import('./pages/resource-square'));
 const MyResourcesPage = lazy(() => import('./pages/my-resources'));
@@ -100,7 +102,7 @@ function AppRoutes() {
             <Route path="/dev/tools/plugins" element={<DevGuard><PlaceholderPage title="插件管理" description="集成DIFY的原生插件页面" /></DevGuard>} />
             <Route path="/dev/tools" element={<DevGuard><ToolsPage /></DevGuard>} />
             <Route path="/dev/connectors" element={<DevGuard><ConnectorsPage /></DevGuard>} />
-            <Route path="/dev/skills" element={<DevGuard><PlaceholderPage title="技能管理" description="可复用技能单元管理" /></DevGuard>} />
+            <Route path="/dev/skills" element={<DevGuard><SkillsPage /></DevGuard>} />
             <Route path="/dev/datasources" element={<DevGuard><DataSourcesPage /></DevGuard>} />
             <Route path="/dev/knowledge" element={<DevGuard><KnowledgeBasePage /></DevGuard>} />
             <Route path="/dev/filestore/:id" element={<DevGuard><FileStoreDetailPage /></DevGuard>} />
@@ -129,6 +131,7 @@ function AppRoutes() {
             <Route path="/manage/org" element={<PlaceholderPage title="组织管理" description="组织架构与部门管理" />} />
             <Route path="/manage/users" element={<PlaceholderPage title="用户管理" description="平台用户账号与权限管理" />} />
             <Route path="/manage/roles" element={<PlaceholderPage title="角色管理" description="角色定义与岗位权限配置" />} />
+            <Route path="/manage/system-config" element={<DevGuard><SystemConfigPage /></DevGuard>} />
           </Routes>
         </MasterLayout>
       } />

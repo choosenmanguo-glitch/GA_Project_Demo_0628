@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
   Alert, App as AntdApp, Button, Col, Drawer, Form, Input, InputNumber,
-  Radio, Row, Select, Space, Tabs, Tooltip,
+  Radio, Row, Select, Space, Tabs, Tooltip, Typography, Upload,
 } from 'antd';
 import {
-  DeleteOutlined, GlobalOutlined, InfoCircleOutlined, PlusOutlined,
+  DeleteOutlined, GlobalOutlined, InfoCircleOutlined, PlusOutlined, InboxOutlined,
 } from '@ant-design/icons';
 import type { CreateResourceInput, ResourceType } from '../types';
 import { typeConfig } from '../ui';
+import ReactMarkdown from 'react-markdown';
 
 interface ResourceTechnicalDrawerProps {
   open: boolean;
@@ -113,10 +114,14 @@ const GatewayPathField: React.FC<{ disabled?: boolean }> = ({ disabled }) => (
 
 const ResourceTechnicalDrawer: React.FC<ResourceTechnicalDrawerProps> = ({ open, type, initialValues, readOnly, onClose, onSave }) => {
   const { message } = AntdApp.useApp();
+  const { Text } = Typography;
   const [form] = Form.useForm<Partial<CreateResourceInput>>();
   const [apiMode, setApiMode] = useState<'manual' | 'openapi'>('manual');
   const authType = Form.useWatch('authType', form);
   const gatewayMode = Form.useWatch('gatewayMode', form);
+  const [skillConfig, setSkillConfig] = useState<CreateResourceInput['skillConfig']>();
+  const [skillUploadedName, setSkillUploadedName] = useState('');
+  const [skillMeta, setSkillMeta] = useState<{ name?: string; resourceKey?: string; description?: string }>({});
 
   useEffect(() => {
     if (!open) return;
@@ -127,12 +132,42 @@ const ResourceTechnicalDrawer: React.FC<ResourceTechnicalDrawerProps> = ({ open,
       requestParams: [], constantParams: [], responseParams: [], errorCodes: [], ...initialValues,
     });
     setApiMode(initialValues.swaggerSchema ? 'openapi' : 'manual');
+    setSkillConfig(initialValues.skillConfig);
+    setSkillUploadedName(initialValues.skillConfig ? '已配置技能包' : '');
+    setSkillMeta({});
   }, [form, initialValues, open]);
+
+  const handleSkillUpload = (file: File) => {
+    if (!file.name.toLowerCase().endsWith('.zip')) {
+      message.error('仅支持 ZIP 格式的技能包');
+      return Upload.LIST_IGNORE;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      message.error('文件过大，请压缩后重试');
+      return Upload.LIST_IGNORE;
+    }
+    const skillName = file.name.replace(/\.zip$/i, '');
+    const skillDescription = '（从 skill.md 解析的技能描述）';
+    const cfg: CreateResourceInput['skillConfig'] = {
+      inputSchema: { type: 'object' },
+      outputSchema: { type: 'object' },
+      timeout: 30,
+      retryCount: 0,
+      skillMd: `# ${skillName}\n\n${skillDescription}\n\n## 使用场景\n\n（待补充）\n\n## 用法\n\n（待补充）`,
+    };
+    setSkillConfig(cfg);
+    setSkillUploadedName(skillName);
+    setSkillMeta({ name: skillName, resourceKey: skillName, description: skillDescription });
+    message.success('技能包解析成功，请确认技能配置');
+    return false;
+  };
 
   const save = async () => {
     let values: Partial<CreateResourceInput>;
     try {
-      if (type === 'api' && apiMode === 'openapi') {
+      if (type === 'skill') {
+        values = { ...(await form.validateFields()), skillConfig, ...skillMeta, markdownIntro: skillConfig?.skillMd };
+      } else if (type === 'api' && apiMode === 'openapi') {
         values = { ...form.getFieldsValue(), ...(await form.validateFields(['swaggerSchema', 'gatewayPath'])) };
       } else if (type === 'model' && form.getFieldValue('gatewayMode') === 'external') {
         values = await form.validateFields();
@@ -189,6 +224,46 @@ const ResourceTechnicalDrawer: React.FC<ResourceTechnicalDrawerProps> = ({ open,
     <GatewayPathField disabled={readOnly || !!initialValues.gatewayPath} />
   </>;
 
+  const skillFields = <>
+    <Alert type="info" showIcon message="保存后自动回填基本信息" description="上传技能包并保存后，技能名称与描述将回填至「资源名称 / 唯一标识 / 资源描述」，skill.md 内容将回填至「资源介绍 (Markdown)」。仅当对应字段为空时才会回填。" style={{ marginBottom: 16 }} />
+    <Form.Item label="技能压缩包">
+      {!skillUploadedName ? (
+        <Upload accept=".zip" showUploadList={false} disabled={readOnly} beforeUpload={handleSkillUpload}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', border: '1px dashed #d9d9d9', borderRadius: 8, background: '#fafafa', cursor: readOnly ? 'not-allowed' : 'pointer' }}>
+            <InboxOutlined style={{ fontSize: 24, color: '#1677ff' }} />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 14, color: 'rgba(0,0,0,0.88)' }}>点击上传技能包</div>
+              <div style={{ fontSize: 12, color: '#999', marginTop: 2 }}>仅支持 .zip 格式，大小不超过 10MB，根目录需包含 skill.md</div>
+            </div>
+          </div>
+        </Upload>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', border: '1px solid #b7eb8f', borderRadius: 6, background: '#f6ffed' }}>
+          <span style={{ color: '#389e0d', fontSize: 13 }}>已上传：{skillUploadedName}.zip</span>
+          {!readOnly && <Button type="link" size="small" onClick={() => { setSkillConfig(undefined); setSkillUploadedName(''); setSkillMeta({}); }}>移除</Button>}
+        </div>
+      )}
+    </Form.Item>
+    {skillUploadedName && (
+      <div style={{ marginBottom: 16, padding: '12px 16px', background: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+        <div style={{ fontWeight: 600, marginBottom: 8 }}>解析结果</div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
+          <span style={{ color: '#8c8c8c', width: 64, flexShrink: 0 }}>技能名称</span>
+          <span>{skillMeta.name}</span>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <span style={{ color: '#8c8c8c', width: 64, flexShrink: 0 }}>技能描述</span>
+          <span>{skillMeta.description || '—'}</span>
+        </div>
+      </div>
+    )}
+    <Form.Item label="skill.md">
+      <div className="resource-markdown" style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: '12px 16px', maxHeight: 240, overflow: 'auto' }}>
+        {skillConfig?.skillMd ? <ReactMarkdown>{skillConfig.skillMd}</ReactMarkdown> : <Text type="secondary">上传技能包后解析回显 skill.md 内容</Text>}
+      </div>
+    </Form.Item>
+  </>;
+
   const manualApi = <>
     <Row gutter={16}><Col span={8}><Form.Item name="method" label="Method" rules={[{ required: true }]}><Select options={['GET', 'POST', 'PUT', 'DELETE'].map(value => ({ value }))} /></Form.Item></Col><Col span={16}><Form.Item name="url" label="URL" rules={[{ required: true }]}><Input placeholder="https://api.example.com/v1/..." /></Form.Item></Col></Row>
     <Form.Item name="authType" label="鉴权方式"><Select options={[{ value: 'none', label: '无鉴权 (Public)' }, { value: 'header', label: '请求头 (Header)' }, { value: 'query', label: '查询参数 (Query)' }]} /></Form.Item>
@@ -216,6 +291,7 @@ const ResourceTechnicalDrawer: React.FC<ResourceTechnicalDrawerProps> = ({ open,
       {type === 'api' && apiFields}
       {type === 'mcp' && mcpFields}
       {type === 'knowledge' && knowledgeFields}
+      {type === 'skill' && skillFields}
     </Form>
   </Drawer>;
 };

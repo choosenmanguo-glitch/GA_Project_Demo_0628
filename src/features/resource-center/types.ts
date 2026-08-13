@@ -1,4 +1,4 @@
-export type ResourceType = 'model' | 'api' | 'mcp' | 'knowledge';
+export type ResourceType = 'model' | 'api' | 'mcp' | 'knowledge' | 'skill';
 export type ResourceStatus = 'authorized' | 'view_only' | 'reviewing' | 'revoked';
 export type PublishStatus = 'pending' | 'reviewing' | 'published' | 'unpublishing' | 'offline';
 export type InstallStatus = 'installed' | 'not_installed' | 'failed' | 'installing';
@@ -77,6 +77,15 @@ export interface ResourceItem {
   constantParams?: ConstantParameter[];
   responseParams?: ResponseParameter[];
   errorCodes?: ErrorCodeParameter[];
+  /** 技能专属字段（type='skill' 时有效） */
+  skillConfig?: {
+    inputSchema?: Record<string, any>;
+    outputSchema?: Record<string, any>;
+    timeout?: number;
+    retryCount?: number;
+    /** 技能包中的 skill.md 内容 */
+    skillMd?: string;
+  };
 }
 
 export interface SpaceResourceGrant {
@@ -175,4 +184,5 @@ export interface CreateResourceInput {
   constantParams?: ConstantParameter[];
   responseParams?: ResponseParameter[];
   errorCodes?: ErrorCodeParameter[];
+  skillConfig?: ResourceItem['skillConfig'];
 }

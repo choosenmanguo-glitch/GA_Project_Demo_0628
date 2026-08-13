@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  ApiOutlined, CodeSandboxOutlined, ControlOutlined, FolderOutlined,
+  ApiOutlined, CodeSandboxOutlined, ControlOutlined, FolderOutlined, ThunderboltOutlined,
 } from '@ant-design/icons';
 import type { InstallStatus, PublicStrategy, PublishStatus, ResourceStatus, ResourceType } from './types';
 
@@ -9,6 +9,7 @@ export const typeConfig: Record<ResourceType, { label: string; color: string; bg
   api: { label: 'API', color: '#52c41a', bg: '#f6ffed', icon: <ApiOutlined /> },
   mcp: { label: 'MCP', color: '#722ed1', bg: '#f9f0ff', icon: <ControlOutlined /> },
   knowledge: { label: '知识库', color: '#fa8c16', bg: '#fff7e6', icon: <FolderOutlined /> },
+  skill: { label: '技能', color: '#eb2f96', bg: '#fff0f6', icon: <ThunderboltOutlined /> },
 };
 
 export const strategyConfig: Record<PublicStrategy, { label: string; color: string }> = {

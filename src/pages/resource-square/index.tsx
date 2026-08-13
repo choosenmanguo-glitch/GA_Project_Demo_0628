@@ -29,6 +29,7 @@ const tabKeys: { key: 'all' | ResourceType; label: string }[] = [
   { key: 'api', label: 'API' },
   { key: 'mcp', label: 'MCP' },
   { key: 'knowledge', label: '知识库' },
+  { key: 'skill', label: '技能' },
 ];
 
 const publishFilterOptions: { label: string; value: PublishStatus | 'all' }[] = [
@@ -47,6 +48,7 @@ const myPublishFilterFields: FilterField[] = [
     { label: 'API', value: 'api' },
     { label: 'MCP', value: 'mcp' },
     { label: '知识库', value: 'knowledge' },
+    { label: '技能', value: 'skill' },
   ]},
   { type: 'select', key: 'status', placeholder: '发布状态', width: 130, options: publishFilterOptions },
 ];
@@ -67,7 +69,10 @@ export default function ResourceSquarePage() {
   const [mainTab, setMainTab] = useState<'all' | 'mine' | 'myPublish'>('all');
 
   // --- 全部资源 ---
-  const [activeType, setActiveType] = useState<'all' | ResourceType>('all');
+  const [activeType, setActiveType] = useState<'all' | ResourceType>(() => {
+    const tab = new URLSearchParams(location.search).get('tab');
+    return tab && ['model', 'api', 'mcp', 'knowledge', 'skill'].includes(tab) ? (tab as ResourceType) : 'all';
+  });
   const [keyword, setKeyword] = useState('');
   const [cardPage, setCardPage] = useState(1);
   const [cardPageSize, setCardPageSize] = useState(12);
@@ -143,6 +148,7 @@ export default function ResourceSquarePage() {
       api: base.filter(r => r.type === 'api').length,
       mcp: base.filter(r => r.type === 'mcp').length,
       knowledge: base.filter(r => r.type === 'knowledge').length,
+      skill: base.filter(r => r.type === 'skill').length,
     };
   }, [currentSpace.id, getAccess, publishedResources]);
 

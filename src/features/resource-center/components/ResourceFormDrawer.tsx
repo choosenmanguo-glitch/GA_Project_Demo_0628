@@ -32,6 +32,7 @@ const workshopItems = [
   { id: 'w2', type: 'model' as const, name: 'Qwen-2.5-Mock', description: '模拟的现有模型资源以供拉取测试。', resourceKey: 'qwen-2.5-mock', gatewayPath: '/gateway/qwen-2.5-mock' },
   { id: 'w3', type: 'knowledge' as const, name: '技术面试题库', description: '各级岗位的面试真题汇总。', resourceKey: 'tech-interview-bank', gatewayPath: '/gateway/tech-interview-bank' },
   { id: 'w4', type: 'mcp' as const, name: 'Notion MCP', description: '未发布的 Notion 笔记连接器。', resourceKey: 'notion-mcp', gatewayPath: '/gateway/notion-mcp' },
+  { id: 'w5', type: 'skill' as const, name: '智能工单分类', description: '未发布的工单自动分类技能。', resourceKey: 'smart-ticket-classifier', skillConfig: { inputSchema: { type: 'object' }, outputSchema: { type: 'object' }, timeout: 30, retryCount: 1, skillMd: '# 智能工单分类\n\n## 使用场景\n\n工单自动分类。\n\n## 用法\n\n- 输入：工单文本\n- 输出：工单类别' } },
 ];
 
 const strategyDescriptions: Record<PublicStrategy, string> = {
@@ -230,7 +231,7 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
         </>}
       </Form>
     </Drawer>
-    <ResourceTechnicalDrawer open={technicalOpen} type={resourceType} initialValues={{ ...resource, ...form.getFieldsValue(), ...technicalValues }} readOnly={readOnly} onClose={() => setTechnicalOpen(false)} onSave={values => { setTechnicalValues(prev => ({ ...prev, ...values })); setTechnicalConfigured(true); setTechnicalOpen(false); message.success('详细配置保存成功'); }} />
+    <ResourceTechnicalDrawer open={technicalOpen} type={resourceType} initialValues={{ ...resource, ...form.getFieldsValue(), ...technicalValues }} readOnly={readOnly} onClose={() => setTechnicalOpen(false)} onSave={values => { const { name, resourceKey, description, markdownIntro, ...technical } = values; setTechnicalValues(prev => ({ ...prev, ...technical })); setTechnicalConfigured(true); if (!form.getFieldValue('name') && name) form.setFieldValue('name', name); if (!form.getFieldValue('resourceKey') && resourceKey) form.setFieldValue('resourceKey', resourceKey); if (!form.getFieldValue('description') && description) form.setFieldValue('description', description); if (!form.getFieldValue('markdownIntro') && markdownIntro) form.setFieldValue('markdownIntro', markdownIntro); setTechnicalOpen(false); message.success('详细配置保存成功'); }} />
     <Modal title="Markdown 预览" open={previewOpen} onCancel={() => setPreviewOpen(false)} footer={null} size="large"><div style={{ minHeight: 220, padding: 12 }}><ReactMarkdown>{markdown || '暂无内容'}</ReactMarkdown></div></Modal>
     <Modal
       title="添加可见对象"

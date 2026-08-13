@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Space, Typography, message, Drawer, Input, Avatar, Radio, Row, Col } from 'antd';
+import { Button, Space, Typography, message, Drawer, Input, Row, Col } from 'antd';
 import {
   AppstoreAddOutlined,
   ArrowRightOutlined,
@@ -23,6 +23,7 @@ import {
 } from '@ant-design/icons';
 import PageHeader from '@/components/PageHeader';
 import ConversationalCreateDrawer from '@/components/ConversationalCreateDrawer';
+import IconPicker, { type IconPickerValue } from '@/components/IconPicker';
 
 const { Text, Title } = Typography;
 
@@ -118,15 +119,6 @@ const agentTypes: { key: AgentType; title: string; desc: string; icon: React.Rea
     desc: '具备自主规划与工具调用能力，可分解复杂目标为子任务逐步执行。',
     example: '犯罪画像分析、综合情报研判、自主巡逻决策等',
   },
-];
-
-const avatarPresets = [
-  { key: 'police', color: '#1677ff', bg: '#e6f4ff', label: '警' },
-  { key: 'shield', color: '#52c41a', bg: '#f6ffed', label: '盾' },
-  { key: 'search', color: '#722ed1', bg: '#f9f0ff', label: '侦' },
-  { key: 'brain', color: '#fa8c16', bg: '#fff7e6', label: '析' },
-  { key: 'doc', color: '#13c2c2', bg: '#e6fffb', label: '文' },
-  { key: 'chat', color: '#eb2f96', bg: '#fff0f6', label: '答' },
 ];
 
 const standardBizTypes: { key: string; title: string; desc: string; icon: React.ReactNode; tags?: string[] }[] = [
@@ -343,7 +335,7 @@ export default function AgentBuildPage() {
   const [subType, setSubType] = useState('');
   const [agentName, setAgentName] = useState('');
   const [agentDesc, setAgentDesc] = useState('');
-  const [avatarKey, setAvatarKey] = useState('police');
+  const [avatarValue, setAvatarValue] = useState<IconPickerValue>({ mode: 'text' });
 
   const handleCreate = (key: CreationMethod['key']) => {
     if (key === 'form') {
@@ -351,7 +343,7 @@ export default function AgentBuildPage() {
       setSubType('');
       setAgentName('');
       setAgentDesc('');
-      setAvatarKey('police');
+      setAvatarValue({ mode: 'text' });
       setDrawerOpen(true);
       return;
     }
@@ -364,8 +356,6 @@ export default function AgentBuildPage() {
       return;
     }
   };
-
-  const selectedAvatar = avatarPresets.find(a => a.key === avatarKey)!;
 
   const handleSubmitForm = () => {
     if (!agentName.trim()) {
@@ -484,11 +474,13 @@ export default function AgentBuildPage() {
         onClose={() => setDrawerOpen(false)}
         size="large"
         styles={{ body: { padding: '24px 32px', background: '#fafbfc' } }}
-        extra={
-          <Button type="primary" icon={<ArrowRightOutlined />} style={{ borderRadius: 6 }}
-            onClick={handleSubmitForm}>
-            创建智能体
-          </Button>
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <Button onClick={() => setDrawerOpen(false)}>取消</Button>
+            <Button type="primary" icon={<ArrowRightOutlined />} onClick={handleSubmitForm}>
+              创建智能体
+            </Button>
+          </div>
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -634,34 +626,7 @@ export default function AgentBuildPage() {
           {/* Avatar selector */}
           <div>
             <div style={{ fontSize: 13, fontWeight: 650, color: G.textPrimary, marginBottom: 12 }}>头像</div>
-            <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-              {avatarPresets.map((a) => {
-                const isSel = avatarKey === a.key;
-                return (
-                  <div
-                    key={a.key}
-                    onClick={() => setAvatarKey(a.key)}
-                    style={{
-                      width: 48, height: 48, borderRadius: 12,
-                      background: a.bg, color: a.color,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 18, fontWeight: 700, cursor: 'pointer',
-                      border: isSel ? `2px solid ${a.color}` : '2px solid transparent',
-                      transition: 'all 0.2s',
-                      boxShadow: isSel ? `0 0 0 3px ${a.bg}` : 'none',
-                    }}
-                  >
-                    {a.label}
-                  </div>
-                );
-              })}
-              <div style={{ width: 48, height: 48, borderRadius: 12, border: '2px dashed #d9d9d9', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'border-color 0.2s', color: '#999', fontSize: 18 }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#1677ff'; e.currentTarget.style.color = '#1677ff'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#d9d9d9'; e.currentTarget.style.color = '#999'; }}
-              >
-                <PicLeftOutlined />
-              </div>
-            </div>
+            <IconPicker value={avatarValue} onChange={setAvatarValue} size={64} defaultName={agentName} />
           </div>
         </div>
       </Drawer>

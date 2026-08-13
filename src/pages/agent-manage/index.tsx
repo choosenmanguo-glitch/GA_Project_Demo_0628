@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table, Button, Space, Tag, Tooltip, Drawer, Form, Input, Select, message, Row, Col, Typography, Dropdown, Card, Pagination } from 'antd';
-import { PlusOutlined, ThunderboltOutlined, FileTextOutlined, RocketOutlined, SettingOutlined, FileDoneOutlined, EyeOutlined, EditOutlined, DeleteOutlined, CopyOutlined, SendOutlined, CheckCircleOutlined, ExclamationCircleOutlined, BarChartOutlined, MoreOutlined, ApiOutlined, DatabaseOutlined, RobotOutlined, ApartmentOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Tag, Tooltip, Drawer, Form, Input, Select, message, Row, Col, Typography, Dropdown, Card, Pagination, Popover, Modal } from 'antd';
+import type { InputRef } from 'antd';
+import { PlusOutlined, ThunderboltOutlined, FileTextOutlined, RocketOutlined, SettingOutlined, FileDoneOutlined, EyeOutlined, EditOutlined, DeleteOutlined, CopyOutlined, SendOutlined, CheckCircleOutlined, ExclamationCircleOutlined, BarChartOutlined, MoreOutlined, ApiOutlined, DatabaseOutlined, RobotOutlined, ApartmentOutlined, MessageOutlined, ArrowLeftOutlined, ArrowRightOutlined, QuestionCircleOutlined, ClusterOutlined, BranchesOutlined, SafetyCertificateOutlined, SearchOutlined, PicLeftOutlined, FormOutlined, AppstoreAddOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import PageHeader from '@/components/PageHeader';
 import FilterBar from '@/components/FilterBar';
@@ -9,6 +10,7 @@ import PaginationBar from '@/components/PaginationBar';
 import type { FilterField } from '@/components/FilterBar';
 import IconPicker, { type IconPickerValue } from '@/components/IconPicker';
 import { mockAgents, type AgentItem, type AgentType, type PublishType } from '@/mock/data';
+import { getChatLimitConfig } from '@/pages/system-config';
 
 const { TextArea } = Input;
 const { Text, Title } = Typography;
@@ -47,6 +49,64 @@ const filterFields: FilterField[] = [
   ]},
 ];
 
+// ──── 复制抽屉数据类型映射 ────
+const typeFromChinese: Record<string, string> = {
+  '标准智能体': 'standard',
+  '流程智能体': 'workflow',
+  '自主智能体': 'autonomous',
+};
+
+const subTypeFromChinese: Record<string, string> = {
+  '普通助手': 'chat',
+  '知识库问答': 'kbqa',
+  '智能分析问数': 'smart_query',
+  '文档编写': 'doc_gen',
+  '数据分析报告': 'data_report',
+  '文件审核': 'file_review',
+  '智能检索': 'smart_search',
+  '智能抽取': 'smart_extract',
+  '智能分类': 'smart_classify',
+  '工作流': 'workflow',
+  '对话流': 'chatflow',
+};
+
+const agentTypes = [
+  { key: 'standard', title: '标准智能体', icon: <RobotOutlined />,
+    desc: '单一任务执行，基于模型 + 提示词 + 知识库 + 工具的标准推理链路。',
+    example: '警情分析、笔录校对、便民问答等' },
+  { key: 'workflow', title: '流程智能体', icon: <ClusterOutlined />,
+    desc: '多步骤任务编排，支持条件分支与并行执行，适配复杂审批、研判流程。',
+    example: '案件流转审批、多部门协查、信息核查流程等' },
+  { key: 'autonomous', title: '自主智能体', icon: <SafetyCertificateOutlined />,
+    desc: '具备自主规划与工具调用能力，可分解复杂目标为子任务逐步执行。',
+    example: '犯罪画像分析、综合情报研判、自主巡逻决策等' },
+];
+
+const standardBizTypes = [
+  { key: 'chat', title: '普通助手', desc: '基于大语言模型的对话式智能助手，支持模型选型、提示词编排、开场白定义与文件上传策略配置。', icon: <MessageOutlined />, tags: ['对话助手', '通用'] },
+  { key: 'kbqa', title: '知识库问答', desc: '基于知识库的智能问答，支持关联多知识库并配置向量检索参数与重排序模型，实现精准回答。', icon: <SafetyCertificateOutlined />, tags: ['知识检索', 'RAG'] },
+  { key: 'smart_query', title: '智能分析问数', desc: '基于结构化数据源的智能分析，支持关联数据表与视图，实现自然语言驱动的数据查询与分析。', icon: <ThunderboltOutlined />, tags: ['数据查询', 'BI分析'] },
+  { key: 'doc_gen', title: '文档编写', desc: '结合知识库的文档智能生成，支持素材检索、引用溯源与文件上传，一键生成规范文档。', icon: <FileTextOutlined />, tags: ['文档生成', '写作'] },
+  { key: 'data_report', title: '数据分析报告', desc: '基于上传数据文件（CSV/XLSX 等）自动生成包含图表和分析结论的数据分析报告。', icon: <PicLeftOutlined />, tags: ['数据分析', '可视化'] },
+  { key: 'file_review', title: '文件审核', desc: '对上传文件进行合规性审核与内容质量审查，自动标记问题项并生成审核意见。', icon: <SafetyCertificateOutlined />, tags: ['审核', '合规'] },
+  { key: 'smart_search', title: '智能检索', desc: '基于知识库的精准信息检索，支持检索字段与回复字段配置，实现高效信息定位。', icon: <SearchOutlined />, tags: ['检索', '信息定位'] },
+  { key: 'smart_extract', title: '智能抽取', desc: '从非结构化文本中按预设规则提取结构化实体信息，如人名、地名、事件要素等。', icon: <FormOutlined />, tags: ['信息抽取', 'NER'] },
+  { key: 'smart_classify', title: '智能分类', desc: '对输入文本按预设分类规则进行自动归类，支持单标签与多标签分类模式。', icon: <AppstoreAddOutlined />, tags: ['分类', '标签'] },
+];
+
+const workflowSubTypes = [
+  { key: 'workflow', title: '工作流', desc: '将 AI 模型调用、知识检索、条件分支、代码执行等组件抽象为标准节点，通过拖拽、连线、配置组装为可重复执行的自动化流程。', icon: <BranchesOutlined />, tags: ['可视化编排', '自动化'] },
+  { key: 'chatflow', title: '对话流', desc: '以对话交互为主线的流程模式，会话变量跨轮次持久化。提供答案节点、变量赋值器、参数提取器等专用组件，适合多轮对话式业务。', icon: <MessageOutlined />, tags: ['多轮对话', '会话变量'] },
+];
+
+const G = {
+  textPrimary: 'rgba(0,0,0,0.88)',
+  textSecondary: 'rgba(0,0,0,0.45)',
+  textBody: 'rgba(0,0,0,0.65)',
+  textTertiary: 'rgba(0,0,0,0.25)',
+  bgBlue: '#f0f5ff',
+};
+
 export default function AgentManagePage() {
   const navigate = useNavigate();
   const [data, setData] = useState<AgentItem[]>(mockAgents);
@@ -66,6 +126,58 @@ export default function AgentManagePage() {
   const [externalForm] = Form.useForm();
   const [externalIcon, setExternalIcon] = useState<IconPickerValue>({ mode: 'text' });
   const externalName = Form.useWatch('name', externalForm);
+  const [chatAgent, setChatAgent] = useState<AgentItem | null>(null);
+  const [chatTipModalOpen, setChatTipModalOpen] = useState(false);
+  const [todayRemaining, setTodayRemaining] = useState(10);
+
+  // ──── 复制抽屉状态 ────
+  const [copyDrawerOpen, setCopyDrawerOpen] = useState(false);
+  const [copyAgentType, setCopyAgentType] = useState('standard');
+  const [copySubType, setCopySubType] = useState('');
+  const [copyAgentName, setCopyAgentName] = useState('');
+  const [copyAgentDesc, setCopyAgentDesc] = useState('');
+  const [copyAvatarValue, setCopyAvatarValue] = useState<IconPickerValue>({ mode: 'text' });
+  const copyNameInputRef = useRef<InputRef>(null);
+
+  const handleCopyAgent = (agent: AgentItem) => {
+    setCopyAgentType(typeFromChinese[agent.type] || 'standard');
+    setCopySubType(subTypeFromChinese[agent.subType] || agent.subType || '');
+    setCopyAgentName(agent.name + '（1）');
+    setCopyAgentDesc(agent.description || '');
+    setCopyAvatarValue({ mode: 'text', text: agent.name.charAt(0) });
+    setCopyDrawerOpen(true);
+    setTimeout(() => {
+      copyNameInputRef.current?.focus();
+      copyNameInputRef.current?.select();
+    }, 150);
+  };
+
+  const chatConfig = getChatLimitConfig();
+
+  const todayKey = `chat_usage_${new Date().toISOString().slice(0, 10)}`;
+  const getUsageCount = () => parseInt(localStorage.getItem(todayKey) || '0', 10);
+  const incrementUsage = () => {
+    const current = getUsageCount();
+    localStorage.setItem(todayKey, String(current + 1));
+    setTodayRemaining(Math.max(0, chatConfig.dailyLimit - (current + 1)));
+  };
+
+  const openChat = (agent: AgentItem) => {
+    setChatAgent(agent);
+    if (chatConfig.enabled && localStorage.getItem('chat_dev_tip_dismissed') !== '1') {
+      setChatTipModalOpen(true);
+    }
+  };
+
+  const handleChatSend = () => {
+    if (chatConfig.enabled) {
+      incrementUsage();
+    }
+  };
+
+  useEffect(() => {
+    setTodayRemaining(Math.max(0, chatConfig.dailyLimit - getUsageCount()));
+  }, []);
 
   const activeStatIndex = activeStat === 'all' ? 0 : activeStat === '标准智能体' ? 1 : activeStat === '流程智能体' ? 2 : activeStat === '自主智能体' ? 3 : activeStat === '外部智能体' ? 4 : -1;
 
@@ -116,13 +228,14 @@ export default function AgentManagePage() {
     { title: '更新时间', dataIndex: 'updateTime', width: 110 },
     { title: '操作', width: 220, render: (_, r) => {
       const moreItems = [
+        { key: 'chat', icon: <MessageOutlined />, label: '去对话', onClick: () => openChat(r) },
         { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, onClick: () => message.success('已删除') },
       ];
       return (
         <Space size={0}>
           <Button type="link" size="small" icon={<EditOutlined />} onClick={() => setViewingAgent(r)}>编辑</Button>
           <Button type="link" size="small" icon={<EditOutlined />} onClick={() => navigate(`/dev/agent-config${r.type === '外部智能体' ? '?external=true' : ''}`)}>配置</Button>
-          {r.type !== '外部智能体' && <Button type="link" size="small" icon={<CopyOutlined />}>复制</Button>}
+          {r.type !== '外部智能体' && <Button type="link" size="small" icon={<CopyOutlined />} onClick={() => handleCopyAgent(r)}>复制</Button>}
           <Dropdown menu={{
             items: moreItems.map(item => ({
               key: item.key,
@@ -215,7 +328,8 @@ export default function AgentManagePage() {
             menu={{
               items: [
                 { key: 'view', icon: <EyeOutlined />, label: '编辑', onClick: ({ domEvent }) => { domEvent.stopPropagation(); onView(); } },
-                ...(agent.type !== '外部智能体' ? [{ key: 'copy', icon: <CopyOutlined />, label: '复制', onClick: ({ domEvent }: any) => { domEvent.stopPropagation(); message.success('已复制'); } }] : []),
+                { key: 'chat', icon: <MessageOutlined />, label: '去对话', onClick: ({ domEvent }) => { domEvent.stopPropagation(); openChat(agent); } },
+                ...(agent.type !== '外部智能体' ? [{ key: 'copy', icon: <CopyOutlined />, label: '复制', onClick: ({ domEvent }: any) => { domEvent.stopPropagation(); handleCopyAgent(agent); } }] : []),
                 { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, onClick: ({ domEvent }) => { domEvent.stopPropagation(); message.success('已删除'); } },
               ],
             }}
@@ -243,6 +357,50 @@ export default function AgentManagePage() {
 
   return (
     <div style={{ flex: 1, padding: '16px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      {chatAgent ? (
+        /* 对话二级页面 */
+        <>
+          <div style={{ padding: '12px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <ArrowLeftOutlined
+                style={{ fontSize: 16, color: 'rgba(0,0,0,0.45)', cursor: 'pointer' }}
+                onClick={() => setChatAgent(null)}
+              />
+              <span style={{ fontSize: 18, fontWeight: 600, color: 'rgba(0,0,0,0.88)' }}>
+                {chatAgent.name}
+              </span>
+              <Popover content="在此与智能体进行对话交互" title="功能说明" trigger="hover" placement="right">
+                <QuestionCircleOutlined style={{ fontSize: 15, color: 'rgba(0,0,0,0.25)', cursor: 'pointer' }} />
+              </Popover>
+            </div>
+            {chatConfig.enabled && (
+              <Text type="secondary" style={{ fontSize: 13 }}>今日剩余使用次数：{todayRemaining}/{chatConfig.dailyLimit}</Text>
+            )}
+          </div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ flex: 1, padding: 24, background: '#f5f5f5', overflow: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Text type="secondary" style={{ fontSize: 14 }}>嵌入助手对话页面</Text>
+            </div>
+            <div style={{
+              padding: '12px 16px', borderTop: '1px solid #f0f0f0', background: '#fff',
+              display: 'flex', alignItems: 'center', gap: 12, borderRadius: '0 0 8px 8px',
+            }}>
+              <Input placeholder="输入消息..." style={{ flex: 1 }} disabled={chatConfig.enabled && todayRemaining <= 0} />
+              <Tooltip title={chatConfig.enabled && todayRemaining <= 0 ? '今日使用次数已用完' : ''}>
+                <Button
+                  type="primary"
+                  icon={<SendOutlined />}
+                  disabled={chatConfig.enabled && todayRemaining <= 0}
+                  onClick={handleChatSend}
+                >
+                  发送
+                </Button>
+              </Tooltip>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
         <PageHeader title="智能体管理" hint="管理已创建的智能体，支持列表和卡片两种视图，可按类型和发布状态筛选" />
         <Row gutter={16} style={{ padding: '0 0 12px' }}>
           {statCards.map((item, idx) => {
@@ -513,6 +671,180 @@ export default function AgentManagePage() {
           </div>
         )}
       </Drawer>
+
+      {/* 复制智能体抽屉 */}
+      <Drawer
+        title={<span style={{ fontSize: 16, fontWeight: 650 }}>复制智能体</span>}
+        open={copyDrawerOpen}
+        onClose={() => setCopyDrawerOpen(false)}
+        size="large"
+        styles={{ body: { padding: '24px 32px', background: '#fafbfc' } }}
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <Button onClick={() => setCopyDrawerOpen(false)}>取消</Button>
+            <Button type="primary" icon={<ArrowRightOutlined />} onClick={() => { setCopyDrawerOpen(false); navigate('/dev/agent-config'); }}>
+              创建智能体
+            </Button>
+          </div>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+          {/* Agent type selection — readonly */}
+          <div style={{ pointerEvents: 'none', opacity: 0.7 }}>
+            <div style={{ fontSize: 13, fontWeight: 650, color: G.textPrimary, marginBottom: 12 }}>
+              智能体类型
+              <span style={{ color: '#999', fontWeight: 400, marginLeft: 8, fontSize: 12 }}>(只读)</span>
+            </div>
+            <Row gutter={16}>
+              {agentTypes.map((t) => {
+                const isSelected = copyAgentType === t.key;
+                return (
+                  <Col span={8} key={t.key}>
+                    <div style={{
+                      background: isSelected ? '#fff' : '#fafafa',
+                      border: isSelected ? '2px solid #1677ff' : '2px solid #f0f0f0',
+                      borderRadius: 10, padding: '18px 16px',
+                      transition: 'all 0.2s', height: '100%',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <span style={{ color: isSelected ? '#1677ff' : '#999', fontSize: 18 }}>{t.icon}</span>
+                        <span style={{ fontWeight: 650, fontSize: 14, color: isSelected ? G.textPrimary : G.textBody }}>{t.title}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: G.textSecondary, lineHeight: '20px', marginBottom: 8 }}>{t.desc}</div>
+                      <div style={{ fontSize: 11, color: G.textTertiary, padding: '4px 8px', background: '#f5f5f5', borderRadius: 4, display: 'inline-block' }}>
+                        典型场景：{t.example}
+                      </div>
+                    </div>
+                  </Col>
+                );
+              })}
+            </Row>
+          </div>
+
+          {/* Subtype selection — readonly */}
+          {copyAgentType !== 'autonomous' && (
+            <div style={{ pointerEvents: 'none', opacity: 0.7 }}>
+              <div style={{ fontSize: 13, fontWeight: 650, color: G.textPrimary, marginBottom: 12 }}>
+                子类型 <span style={{ color: '#ff4d4f' }}>*</span>
+                <span style={{ color: '#999', fontWeight: 400, marginLeft: 8, fontSize: 12 }}>(只读)</span>
+              </div>
+              {copyAgentType === 'standard' ? (
+                <Row gutter={[12, 12]}>
+                  {standardBizTypes.map((st) => {
+                    const isSel = copySubType === st.key;
+                    return (
+                      <Col span={8} key={st.key}>
+                        <div style={{
+                          background: isSel ? '#fff' : '#fafafa',
+                          border: isSel ? '2px solid #1677ff' : '2px solid #f0f0f0',
+                          borderRadius: 10, padding: '14px 14px', transition: 'all 0.2s', height: '100%', minHeight: 132,
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                            <span style={{ color: isSel ? '#1677ff' : '#999', fontSize: 16 }}>{st.icon}</span>
+                            <span style={{ fontWeight: 650, fontSize: 13, color: isSel ? G.textPrimary : G.textBody }}>{st.title}</span>
+                          </div>
+                          <div style={{ fontSize: 11, color: G.textSecondary, lineHeight: '18px', marginBottom: 8 }}>{st.desc}</div>
+                          {st.tags && (
+                            <Space size={4}>
+                              {st.tags.map(tag => (
+                                <span key={tag} style={{ fontSize: 10, color: isSel ? '#1677ff' : '#aaa', background: isSel ? G.bgBlue : '#f5f5f5', padding: '1px 6px', borderRadius: 3 }}>{tag}</span>
+                              ))}
+                            </Space>
+                          )}
+                        </div>
+                      </Col>
+                    );
+                  })}
+                </Row>
+              ) : (
+                <Row gutter={16}>
+                  {workflowSubTypes.map((wt) => {
+                    const isSel = copySubType === wt.key;
+                    return (
+                      <Col span={12} key={wt.key}>
+                        <div style={{
+                          background: isSel ? '#fff' : '#fafafa',
+                          border: isSel ? '2px solid #1677ff' : '2px solid #f0f0f0',
+                          borderRadius: 10, padding: '18px 20px', transition: 'all 0.2s', height: '100%',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                            <span style={{ fontSize: 28, color: isSel ? '#1677ff' : '#999' }}>{wt.icon}</span>
+                            <span style={{ fontWeight: 650, fontSize: 14, color: isSel ? G.textPrimary : G.textBody }}>{wt.title}</span>
+                          </div>
+                          <div style={{ fontSize: 12, color: G.textSecondary, lineHeight: '20px', marginBottom: 10 }}>{wt.desc}</div>
+                          {wt.tags && (
+                            <Space size={4}>
+                              {wt.tags.map(tag => (
+                                <span key={tag} style={{ fontSize: 10, color: isSel ? '#1677ff' : '#aaa', background: isSel ? G.bgBlue : '#f5f5f5', padding: '1px 6px', borderRadius: 3 }}>{tag}</span>
+                              ))}
+                            </Space>
+                          )}
+                        </div>
+                      </Col>
+                    );
+                  })}
+                </Row>
+              )}
+            </div>
+          )}
+
+          {/* Agent name */}
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 650, color: G.textPrimary, marginBottom: 8 }}>
+              智能体名称 <span style={{ color: '#ff4d4f' }}>*</span>
+            </div>
+            <Input
+              ref={copyNameInputRef}
+              placeholder="请输入智能体名称"
+              maxLength={50}
+              showCount
+              value={copyAgentName}
+              onChange={(e) => setCopyAgentName(e.target.value)}
+              style={{ borderRadius: 8 }}
+            />
+          </div>
+
+          {/* Agent description */}
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 650, color: G.textPrimary, marginBottom: 8 }}>智能体描述</div>
+            <Input.TextArea
+              placeholder="描述该智能体的用途和适用范围，方便团队成员理解和使用"
+              rows={3}
+              maxLength={200}
+              showCount
+              value={copyAgentDesc}
+              onChange={(e) => setCopyAgentDesc(e.target.value)}
+              style={{ borderRadius: 8 }}
+            />
+          </div>
+
+          {/* Avatar selector */}
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 650, color: G.textPrimary, marginBottom: 12 }}>头像</div>
+            <IconPicker value={copyAvatarValue} onChange={setCopyAvatarValue} size={64} defaultName={copyAgentName} />
+          </div>
+        </div>
+      </Drawer>
+        </>
+      )}
+
+      {/* 对话页使用提示弹窗 */}
+      <Modal
+        title="使用提示"
+        open={chatTipModalOpen}
+        onOk={() => {
+          localStorage.setItem('chat_dev_tip_dismissed', '1');
+          setChatTipModalOpen(false);
+        }}
+        onCancel={() => setChatTipModalOpen(false)}
+        okText="知道了"
+        cancelText="关闭"
+        width={480}
+      >
+        <Text>
+          开发中心的对话页面仅供测试，限制每日使用次数（{chatConfig.dailyLimit}次），如需正常使用，请将智能体发布到门户，并前往门户使用。
+        </Text>
+      </Modal>
     </div>
   );
 }

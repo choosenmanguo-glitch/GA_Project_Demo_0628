@@ -25,6 +25,7 @@ import {
   BankOutlined,
   AuditOutlined,
   CloudServerOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import React from 'react';
@@ -57,6 +58,7 @@ export const devSideMenuItems: MenuProps['items'] = [
       { key: '/dev/models', icon: React.createElement(CodeSandboxOutlined), label: '模型' },
       { key: '/dev/tools', icon: React.createElement(ToolOutlined), label: '工具' },
       { key: '/dev/connectors', icon: React.createElement(ApiOutlined), label: '连接器' },
+      { key: '/dev/skills', icon: React.createElement(ThunderboltOutlined), label: '技能' },
       { key: '/dev/datasources', icon: React.createElement(DatabaseOutlined), label: '数据连接' },
       { key: '/dev/knowledge', icon: React.createElement(FolderOutlined), label: '知识库' },
       { key: '/dev/filestore', icon: React.createElement(CloudServerOutlined), label: '文件库' },
@@ -124,6 +126,7 @@ export const moduleSideMenus: Record<string, MenuProps['items']> = {
       { key: '/manage/resource-permissions', icon: React.createElement(AuditOutlined), label: '资源权限' },
     ]},
     { type: 'group', label: '系统管理', children: [
+      { key: '/manage/system-config', icon: React.createElement(SettingOutlined), label: '系统配置' },
       { key: '/manage/org', icon: React.createElement(BankOutlined), label: '组织管理' },
       { key: '/manage/users', icon: React.createElement(UserOutlined), label: '用户管理' },
       { key: '/manage/roles', icon: React.createElement(TeamOutlined), label: '角色管理' },

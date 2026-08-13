@@ -1,4 +1,5 @@
 /** Mock 数据 - 所有模块的模拟数据集中管理 */
+import type { IconPickerValue } from '@/components/IconPicker';
 
 // ==================== 模型管理 ====================
 export interface ModelItem {
@@ -52,6 +53,154 @@ export const mockModelSources: ModelSourceItem[] = [
   { id: 'ms-2', name: '阿里云百炼平台', deployType: '公网', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', apiKey: 'sk-****def456', remark: '阿里云模型服务平台', creator: '管理员', createTime: '2026-02-15', updateTime: '2026-06-18' },
   { id: 'ms-3', name: '本地 GPU 集群', deployType: '本地', baseUrl: 'http://10.0.1.100:8080/v1', apiKey: 'local-****ghi789', remark: '本地 vLLM 推理服务', creator: '张警官', createTime: '2026-03-20', updateTime: '2026-06-22' },
   { id: 'ms-4', name: '智谱 AI 开放平台', deployType: '公网', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', apiKey: 'sk-****jkl012', remark: '智谱 GLM 系列模型 API', creator: '管理员', createTime: '2026-04-01', updateTime: '2026-06-15' },
+];
+
+// ==================== 技能管理 ====================
+export type SkillSource = 'local' | 'square';
+
+export interface SkillConfig {
+  inputSchema?: Record<string, any>;
+  outputSchema?: Record<string, any>;
+  timeout?: number;
+  retryCount?: number;
+}
+
+export interface SkillItem {
+  id: string;
+  name: string;
+  /** 唯一标识（小写字母、数字、连字符），创建后不可修改 */
+  resourceKey?: string;
+  description: string;
+  /** 当前头像（统一头像组件） */
+  avatar?: IconPickerValue;
+  source: SkillSource;
+  sourceResourceId?: string;
+  config: SkillConfig;
+  callCount: number;
+  status: 'active' | 'inactive';
+  createTime: string;
+  updateTime: string;
+  creator: string;
+  tags?: string[];
+  /** 引用该技能的智能体名称列表（用于删除校验） */
+  referencedAgents?: string[];
+  /** 技能包（SKILL/skill.md）中的真实名称 */
+  packageName?: string;
+  /** 技能包（SKILL/skill.md）中的真实描述 */
+  packageDescription?: string;
+  /** 技能包中的使用场景、用法等 Markdown 文本 */
+  usageMarkdown?: string;
+}
+
+export const mockSkills: SkillItem[] = [
+  {
+    id: 'sk1',
+    name: '警情分类与分级',
+    resourceKey: 'police-incident-classifier',
+    description: '根据警情描述自动分类并判定紧急等级，支持多级分类标签',
+    avatar: { mode: 'icon', iconKey: 'thunder', iconBgColor: '#fff0f6', iconColor: '#eb2f96' },
+    source: 'local',
+    config: {
+      inputSchema: { type: 'object', properties: { text: { type: 'string' } } },
+      outputSchema: { type: 'object', properties: { category: { type: 'string' }, level: { type: 'string' } } },
+      timeout: 30,
+      retryCount: 0,
+    },
+    callCount: 128,
+    status: 'active',
+    createTime: '2026-06-15 10:30:00',
+    updateTime: '2026-08-01 14:20:00',
+    creator: '张明',
+    tags: ['警情', '分类'],
+    referencedAgents: ['反诈智能助手', '接警研判机器人'],
+    packageName: 'police-incident-classifier',
+    packageDescription: '对警情文本进行自动分类并判定紧急等级，返回警情类别与紧急等级。',
+    usageMarkdown: `## 使用场景\n\n适用于 110 接处警、线索核查等场景，对警情描述文本进行自动分类与紧急等级判定。\n\n## 用法\n\n- 输入：警情描述文本\n- 输出：警情类别（如「盗窃」「诈骗」「纠纷」）与紧急等级（高 / 中 / 低）\n\n## 示例\n\n\`\`\`json\n{ "text": "某小区发生入室盗窃，嫌疑人已逃离现场" }\n\`\`\`\n\n> 建议配合接警研判机器人使用，分类结果可直接进入警情流转。`,
+  },
+  {
+    id: 'sk2',
+    name: '身份证信息核验',
+    resourceKey: 'id-card-verify',
+    description: '调用人口信息查询API，核验身份证号与姓名匹配性',
+    avatar: { mode: 'icon', iconKey: 'safety', iconBgColor: '#e6f4ff', iconColor: '#1677ff' },
+    source: 'square',
+    sourceResourceId: 'skill-2',
+    config: {
+      inputSchema: { type: 'object', properties: { idNo: { type: 'string' }, name: { type: 'string' } } },
+      outputSchema: { type: 'object', properties: { matched: { type: 'boolean' } } },
+      timeout: 10,
+      retryCount: 1,
+    },
+    callCount: 56,
+    status: 'active',
+    createTime: '2026-07-20 09:00:00',
+    updateTime: '2026-08-10 11:00:00',
+    creator: '数据资源中心',
+    tags: ['身份核验', 'API'],
+    packageName: 'id-card-verify',
+    packageDescription: '调用人口信息查询接口，核验身份证号与姓名的匹配性。',
+    usageMarkdown: `## 使用场景\n\n人员身份核验、实名认证、开户审核等场景。\n\n## 用法\n\n- 输入：身份证号 + 姓名\n- 输出：是否匹配（boolean）\n\n## 示例\n\n\`\`\`json\n{ "idNo": "110101199001011234", "name": "张三" }\n\`\`\``,
+  },
+  {
+    id: 'sk3',
+    name: '电诈资金链路分析',
+    resourceKey: 'fraud-fund-chain-analysis',
+    description: '基于多层级转账记录识别可疑卡号群体，按可疑程度排序',
+    avatar: { mode: 'icon', iconKey: 'search', iconBgColor: '#fff7e6', iconColor: '#fa8c16' },
+    source: 'local',
+    config: {
+      inputSchema: { type: 'object', properties: { records: { type: 'array' } } },
+      outputSchema: { type: 'object', properties: { suspicious: { type: 'array' } } },
+      timeout: 60,
+      retryCount: 2,
+    },
+    callCount: 89,
+    status: 'active',
+    createTime: '2026-05-28 16:00:00',
+    updateTime: '2026-07-30 10:00:00',
+    creator: '李强',
+    tags: ['反诈', '资金'],
+    packageName: 'fraud-fund-chain-analysis',
+    packageDescription: '基于多层级转账记录识别可疑卡号群体，并按可疑程度排序输出。',
+    usageMarkdown: `## 使用场景\n\n反诈资金研判，识别洗钱链路与可疑卡号群体。\n\n## 用法\n\n- 输入：转账记录列表\n- 输出：可疑卡号列表（按可疑程度降序）\n\n## 注意事项\n\n> 分析结果仅作为研判线索，需结合人工复核。`,
+  },
+  {
+    id: 'sk4',
+    name: '交通事故责任认定辅助',
+    resourceKey: 'traffic-accident-liability',
+    description: '基于现场勘查记录与当事人陈述，分析事故原因并判定责任方',
+    avatar: { mode: 'icon', iconKey: 'file', iconBgColor: '#f6ffed', iconColor: '#52c41a' },
+    source: 'square',
+    sourceResourceId: 'skill-3',
+    config: { inputSchema: { type: 'object' }, outputSchema: { type: 'object' }, timeout: 45, retryCount: 1 },
+    callCount: 12,
+    status: 'active',
+    createTime: '2026-08-01 08:00:00',
+    updateTime: '2026-08-11 15:30:00',
+    creator: '交通管理局',
+    tags: ['交通', '事故'],
+    packageName: 'traffic-accident-liability',
+    packageDescription: '基于现场勘查记录与当事人陈述，分析事故原因并判定责任方。',
+    usageMarkdown: `## 使用场景\n\n交通事故处理，辅助责任认定。\n\n## 用法\n\n- 输入：现场勘查记录 + 当事人陈述\n- 输出：事故原因分析 + 责任方判定建议`,
+  },
+  {
+    id: 'sk5',
+    name: '走失人员协查通报生成',
+    resourceKey: 'missing-person-bulletin',
+    description: '根据走失人员特征快速生成规范格式的协查通报',
+    avatar: { mode: 'text', text: '走', textBgColor: '#fff7e6', textColor: '#fa8c16' },
+    source: 'local',
+    config: { inputSchema: { type: 'object' }, outputSchema: { type: 'object' }, timeout: 20, retryCount: 0 },
+    callCount: 0,
+    status: 'inactive',
+    createTime: '2026-07-01 10:00:00',
+    updateTime: '2026-08-05 09:00:00',
+    creator: '王芳',
+    tags: ['治安', '通报'],
+    packageName: 'missing-person-bulletin',
+    packageDescription: '根据走失人员特征快速生成规范格式的协查通报文本。',
+    usageMarkdown: `## 使用场景\n\n治安管理部门发布走失人员协查通报。\n\n## 用法\n\n- 输入：走失人员姓名、性别、年龄、体貌特征、最后出现地点等\n- 输出：规范格式的协查通报文本`,
+  },
 ];
 
 // ==================== 提示词管理 ====================
