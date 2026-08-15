@@ -178,6 +178,23 @@ export const initialAuditLogs: ResourceAuditLog[] = [
   { id: 'log-4', resourceId: '5', time: '2026-05-10 10:00', operator: '王五', action: '提交发布申请', detail: '申请发布至资源广场。' },
 ];
 
+export interface ExternalGatewayModel {
+  modelName: string;
+  name: string;
+  resourceKey: string;
+  description: string;
+  baseurl: string;
+  path: string;
+}
+
+/** 模拟外部大模型网关「模型路由选择接口」返回的模型路由数据 */
+export const externalGatewayModels: ExternalGatewayModel[] = [
+  { modelName: 'gpt-4o', name: 'GPT-4o 大模型', resourceKey: 'gpt-4o', description: '外部网关提供的 GPT-4o 大模型服务，用于复杂推理与内容生成。', baseurl: 'https://api.external-gw.com/v1', path: '/chat/completions' },
+  { modelName: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', resourceKey: 'claude-3-5-sonnet', description: '外部网关提供的 Claude 大模型服务，擅长长文本与代码理解。', baseurl: 'https://api.external-gw.com/v1', path: '/chat/completions' },
+  { modelName: 'deepseek-v3', name: 'DeepSeek-V3', resourceKey: 'deepseek-v3', description: '外部网关提供的 DeepSeek 大模型服务，兼顾性能与成本。', baseurl: 'https://api.external-gw.com/v1', path: '/chat/completions' },
+  { modelName: 'bge-large-zh', name: 'BGE-Large 向量模型', resourceKey: 'bge-large-zh', description: '外部网关提供的中文向量化模型服务。', baseurl: 'https://api.external-gw.com/v1', path: '/embeddings' },
+];
+
 export const initialPublishApprovals: PublishApproval[] = [
   {
     id: 'pub-pending-1', resourceId: 'pub-approval-demo', applicant: '演示用户',

@@ -15,6 +15,7 @@ interface ResourceTechnicalDrawerProps {
   type: ResourceType;
   initialValues: Partial<CreateResourceInput>;
   readOnly?: boolean;
+  gatewayLocked?: boolean;
   onClose: () => void;
   onSave: (values: Partial<CreateResourceInput>) => void;
 }
@@ -112,7 +113,7 @@ const GatewayPathField: React.FC<{ disabled?: boolean }> = ({ disabled }) => (
   </div>
 );
 
-const ResourceTechnicalDrawer: React.FC<ResourceTechnicalDrawerProps> = ({ open, type, initialValues, readOnly, onClose, onSave }) => {
+const ResourceTechnicalDrawer: React.FC<ResourceTechnicalDrawerProps> = ({ open, type, initialValues, readOnly, gatewayLocked, onClose, onSave }) => {
   const { message } = AntdApp.useApp();
   const { Text } = Typography;
   const [form] = Form.useForm<Partial<CreateResourceInput>>();
@@ -172,6 +173,7 @@ const ResourceTechnicalDrawer: React.FC<ResourceTechnicalDrawerProps> = ({ open,
       } else if (type === 'model' && form.getFieldValue('gatewayMode') === 'external') {
         values = await form.validateFields();
         delete values.gatewayPath;
+        delete values.apikey;
       } else {
         values = await form.validateFields();
       }
@@ -194,16 +196,16 @@ const ResourceTechnicalDrawer: React.FC<ResourceTechnicalDrawerProps> = ({ open,
     <Form.Item name="modelType" label="模型类型" rules={[{ required: true }]}><Select onChange={value => form.setFieldValue('path', value === 'LargeModel' ? '/chat/completions' : value === 'VectorModel' ? '/embeddings' : '/rerank')} options={[{ value: 'LargeModel', label: '大模型' }, { value: 'VectorModel', label: '向量化模型' }, { value: 'RerankModel', label: 'rerank 模型' }]} /></Form.Item>
     <Form.Item name="baseurl" label="Base URL" rules={[{ required: true }]}><Input placeholder="https://..." /></Form.Item>
     <Form.Item name="path" label="Path" tooltip="当服务路径与标准不一致时可自主修改"><Input placeholder="/chat/completions" /></Form.Item>
-    <Form.Item name="apikey" label="API Key"><Input.Password placeholder="输入 API Key" /></Form.Item>
+    {gatewayMode !== 'external' && <Form.Item name="apikey" label="API Key"><Input.Password placeholder="输入 API Key" /></Form.Item>}
     <Form.Item name="modelName" label="模型名称" rules={[{ required: true }, { pattern: /^[a-zA-Z0-9_.-]+$/, message: '只能包含字母、数字、下划线、短横线或点' }]}><Input /></Form.Item>
     <Form.Item name="deploymentMode" label="部署方式" rules={[{ required: true }]}><Radio.Group options={[{ value: 'Internal', label: '内网' }, { value: 'Public', label: '公网' }]} /></Form.Item>
-    <Form.Item name="gatewayMode" label="网关设置" rules={[{ required: true }]} tooltip="内置网关：将大模型注册到 Higress，代理后使用；外部网关：直接使用外部网关路由，不再由 Higress 代理。">
+    <Form.Item name="gatewayMode" label="连接方式" rules={[{ required: true }]} tooltip="代理连接：将大模型注册到 Higress，代理后使用；直接连接：直接使用外部网关路由，不再由 Higress 代理。">
       <Radio.Group
         options={[
-          { value: 'builtin', label: '内置网关' },
-          { value: 'external', label: '外部网关' },
+          { value: 'builtin', label: '代理连接' },
+          { value: 'external', label: '直接连接' },
         ]}
-        disabled={readOnly}
+        disabled={readOnly || gatewayLocked}
       />
     </Form.Item>
     {gatewayMode !== 'external' && <GatewayPathField disabled={readOnly || !!initialValues.gatewayPath} />}

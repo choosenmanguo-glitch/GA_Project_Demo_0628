@@ -12,6 +12,12 @@ export const typeConfig: Record<ResourceType, { label: string; color: string; bg
   skill: { label: '技能', color: '#eb2f96', bg: '#fff0f6', icon: <ThunderboltOutlined /> },
 };
 
+export const modelTypeConfig: Record<'LargeModel' | 'VectorModel' | 'RerankModel', string> = {
+  LargeModel: '大模型',
+  VectorModel: '向量化模型',
+  RerankModel: 'rerank 模型',
+};
+
 export const strategyConfig: Record<PublicStrategy, { label: string; color: string }> = {
   public: { label: '完全公开', color: 'success' },
   visible: { label: '公开可见，授权可用', color: 'processing' },

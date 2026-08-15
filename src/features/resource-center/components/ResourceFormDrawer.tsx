@@ -5,12 +5,13 @@ import {
 } from 'antd';
 import {
   BuildOutlined, CheckOutlined, CloudDownloadOutlined, DeleteOutlined,
-  RightOutlined, SettingOutlined, UserOutlined, InfoCircleOutlined,
+  RightOutlined, SettingOutlined, UserOutlined, InfoCircleOutlined, GlobalOutlined,
 } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import type { CreateResourceInput, PublicStrategy, ResourceItem, ResourceType } from '../types';
 import { strategyConfig, typeConfig } from '../ui';
+import { externalGatewayModels } from '../mock';
 import ResourceTechnicalDrawer from './ResourceTechnicalDrawer';
 
 interface ResourceFormDrawerProps {
@@ -22,9 +23,10 @@ interface ResourceFormDrawerProps {
 }
 
 interface FormValues extends CreateResourceInput {
-  source: 'workshop' | 'new';
+  source: 'workshop' | 'new' | 'externalGateway';
   workshopId?: string;
   workshopSpaceId?: string;
+  externalGatewayModel?: string;
 }
 
 const workshopItems = [
@@ -47,7 +49,7 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
   const [form] = Form.useForm<FormValues>();
   const [step, setStep] = useState(0);
   const [technicalOpen, setTechnicalOpen] = useState(false);
-  const [creationSource, setCreationSource] = useState<'workshop' | 'new'>('workshop');
+  const [creationSource, setCreationSource] = useState<'workshop' | 'new' | 'externalGateway'>('workshop');
   const [creationType, setCreationType] = useState<ResourceType>('api');
   const [technicalValues, setTechnicalValues] = useState<Partial<CreateResourceInput>>({});
   const [technicalConfigured, setTechnicalConfigured] = useState(false);
@@ -88,22 +90,46 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
     form.setFieldsValue({ type, workshopId: undefined });
     setTechnicalValues({});
     setTechnicalConfigured(source === 'workshop');
+    if (type !== 'model' && source === 'externalGateway') {
+      setCreationSource('new');
+      form.setFieldValue('source', 'new');
+    }
+  };
+
+  const selectSource = (value: 'workshop' | 'new' | 'externalGateway') => {
+    setCreationSource(value);
+    form.setFieldValue('source', value);
+    form.setFieldValue('externalGatewayModel', undefined);
+    if (value === 'externalGateway') {
+      setTechnicalValues({ gatewayMode: 'external' });
+      setTechnicalConfigured(false);
+    } else {
+      setTechnicalConfigured(value === 'workshop');
+    }
   };
 
   const next = async () => {
     if (step === 0) {
       if (source === 'workshop') await form.validateFields(['type', 'workshopSpaceId', 'workshopId']);
+      if (source === 'externalGateway') await form.validateFields(['type', 'externalGatewayModel']);
       const selected = workshopItems.find(item => item.id === selectedWorkshop);
       if (selected) {
         form.setFieldsValue({ ...selected, owner: '演示用户' });
         setTechnicalValues(selected);
         setTechnicalConfigured(true);
       }
+      const selectedModel = externalGatewayModels.find(item => item.modelName === form.getFieldValue('externalGatewayModel'));
+      if (selectedModel) {
+        form.setFieldsValue({ name: selectedModel.name, resourceKey: selectedModel.resourceKey, description: selectedModel.description, owner: '演示用户' });
+        setTechnicalValues({ gatewayMode: 'external', baseurl: selectedModel.baseurl, path: selectedModel.path, modelName: selectedModel.modelName });
+        setTechnicalConfigured(true);
+      }
       setStep(1);
       return;
     }
     await form.validateFields(['name', 'resourceKey', 'description']);
-    if (source === 'new' && !technicalConfigured && ['api', 'mcp', 'knowledge'].includes(resourceType)) {
+    const needTechnical = (source === 'new' && ['api', 'mcp', 'knowledge'].includes(resourceType)) || source === 'externalGateway';
+    if (needTechnical && !technicalConfigured) {
       message.warning('请完成“技术细节配置”后再进行下一步');
       return;
     }
@@ -128,8 +154,8 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
           <Space size={12}>
             <div style={{ width: 40, height: 40, borderRadius: 8, background: technicalConfigured ? '#f6ffed' : '#f0f0f0', display: 'grid', placeItems: 'center' }}><SettingOutlined style={{ color: technicalConfigured ? '#52c41a' : '#666', fontSize: 20 }} /></div>
             <div>
-              <Space><strong>{resourceType.toUpperCase()} 技术细节配置</strong>{!editing && source === 'new' && <Tag color={technicalConfigured ? 'success' : 'error'}>{technicalConfigured ? '已配置' : '待配置'}</Tag>}</Space>
-              <div style={{ color: '#8f959e', fontSize: 12 }}>{source === 'workshop' ? '拉取自已有数据，支持配置编辑' : '手动维护底层资源数据'}</div>
+              <Space><strong>{resourceType.toUpperCase()} 技术细节配置</strong>{!editing && (source === 'new' || source === 'externalGateway') && <Tag color={technicalConfigured ? 'success' : 'error'}>{technicalConfigured ? '已配置' : '待配置'}</Tag>}</Space>
+              <div style={{ color: '#8f959e', fontSize: 12 }}>{source === 'workshop' ? '拉取自已有数据，支持配置编辑' : source === 'externalGateway' ? '对接外部网关路由，自动回填配置' : '手动维护底层资源数据'}</div>
             </div>
           </Space>
           <RightOutlined style={{ color: '#bfbfbf' }} />
@@ -146,9 +172,10 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
     <div style={{ fontWeight: 600, marginBottom: 12 }}>2. 关联来源方式</div>
       <Row gutter={16} style={{ marginBottom: 24 }}>
         {[
-          { value: 'workshop' as const, title: '从已有数据拉取', desc: '拉取未发布的现有资源', icon: <CloudDownloadOutlined />, color: '#1677ff' },
-          { value: 'new' as const, title: '全新创建', desc: '直接在我的资源中创建资源信息', icon: <BuildOutlined />, color: '#52c41a' },
-        ].map(option => <Col span={12} key={option.value}><div onClick={() => { setCreationSource(option.value); form.setFieldValue('source', option.value); setTechnicalConfigured(option.value === 'workshop'); }} style={{ position: 'relative', height: '100%', padding: 16, border: source === option.value ? '1px solid #1677ff' : '1px solid #f0f0f0', background: source === option.value ? '#f0f7ff' : '#fafafa', borderRadius: 12, cursor: 'pointer' }}><Space align="start"><Avatar shape="square" icon={option.icon} style={{ color: option.color, background: option.value === 'workshop' ? '#e6f4ff' : '#f6ffed' }} /><div><strong>{option.title}</strong><div style={{ color: '#8f959e', fontSize: 12, marginTop: 4 }}>{option.desc}</div></div></Space>{source === option.value && <span style={{ position: 'absolute', right: -1, top: -1, width: 24, height: 24, borderRadius: '0 12px 0 12px', background: '#1677ff', color: '#fff', display: 'grid', placeItems: 'center' }}><CheckOutlined /></span>}</div></Col>)}
+          { value: 'workshop' as const, title: '从已有数据拉取', desc: '拉取未发布的现有资源', icon: <CloudDownloadOutlined />, color: '#1677ff', bg: '#e6f4ff' },
+          { value: 'new' as const, title: '全新创建', desc: '直接在我的资源中创建资源信息', icon: <BuildOutlined />, color: '#52c41a', bg: '#f6ffed' },
+          ...(resourceType === 'model' ? [{ value: 'externalGateway' as const, title: '外部大模型网关', desc: '对接外部网关路由，自动回填配置', icon: <GlobalOutlined />, color: '#722ed1', bg: '#f9f0ff' }] : []),
+        ].map(option => <Col span={resourceType === 'model' ? 8 : 12} key={option.value}><div onClick={() => selectSource(option.value)} style={{ position: 'relative', height: '100%', padding: 16, border: source === option.value ? '1px solid #1677ff' : '1px solid #f0f0f0', background: source === option.value ? '#f0f7ff' : '#fafafa', borderRadius: 12, cursor: 'pointer' }}><Space align="start"><Avatar shape="square" icon={option.icon} style={{ color: option.color, background: option.bg }} /><div><strong>{option.title}</strong><div style={{ color: '#8f959e', fontSize: 12, marginTop: 4 }}>{option.desc}</div></div></Space>{source === option.value && <span style={{ position: 'absolute', right: -1, top: -1, width: 24, height: 24, borderRadius: '0 12px 0 12px', background: '#1677ff', color: '#fff', display: 'grid', placeItems: 'center' }}><CheckOutlined /></span>}</div></Col>)}
       </Row>
     {source === 'workshop' && <>
       <Form.Item name="workshopSpaceId" label="3. 选择所在空间" rules={[{ required: true, message: '请选择所在空间' }]}>
@@ -186,12 +213,29 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
         />
       </Form.Item>
     </>}
+    {source === 'externalGateway' && <Form.Item name="externalGatewayModel" label="3. 选择模型路由" rules={[{ required: true, message: '请选择模型路由' }]}>
+      <Select
+        showSearch
+        optionFilterProp="label"
+        placeholder="请输入或选择模型名称"
+        optionRender={(option) => (
+          <Space>
+            <Avatar size={32} icon={<GlobalOutlined />} style={{ background: '#f9f0ff', color: '#722ed1', flexShrink: 0 }} />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{option.data.label}</div>
+              <div style={{ color: '#8c8c8c', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{option.data.description}</div>
+            </div>
+          </Space>
+        )}
+        options={externalGatewayModels.map(item => ({ value: item.modelName, label: item.modelName, description: item.description }))}
+      />
+    </Form.Item>}
   </div>;
 
   const coreFields = <>
     <div style={{ padding: 16, marginBottom: 24, border: '1px solid #f0f0f0', borderRadius: 8, background: '#fafafa' }}>
       <div style={{ color: '#8c8c8c', fontSize: 12, marginBottom: 8 }}>资源类型 {editing ? '' : '& 来源'}</div>
-      <Space><Tag color="blue" icon={typeConfig[resourceType].icon}>{typeConfig[resourceType].label}</Tag>{!editing && <Tag color={source === 'workshop' ? 'cyan' : 'green'}>{source === 'workshop' ? '已有拉取' : '全新创建'}</Tag>}</Space>
+      <Space><Tag color="blue" icon={typeConfig[resourceType].icon}>{typeConfig[resourceType].label}</Tag>{!editing && <Tag color={source === 'workshop' ? 'cyan' : source === 'externalGateway' ? 'purple' : 'green'}>{source === 'workshop' ? '已有拉取' : source === 'externalGateway' ? '外部大模型网关' : '全新创建'}</Tag>}</Space>
     </div>
     <Form.Item name="name" label="资源名称" rules={[{ required: true, message: '请输入名称' }]}><Input placeholder="输入资源在广场展示的名称" maxLength={40} showCount /></Form.Item>
     <Form.Item name="resourceKey" label="唯一标识 (Key)" tooltip="创建后不允许编辑" extra={!editing ? '包含小写字母、数字和特殊字符（-.），不能以特殊字符开头和结尾。' : undefined} rules={[{ required: true }, { pattern: /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/, message: '格式不正确，例如 inner-address-api' }]}><Input disabled={editing} /></Form.Item>
@@ -231,7 +275,7 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
         </>}
       </Form>
     </Drawer>
-    <ResourceTechnicalDrawer open={technicalOpen} type={resourceType} initialValues={{ ...resource, ...form.getFieldsValue(), ...technicalValues }} readOnly={readOnly} onClose={() => setTechnicalOpen(false)} onSave={values => { const { name, resourceKey, description, markdownIntro, ...technical } = values; setTechnicalValues(prev => ({ ...prev, ...technical })); setTechnicalConfigured(true); if (!form.getFieldValue('name') && name) form.setFieldValue('name', name); if (!form.getFieldValue('resourceKey') && resourceKey) form.setFieldValue('resourceKey', resourceKey); if (!form.getFieldValue('description') && description) form.setFieldValue('description', description); if (!form.getFieldValue('markdownIntro') && markdownIntro) form.setFieldValue('markdownIntro', markdownIntro); setTechnicalOpen(false); message.success('详细配置保存成功'); }} />
+    <ResourceTechnicalDrawer open={technicalOpen} type={resourceType} initialValues={{ ...resource, ...form.getFieldsValue(), ...technicalValues }} readOnly={readOnly} gatewayLocked={source === 'externalGateway' || resource?.gatewayMode === 'external'} onClose={() => setTechnicalOpen(false)} onSave={values => { const { name, resourceKey, description, markdownIntro, ...technical } = values; setTechnicalValues(prev => ({ ...prev, ...technical })); setTechnicalConfigured(true); if (!form.getFieldValue('name') && name) form.setFieldValue('name', name); if (!form.getFieldValue('resourceKey') && resourceKey) form.setFieldValue('resourceKey', resourceKey); if (!form.getFieldValue('description') && description) form.setFieldValue('description', description); if (!form.getFieldValue('markdownIntro') && markdownIntro) form.setFieldValue('markdownIntro', markdownIntro); setTechnicalOpen(false); message.success('详细配置保存成功'); }} />
     <Modal title="Markdown 预览" open={previewOpen} onCancel={() => setPreviewOpen(false)} footer={null} size="large"><div style={{ minHeight: 220, padding: 12 }}><ReactMarkdown>{markdown || '暂无内容'}</ReactMarkdown></div></Modal>
     <Modal
       title="添加可见对象"

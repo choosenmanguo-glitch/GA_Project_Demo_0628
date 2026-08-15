@@ -140,7 +140,7 @@ export const ResourceCenterProvider: React.FC<{ children: React.ReactNode }> = (
     const statusText = asUser ? '发布审批中' : '待上架';
     const item: ResourceItem = {
       ...input, id: `resource-${Date.now()}`, updateTime: new Date().toISOString().slice(0, 10), heat: 0,
-      status: 'authorized', publishStatus: initialStatus, gatewayPath: input.gatewayPath || `/gateway/${input.resourceKey}`,
+      status: 'authorized', publishStatus: initialStatus, gatewayPath: input.gatewayMode === 'external' ? undefined : input.gatewayPath || `/gateway/${input.resourceKey}`,
       visibleTargets: input.visibleTargets || [],
     };
     setResources(prev => [item, ...prev]);

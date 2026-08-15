@@ -3,7 +3,7 @@ import { Alert, Button, Card, Descriptions, Drawer, Space, Tag } from 'antd';
 import { SafetyCertificateOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import type { ResourceAccessView, ResourceItem } from '../types';
-import { strategyConfig, typeConfig } from '../ui';
+import { modelTypeConfig, strategyConfig, typeConfig } from '../ui';
 
 interface ResourceDetailDrawerProps {
   open: boolean;
@@ -18,7 +18,7 @@ interface ResourceDetailDrawerProps {
 const ResourceDetailDrawer: React.FC<ResourceDetailDrawerProps> = ({ open, resource, access, spaceName, onClose, onAcquire, onApply }) => {
   if (!resource) return null;
   const type = typeConfig[resource.type];
-  const subtitle = resource.modelType || resource.knowledgeType || resource.deployment;
+  const subtitle = (resource.modelType ? modelTypeConfig[resource.modelType] : undefined) || resource.knowledgeType || resource.deployment;
   const callUrl = `http://10.193.0.41:8080${resource.gatewayPath || '/gateway/placeholder'}${resource.type === 'model' ? `/v1${resource.path || '/chat/completions'}` : ''}`;
 
   return (

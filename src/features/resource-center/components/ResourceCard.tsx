@@ -6,7 +6,7 @@ import {
   CloudDownloadOutlined, FireFilled,
 } from '@ant-design/icons';
 import type { ResourceAccessView, ResourceItem } from '../types';
-import { installConfig, strategyConfig, typeConfig } from '../ui';
+import { installConfig, modelTypeConfig, strategyConfig, typeConfig } from '../ui';
 
 interface ResourceCardProps {
   resource: ResourceItem;
@@ -29,7 +29,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
   const type = typeConfig[resource.type];
   const invalid = access?.invalidReason;
   const installStatus = access?.grant?.installStatus;
-  const subtitle = resource.modelType || resource.knowledgeType || resource.deployment;
+  const subtitle = (resource.modelType ? modelTypeConfig[resource.modelType] : undefined) || resource.knowledgeType || resource.deployment;
 
   const publishLabel: Record<string, string> = {
     pending: '待上架', reviewing: '发布审批中', published: '已上架', unpublishing: '下架审批中', offline: '已下架',
