@@ -15,7 +15,6 @@ interface ResourceTechnicalDrawerProps {
   type: ResourceType;
   initialValues: Partial<CreateResourceInput>;
   readOnly?: boolean;
-  gatewayLocked?: boolean;
   onClose: () => void;
   onSave: (values: Partial<CreateResourceInput>) => void;
 }
@@ -113,13 +112,13 @@ const GatewayPathField: React.FC<{ disabled?: boolean }> = ({ disabled }) => (
   </div>
 );
 
-const ResourceTechnicalDrawer: React.FC<ResourceTechnicalDrawerProps> = ({ open, type, initialValues, readOnly, gatewayLocked, onClose, onSave }) => {
+const ResourceTechnicalDrawer: React.FC<ResourceTechnicalDrawerProps> = ({ open, type, initialValues, readOnly, onClose, onSave }) => {
   const { message } = AntdApp.useApp();
   const { Text } = Typography;
   const [form] = Form.useForm<Partial<CreateResourceInput>>();
   const [apiMode, setApiMode] = useState<'manual' | 'openapi'>('manual');
   const authType = Form.useWatch('authType', form);
-  const gatewayMode = Form.useWatch('gatewayMode', form);
+  const gatewayMode = initialValues.gatewayMode ?? 'builtin';
   const [skillConfig, setSkillConfig] = useState<CreateResourceInput['skillConfig']>();
   const [skillUploadedName, setSkillUploadedName] = useState('');
   const [skillMeta, setSkillMeta] = useState<{ name?: string; resourceKey?: string; description?: string }>({});
@@ -170,7 +169,7 @@ const ResourceTechnicalDrawer: React.FC<ResourceTechnicalDrawerProps> = ({ open,
         values = { ...(await form.validateFields()), skillConfig, ...skillMeta, markdownIntro: skillConfig?.skillMd };
       } else if (type === 'api' && apiMode === 'openapi') {
         values = { ...form.getFieldsValue(), ...(await form.validateFields(['swaggerSchema', 'gatewayPath'])) };
-      } else if (type === 'model' && form.getFieldValue('gatewayMode') === 'external') {
+      } else if (type === 'model' && gatewayMode === 'external') {
         values = await form.validateFields();
         delete values.gatewayPath;
         delete values.apikey;
@@ -199,15 +198,6 @@ const ResourceTechnicalDrawer: React.FC<ResourceTechnicalDrawerProps> = ({ open,
     {gatewayMode !== 'external' && <Form.Item name="apikey" label="API Key"><Input.Password placeholder="输入 API Key" /></Form.Item>}
     <Form.Item name="modelName" label="模型名称" rules={[{ required: true }, { pattern: /^[a-zA-Z0-9_.-]+$/, message: '只能包含字母、数字、下划线、短横线或点' }]}><Input /></Form.Item>
     <Form.Item name="deploymentMode" label="部署方式" rules={[{ required: true }]}><Radio.Group options={[{ value: 'Internal', label: '内网' }, { value: 'Public', label: '公网' }]} /></Form.Item>
-    <Form.Item name="gatewayMode" label="连接方式" rules={[{ required: true }]} tooltip="代理连接：将大模型注册到 Higress，代理后使用；直接连接：直接使用外部网关路由，不再由 Higress 代理。">
-      <Radio.Group
-        options={[
-          { value: 'builtin', label: '代理连接' },
-          { value: 'external', label: '直接连接' },
-        ]}
-        disabled={readOnly || gatewayLocked}
-      />
-    </Form.Item>
     {gatewayMode !== 'external' && <GatewayPathField disabled={readOnly || !!initialValues.gatewayPath} />}
   </>;
 

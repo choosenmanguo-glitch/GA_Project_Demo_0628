@@ -478,6 +478,65 @@ export default function ResourceManagePage() {
           );
         })()}
       </Drawer>
+    </div>
+  );
+
+  // ==================== 审批记录 Tab ====================
+  const historyTab = (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 8, overflow: 'hidden' }}>
+      <FilterBar
+        filters={historyFilterFields}
+        filterValues={historyFilterValues}
+        onFilterChange={(key, value) => setHistoryFilterValues(prev => ({ ...prev, [key]: value }))}
+        onSearch={() => {}}
+        onReset={() => setHistoryFilterValues({ nameSearch: '', applicantSearch: '', statusFilter: undefined })}
+      />
+      <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px' }}>
+        <Table
+          rowKey="id"
+          dataSource={nonPendingApprovals}
+          size="middle"
+          style={{ marginTop: 12 }}
+          pagination={{ defaultPageSize: 10, showSizeChanger: true, pageSizeOptions: ['10', '20', '50', '100'] }}
+          locale={{ emptyText: <Empty description="暂无审批记录" style={{ padding: '60px 0' }} /> }}
+          onRow={(rec: PublishApproval) => ({ onClick: () => { setHistoryDetail(rec); setHistoryDetailOpen(true); }, style: { cursor: 'pointer' } })}
+          columns={[
+            {
+              title: '资源名称', key: 'resource', width: '22%',
+              render: (_, rec: PublishApproval) => {
+                const res = getResource(rec.resourceId);
+                const type = res?.type;
+                const typeLabel = type ? typeConfig[type]?.label : '';
+                return (
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    {type && renderTypeIcon(type)}
+                    <div>
+                      <div style={{ fontWeight: 600, color: '#262626', fontSize: 13 }}>{res?.name || '资源不存在'}</div>
+                      {type && <Tag color={type === 'model' ? '#722ed1' : type === 'api' ? '#1890ff' : type === 'mcp' ? '#fa8c16' : type === 'skill' ? '#eb2f96' : '#52c41a'} style={{ marginTop: 2, borderRadius: 4, fontSize: 10, margin: 0, padding: '0 4px', height: 16, lineHeight: '14px' }}>{typeLabel}</Tag>}
+                    </div>
+                  </div>
+                );
+              },
+            },
+            { title: '申请人', dataIndex: 'applicant', key: 'applicant', width: '12%', render: (v: string) => <span style={{ fontSize: 13 }}>{v}</span> },
+            {
+              title: '申请类型', dataIndex: 'applyType', key: 'applyType', width: '10%',
+              render: (v: string) => <Tag color={v === 'publish' ? 'blue' : 'orange'} style={{ borderRadius: 4 }}>{v === 'publish' ? '发布' : '下架'}</Tag>,
+            },
+            {
+              title: '审批决策', dataIndex: 'status', key: 'status', width: '10%',
+              render: (status: string) => (
+                <Tag color={status === 'approved' ? 'success' : 'error'} style={{ borderRadius: 4, fontWeight: 500 }}>
+                  {status === 'approved' ? '审批通过' : '已驳回'}
+                </Tag>
+              ),
+            },
+            { title: '申请时间', dataIndex: 'applyTime', key: 'applyTime', width: '14%', render: (v: string) => <span style={{ fontSize: 12, color: '#8c8c8c' }}>{v}</span> },
+            { title: '审批人', dataIndex: 'operator', key: 'operator', width: '10%', render: (v: string) => <span style={{ fontSize: 12, color: '#595959' }}>{v || '—'}</span> },
+            { title: '审批意见', dataIndex: 'opinion', key: 'opinion', render: (v: string) => <span style={{ fontSize: 12, color: '#262626' }}>{v || '—'}</span> },
+          ]}
+        />
+      </div>
 
       {/* 审批记录详情 Drawer */}
       <Drawer
@@ -561,65 +620,6 @@ export default function ResourceManagePage() {
           );
         })()}
       </Drawer>
-    </div>
-  );
-
-  // ==================== 审批记录 Tab ====================
-  const historyTab = (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 8, overflow: 'hidden' }}>
-      <FilterBar
-        filters={historyFilterFields}
-        filterValues={historyFilterValues}
-        onFilterChange={(key, value) => setHistoryFilterValues(prev => ({ ...prev, [key]: value }))}
-        onSearch={() => {}}
-        onReset={() => setHistoryFilterValues({ nameSearch: '', applicantSearch: '', statusFilter: undefined })}
-      />
-      <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 16px' }}>
-        <Table
-          rowKey="id"
-          dataSource={nonPendingApprovals}
-          size="middle"
-          style={{ marginTop: 12 }}
-          pagination={{ defaultPageSize: 10, showSizeChanger: true, pageSizeOptions: ['10', '20', '50', '100'] }}
-          locale={{ emptyText: <Empty description="暂无审批记录" style={{ padding: '60px 0' }} /> }}
-          onRow={(rec: PublishApproval) => ({ onClick: () => { setHistoryDetail(rec); setHistoryDetailOpen(true); }, style: { cursor: 'pointer' } })}
-          columns={[
-            {
-              title: '资源名称', key: 'resource', width: '22%',
-              render: (_, rec: PublishApproval) => {
-                const res = getResource(rec.resourceId);
-                const type = res?.type;
-                const typeLabel = type ? typeConfig[type]?.label : '';
-                return (
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                    {type && renderTypeIcon(type)}
-                    <div>
-                      <div style={{ fontWeight: 600, color: '#262626', fontSize: 13 }}>{res?.name || '资源不存在'}</div>
-                      {type && <Tag color={type === 'model' ? '#722ed1' : type === 'api' ? '#1890ff' : type === 'mcp' ? '#fa8c16' : type === 'skill' ? '#eb2f96' : '#52c41a'} style={{ marginTop: 2, borderRadius: 4, fontSize: 10, margin: 0, padding: '0 4px', height: 16, lineHeight: '14px' }}>{typeLabel}</Tag>}
-                    </div>
-                  </div>
-                );
-              },
-            },
-            { title: '申请人', dataIndex: 'applicant', key: 'applicant', width: '12%', render: (v: string) => <span style={{ fontSize: 13 }}>{v}</span> },
-            {
-              title: '申请类型', dataIndex: 'applyType', key: 'applyType', width: '10%',
-              render: (v: string) => <Tag color={v === 'publish' ? 'blue' : 'orange'} style={{ borderRadius: 4 }}>{v === 'publish' ? '发布' : '下架'}</Tag>,
-            },
-            {
-              title: '审批决策', dataIndex: 'status', key: 'status', width: '10%',
-              render: (status: string) => (
-                <Tag color={status === 'approved' ? 'success' : 'error'} style={{ borderRadius: 4, fontWeight: 500 }}>
-                  {status === 'approved' ? '审批通过' : '已驳回'}
-                </Tag>
-              ),
-            },
-            { title: '申请时间', dataIndex: 'applyTime', key: 'applyTime', width: '14%', render: (v: string) => <span style={{ fontSize: 12, color: '#8c8c8c' }}>{v}</span> },
-            { title: '审批人', dataIndex: 'operator', key: 'operator', width: '10%', render: (v: string) => <span style={{ fontSize: 12, color: '#595959' }}>{v || '—'}</span> },
-            { title: '审批意见', dataIndex: 'opinion', key: 'opinion', render: (v: string) => <span style={{ fontSize: 12, color: '#262626' }}>{v || '—'}</span> },
-          ]}
-        />
-      </div>
     </div>
   );
 

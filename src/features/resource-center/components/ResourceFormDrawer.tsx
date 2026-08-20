@@ -13,6 +13,7 @@ import type { CreateResourceInput, PublicStrategy, ResourceItem, ResourceType } 
 import { strategyConfig, typeConfig } from '../ui';
 import { externalGatewayModels } from '../mock';
 import ResourceTechnicalDrawer from './ResourceTechnicalDrawer';
+import { getResourceCreateConfig, type ResourceCreateConfig } from '@/pages/system-config';
 
 interface ResourceFormDrawerProps {
   open: boolean;
@@ -43,6 +44,15 @@ const strategyDescriptions: Record<PublicStrategy, string> = {
   whitelist: '仅授权对象可见',
 };
 
+const sourceOptionDefs: Array<{ value: 'workshop' | 'new' | 'externalGateway'; title: string; desc: string; icon: React.ReactNode; color: string; bg: string }> = [
+  { value: 'workshop', title: '从已有数据拉取', desc: '拉取未发布的现有资源', icon: <CloudDownloadOutlined />, color: '#1677ff', bg: '#e6f4ff' },
+  { value: 'new', title: '全新创建', desc: '直接在我的资源中创建资源信息', icon: <BuildOutlined />, color: '#52c41a', bg: '#f6ffed' },
+  { value: 'externalGateway', title: '外部大模型网关', desc: '对接外部网关路由，自动回填配置', icon: <GlobalOutlined />, color: '#722ed1', bg: '#f9f0ff' },
+];
+
+const getAllowedTypes = (config: ResourceCreateConfig): ResourceType[] =>
+  (Object.keys(config.sourcesByType) as ResourceType[]).filter(type => (config.sourcesByType[type] ?? []).length > 0);
+
 const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource, readOnly, onClose, onSubmit }) => {
   const { message } = AntdApp.useApp();
   const { spaces } = useWorkspace();
@@ -51,6 +61,7 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
   const [technicalOpen, setTechnicalOpen] = useState(false);
   const [creationSource, setCreationSource] = useState<'workshop' | 'new' | 'externalGateway'>('workshop');
   const [creationType, setCreationType] = useState<ResourceType>('api');
+  const [createConfig, setCreateConfig] = useState(() => getResourceCreateConfig());
   const [technicalValues, setTechnicalValues] = useState<Partial<CreateResourceInput>>({});
   const [technicalConfigured, setTechnicalConfigured] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -67,6 +78,8 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
 
   useEffect(() => {
     if (!open) return;
+    const config = getResourceCreateConfig();
+    setCreateConfig(config);
     setStep(0);
     setTechnicalOpen(false);
     setTechnicalValues(resource || {});
@@ -77,22 +90,42 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
       setCreationType(resource.type);
       form.setFieldsValue({ ...resource, source: 'new', type: resource.type, owner: resource.owner } as FormValues);
     } else {
-      setCreationSource('workshop');
-      setCreationType('api');
-      form.setFieldsValue({ source: 'workshop', type: 'api', owner: '演示用户', publicStrategy: 'public', workshopSpaceId: spaces[0]?.id });
+      const allowedTypes = getAllowedTypes(config);
+      const defaultType = allowedTypes.includes('api') ? 'api' : (allowedTypes[0] ?? 'api');
+      const candidateSources: Array<'workshop' | 'new' | 'externalGateway'> = ['workshop', 'new', ...(defaultType === 'model' ? ['externalGateway'] : [])];
+      const defaultSource = candidateSources.find(s => (config.sourcesByType[defaultType] ?? []).includes(s)) ?? 'workshop';
+      setCreationSource(defaultSource);
+      setCreationType(defaultType);
+      form.setFieldsValue({ source: defaultSource, type: defaultType, owner: '演示用户', publicStrategy: 'public', workshopSpaceId: spaces[0]?.id });
     }
   }, [form, open, resource, spaces]);
 
-  const typeOptions = useMemo(() => Object.entries(typeConfig).map(([key, config]) => ({ key: key as ResourceType, ...config })), []);
+  const allowedTypes = useMemo(() => getAllowedTypes(createConfig), [createConfig]);
+
+  const typeOptions = useMemo(() => Object.entries(typeConfig)
+    .filter(([key]) => allowedTypes.includes(key as ResourceType))
+    .map(([key, config]) => ({ key: key as ResourceType, ...config })), [allowedTypes]);
+
+  const sourceOptions = useMemo(() => sourceOptionDefs
+    .filter(option => (option.value !== 'externalGateway' || resourceType === 'model') && (createConfig.sourcesByType[resourceType] ?? []).includes(option.value)), [resourceType, createConfig.sourcesByType]);
+  const sourceColSpan = sourceOptions.length === 1 ? 24 : sourceOptions.length === 2 ? 12 : 8;
 
   const selectType = (type: ResourceType) => {
+    const validSources = sourceOptionDefs
+      .filter(option => (option.value !== 'externalGateway' || type === 'model') && (createConfig.sourcesByType[type] ?? []).includes(option.value))
+      .map(option => option.value);
     setCreationType(type);
     form.setFieldsValue({ type, workshopId: undefined });
     setTechnicalValues({});
-    setTechnicalConfigured(source === 'workshop');
-    if (type !== 'model' && source === 'externalGateway') {
-      setCreationSource('new');
-      form.setFieldValue('source', 'new');
+    const nextSource = validSources.includes(source) ? source : (validSources[0] ?? 'new');
+    if (nextSource !== source) {
+      setCreationSource(nextSource);
+      form.setFieldValue('source', nextSource);
+    }
+    setTechnicalConfigured(nextSource === 'workshop');
+    if (nextSource === 'externalGateway') {
+      setTechnicalValues({ gatewayMode: 'external' });
+      setTechnicalConfigured(false);
     }
   };
 
@@ -120,7 +153,7 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
       }
       const selectedModel = externalGatewayModels.find(item => item.modelName === form.getFieldValue('externalGatewayModel'));
       if (selectedModel) {
-        form.setFieldsValue({ name: selectedModel.name, resourceKey: selectedModel.resourceKey, description: selectedModel.description, owner: '演示用户' });
+        form.setFieldsValue({ name: `${selectedModel.modelName}-${selectedModel.cluster}`, resourceKey: selectedModel.resourceKey, description: selectedModel.description, owner: '演示用户' });
         setTechnicalValues({ gatewayMode: 'external', baseurl: selectedModel.baseurl, path: selectedModel.path, modelName: selectedModel.modelName });
         setTechnicalConfigured(true);
       }
@@ -171,11 +204,7 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
     </Row>
     <div style={{ fontWeight: 600, marginBottom: 12 }}>2. 关联来源方式</div>
       <Row gutter={16} style={{ marginBottom: 24 }}>
-        {[
-          { value: 'workshop' as const, title: '从已有数据拉取', desc: '拉取未发布的现有资源', icon: <CloudDownloadOutlined />, color: '#1677ff', bg: '#e6f4ff' },
-          { value: 'new' as const, title: '全新创建', desc: '直接在我的资源中创建资源信息', icon: <BuildOutlined />, color: '#52c41a', bg: '#f6ffed' },
-          ...(resourceType === 'model' ? [{ value: 'externalGateway' as const, title: '外部大模型网关', desc: '对接外部网关路由，自动回填配置', icon: <GlobalOutlined />, color: '#722ed1', bg: '#f9f0ff' }] : []),
-        ].map(option => <Col span={resourceType === 'model' ? 8 : 12} key={option.value}><div onClick={() => selectSource(option.value)} style={{ position: 'relative', height: '100%', padding: 16, border: source === option.value ? '1px solid #1677ff' : '1px solid #f0f0f0', background: source === option.value ? '#f0f7ff' : '#fafafa', borderRadius: 12, cursor: 'pointer' }}><Space align="start"><Avatar shape="square" icon={option.icon} style={{ color: option.color, background: option.bg }} /><div><strong>{option.title}</strong><div style={{ color: '#8f959e', fontSize: 12, marginTop: 4 }}>{option.desc}</div></div></Space>{source === option.value && <span style={{ position: 'absolute', right: -1, top: -1, width: 24, height: 24, borderRadius: '0 12px 0 12px', background: '#1677ff', color: '#fff', display: 'grid', placeItems: 'center' }}><CheckOutlined /></span>}</div></Col>)}
+        {sourceOptions.map(option => <Col span={sourceColSpan} key={option.value}><div onClick={() => selectSource(option.value)} style={{ position: 'relative', height: '100%', padding: 16, border: source === option.value ? '1px solid #1677ff' : '1px solid #f0f0f0', background: source === option.value ? '#f0f7ff' : '#fafafa', borderRadius: 12, cursor: 'pointer' }}><Space align="start"><Avatar shape="square" icon={option.icon} style={{ color: option.color, background: option.bg }} /><div><strong>{option.title}</strong><div style={{ color: '#8f959e', fontSize: 12, marginTop: 4 }}>{option.desc}</div></div></Space>{source === option.value && <span style={{ position: 'absolute', right: -1, top: -1, width: 24, height: 24, borderRadius: '0 12px 0 12px', background: '#1677ff', color: '#fff', display: 'grid', placeItems: 'center' }}><CheckOutlined /></span>}</div></Col>)}
       </Row>
     {source === 'workshop' && <>
       <Form.Item name="workshopSpaceId" label="3. 选择所在空间" rules={[{ required: true, message: '请选择所在空间' }]}>
@@ -219,15 +248,18 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
         optionFilterProp="label"
         placeholder="请输入或选择模型名称"
         optionRender={(option) => (
-          <Space>
+          <Space align="start">
             <Avatar size={32} icon={<GlobalOutlined />} style={{ background: '#f9f0ff', color: '#722ed1', flexShrink: 0 }} />
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{option.data.label}</div>
+              <Space size={6}>
+                <span style={{ fontWeight: 500 }}>{option.data.label}</span>
+                <Tag color="blue" style={{ marginInlineEnd: 0 }}>集群 {option.data.cluster}</Tag>
+              </Space>
               <div style={{ color: '#8c8c8c', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{option.data.description}</div>
             </div>
           </Space>
         )}
-        options={externalGatewayModels.map(item => ({ value: item.modelName, label: item.modelName, description: item.description }))}
+        options={externalGatewayModels.map(item => ({ value: item.modelName, label: item.modelName, cluster: item.cluster, description: item.description }))}
       />
     </Form.Item>}
   </div>;
@@ -275,7 +307,7 @@ const ResourceFormDrawer: React.FC<ResourceFormDrawerProps> = ({ open, resource,
         </>}
       </Form>
     </Drawer>
-    <ResourceTechnicalDrawer open={technicalOpen} type={resourceType} initialValues={{ ...resource, ...form.getFieldsValue(), ...technicalValues }} readOnly={readOnly} gatewayLocked={source === 'externalGateway' || resource?.gatewayMode === 'external'} onClose={() => setTechnicalOpen(false)} onSave={values => { const { name, resourceKey, description, markdownIntro, ...technical } = values; setTechnicalValues(prev => ({ ...prev, ...technical })); setTechnicalConfigured(true); if (!form.getFieldValue('name') && name) form.setFieldValue('name', name); if (!form.getFieldValue('resourceKey') && resourceKey) form.setFieldValue('resourceKey', resourceKey); if (!form.getFieldValue('description') && description) form.setFieldValue('description', description); if (!form.getFieldValue('markdownIntro') && markdownIntro) form.setFieldValue('markdownIntro', markdownIntro); setTechnicalOpen(false); message.success('详细配置保存成功'); }} />
+    <ResourceTechnicalDrawer open={technicalOpen} type={resourceType} initialValues={{ ...resource, ...form.getFieldsValue(), ...technicalValues }} readOnly={readOnly} onClose={() => setTechnicalOpen(false)} onSave={values => { const { name, resourceKey, description, markdownIntro, ...technical } = values; setTechnicalValues(prev => ({ ...prev, ...technical })); setTechnicalConfigured(true); if (!form.getFieldValue('name') && name) form.setFieldValue('name', name); if (!form.getFieldValue('resourceKey') && resourceKey) form.setFieldValue('resourceKey', resourceKey); if (!form.getFieldValue('description') && description) form.setFieldValue('description', description); if (!form.getFieldValue('markdownIntro') && markdownIntro) form.setFieldValue('markdownIntro', markdownIntro); setTechnicalOpen(false); message.success('详细配置保存成功'); }} />
     <Modal title="Markdown 预览" open={previewOpen} onCancel={() => setPreviewOpen(false)} footer={null} size="large"><div style={{ minHeight: 220, padding: 12 }}><ReactMarkdown>{markdown || '暂无内容'}</ReactMarkdown></div></Modal>
     <Modal
       title="添加可见对象"

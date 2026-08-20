@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Table, Button, Space, Tag, Drawer, Form, Input, Select, Row, Col, Typography, Tabs, message, Dropdown, Modal, Card,
+  Table, Button, Space, Tag, Drawer, Form, Input, Select, Row, Col, Typography, Tabs, message, Dropdown, Modal, Card, Descriptions,
 } from 'antd';
 import type { MenuProps } from 'antd';
 import {
@@ -803,16 +803,18 @@ export default function OpsSpacesPage() {
               </div>
             </div>
 
-            {pendingDetailSpace.status === '已驳回' && (
-              <div style={{
-                padding: '20px', borderRadius: 10, background: '#fff1f0',
-                border: '1px solid #ffccc7',
-              }}>
-                <Title level={5} style={{ margin: 0, marginBottom: 8, color: '#ff4d4f' }}>驳回原因</Title>
-                <div style={{ fontSize: 14, color: '#d93026', lineHeight: '22px', whiteSpace: 'pre-wrap' }}>
-                  {pendingDetailSpace.rejectionReason || '未填写驳回原因'}
-                </div>
-              </div>
+            {(pendingDetailSpace.status === '已通过' || pendingDetailSpace.status === '已驳回') && (
+              <Card title="审批结果" styles={{ body: { padding: 20 } }}>
+                <Descriptions column={2} size="small" items={[
+                  {
+                    key: 'status', label: '审批决策',
+                    children: <Tag color={pendingDetailSpace.status === '已通过' ? 'success' : 'error'} style={{ fontWeight: 500 }}>{pendingDetailSpace.status === '已通过' ? '审批通过' : '已驳回'}</Tag>,
+                  },
+                  { key: 'operator', label: '审批人', children: pendingDetailSpace.approver || '—' },
+                  { key: 'approvalTime', label: '审批时间', children: pendingDetailSpace.approvalTime || '—' },
+                  { key: 'opinion', label: '审批意见', span: 2, children: <span style={{ whiteSpace: 'pre-wrap' }}>{pendingDetailSpace.rejectionReason || '—'}</span> },
+                ]} />
+              </Card>
             )}
 
             {pendingDetailSpace.status === '待审核' && (

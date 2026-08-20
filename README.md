@@ -1,4 +1,4 @@
-# 路警智算 AI 平台 — 前端原型
+# 鲁警智算 AI 平台 — 前端原型
 
 面向公安多警种场景的智能体协作平台，提供智能体全生命周期管理、多空间协同、资源广场和运维监控能力。
 
@@ -11,7 +11,7 @@ npm run dev        # http://localhost:5174
 
 ## 技术栈
 
-React 19 · TypeScript · Vite 6 · Ant Design 6 · React Router 7 · Recharts
+React 19 · TypeScript · Vite 6 · Ant Design 6 · React Router 7 · Recharts · dayjs · jszip · react-markdown
 
 ## 项目结构
 
@@ -34,4 +34,4 @@ prd/              旧版 PRD 参考文档
 |------|------|------|
 | 开发中心 | `/dev/*` | 智能体构建·管理·测评、组件管理、资源广场、空间运营 |
 | 运维中心 | `/ops/*` | 资源监控、运营洞察、告警监控、会话日志 |
-| 管理中心 | `/manage/*` | 空间管理（创建/审批/管控） |
+| 管理中心 | `/manage/*` | 空间管理（创建/审批/管控）、资源管理、资源权限、系统配置、组织/用户/角色管理 |

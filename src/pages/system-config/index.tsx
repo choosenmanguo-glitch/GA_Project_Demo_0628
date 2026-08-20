@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Drawer, Form, Switch, InputNumber, Button, message, Typography, Divider } from 'antd';
+import { Table, Drawer, Form, Switch, InputNumber, Button, message, Typography, Divider, Select } from 'antd';
 import { SaveOutlined, SettingOutlined } from '@ant-design/icons';
 import PageHeader from '@/components/PageHeader';
 import type { ColumnsType } from 'antd/es/table';
+import type { ResourceType } from '@/features/resource-center/types';
 
 const { Text } = Typography;
 
@@ -27,6 +28,61 @@ export function getChatLimitConfig(): ChatLimitConfig {
   return chatLimitDefault;
 }
 
+// ── 创建资源配置 ──
+export type ResourceSourceType = 'workshop' | 'new' | 'externalGateway';
+
+export interface ResourceCreateConfig {
+  sourcesByType: Record<ResourceType, ResourceSourceType[]>;
+}
+
+const RESOURCE_CREATE_STORAGE_KEY = 'system_config_resource_create';
+
+const resourceCreateDefault: ResourceCreateConfig = {
+  sourcesByType: {
+    model: ['workshop', 'new', 'externalGateway'],
+    api: ['workshop', 'new'],
+    mcp: ['workshop', 'new'],
+    knowledge: ['workshop', 'new'],
+    skill: ['workshop', 'new'],
+  },
+};
+
+export const resourceTypeLabels: Record<ResourceType, string> = {
+  model: '模型',
+  api: 'API',
+  mcp: 'MCP',
+  knowledge: '知识库',
+  skill: '技能',
+};
+
+export const resourceSourceLabels: Record<ResourceSourceType, string> = {
+  workshop: '从已有数据拉取',
+  new: '全新创建',
+  externalGateway: '外部大模型网关',
+};
+
+const sourceOptionsForType = (type: ResourceType): Array<{ value: ResourceSourceType; label: string }> => {
+  const options: Array<{ value: ResourceSourceType; label: string }> = [
+    { value: 'workshop', label: resourceSourceLabels.workshop },
+    { value: 'new', label: resourceSourceLabels.new },
+  ];
+  if (type === 'model') options.push({ value: 'externalGateway', label: resourceSourceLabels.externalGateway });
+  return options;
+};
+
+export function getResourceCreateConfig(): ResourceCreateConfig {
+  try {
+    const raw = localStorage.getItem(RESOURCE_CREATE_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<ResourceCreateConfig>;
+      if (parsed.sourcesByType && typeof parsed.sourcesByType === 'object') {
+        return { sourcesByType: { ...resourceCreateDefault.sourcesByType, ...parsed.sourcesByType } };
+      }
+    }
+  } catch {}
+  return resourceCreateDefault;
+}
+
 // ── 配置项定义 ──
 interface ConfigItem {
   key: string;
@@ -39,6 +95,11 @@ const configItems: ConfigItem[] = [
     key: 'chat_limit',
     name: '智能体对话限制',
     description: '控制开发中心智能体对话的每日使用次数上限，超出后发送按钮禁用并显示提示。',
+  },
+  {
+    key: 'resource_create',
+    name: '创建资源配置',
+    description: '控制创建资源时可选的资源类型与来源方式，例如仅允许通过外部大模型网关创建。',
   },
 ];
 
@@ -144,11 +205,70 @@ const ChatLimitDrawer: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   );
 };
 
+// ── 创建资源配置抽屉内容 ──
+const ResourceCreateDrawer: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    form.setFieldsValue(getResourceCreateConfig());
+  }, [form]);
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      const values: ResourceCreateConfig = await form.validateFields();
+      localStorage.setItem(RESOURCE_CREATE_STORAGE_KEY, JSON.stringify(values));
+      message.success('保存成功');
+      onClose();
+    } catch {
+      // validation failed
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ flex: 1, overflow: 'auto', paddingBottom: 16 }}>
+        <Form form={form} layout="vertical" initialValues={resourceCreateDefault}>
+          <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+            针对每种资源类型分别配置可用的来源方式；未选择任何来源的类型将不会出现在创建资源时。
+          </Text>
+          {(Object.keys(resourceTypeLabels) as ResourceType[]).map(type => (
+            <Form.Item
+              key={type}
+              name={['sourcesByType', type]}
+              label={resourceTypeLabels[type]}
+            >
+              <Select
+                mode="multiple"
+                allowClear
+                placeholder="请选择来源方式"
+                options={sourceOptionsForType(type)}
+              />
+            </Form.Item>
+          ))}
+        </Form>
+      </div>
+      <Divider style={{ margin: '0 0 16px' }} />
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <Button onClick={onClose}>取消</Button>
+        <Button type="primary" icon={<SaveOutlined />} onClick={handleSave} loading={loading}>
+          保存
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 // ── 配置抽屉路由 ──
 const renderDrawerContent = (key: string, onClose: () => void) => {
   switch (key) {
     case 'chat_limit':
       return <ChatLimitDrawer onClose={onClose} />;
+    case 'resource_create':
+      return <ResourceCreateDrawer onClose={onClose} />;
     default:
       return <Text type="secondary">未知配置项</Text>;
   }
