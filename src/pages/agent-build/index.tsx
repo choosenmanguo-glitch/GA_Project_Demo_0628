@@ -372,7 +372,7 @@ export default function AgentBuildPage() {
     }
     message.success(`智能体「${agentName}」创建成功，即将跳转至配置页面。`);
     setDrawerOpen(false);
-    setTimeout(() => nav('/dev/agent-config'), 500);
+    setTimeout(() => nav(`/dev/agent-config${agentType !== 'standard' ? `?type=${agentType}` : ''}`), 500);
   };
 
   return (

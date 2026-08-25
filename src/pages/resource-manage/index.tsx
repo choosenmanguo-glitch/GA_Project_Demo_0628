@@ -3,7 +3,7 @@ import { App as AntdApp, Badge, Button, Card, Descriptions, Drawer, Dropdown, Em
 import {
   DeleteOutlined, EditOutlined, EyeOutlined,
   PushpinOutlined, SafetyCertificateOutlined, SendOutlined,
-  AppstoreOutlined, MoreOutlined,
+  AppstoreOutlined, MoreOutlined, QuestionCircleOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import PageHeader from '@/components/PageHeader';
@@ -79,7 +79,7 @@ const renderTypeIcon = (type: string) => {
 };
 
 export default function ResourceManagePage() {
-  const { message } = AntdApp.useApp();
+  const { message, modal } = AntdApp.useApp();
   const { spaces } = useWorkspace();
   const {
     resources, createResource, updateResource, togglePublish, togglePinned,
@@ -119,6 +119,21 @@ export default function ResourceManagePage() {
     setFormOpen(true);
   };
 
+  const confirmTogglePublish = (resource: ResourceItem) => {
+    const isPublish = resource.publishStatus === 'pending' || resource.publishStatus === 'offline';
+    modal.confirm({
+      title: isPublish ? '确认上架所选资源?' : '确认下架所选资源?',
+      icon: <QuestionCircleOutlined style={{ color: '#faad14' }} />,
+      content: <div style={{ marginTop: 8, color: '#595959' }}>当前选中资源为{resource.name}</div>,
+      okText: '确定',
+      cancelText: '取消',
+      onOk: () => {
+        togglePublish(resource.id);
+        message.success(isPublish ? '资源已上架' : '资源已下架');
+      },
+    });
+  };
+
   const menuItems = (resource: ResourceItem): MenuProps['items'] => {
     const items: MenuProps['items'] = [
       { key: 'view', icon: <EyeOutlined />, label: '查看详情', onClick: () => setDetail(resource) },
@@ -126,10 +141,10 @@ export default function ResourceManagePage() {
     ];
     // 上架/下架：待上架和已下架可上架；已上架可下架
     if (resource.publishStatus === 'pending' || resource.publishStatus === 'offline') {
-      items.push({ key: 'publish', icon: <SendOutlined />, label: '上架资源', onClick: () => { togglePublish(resource.id); message.success('资源已上架'); } });
+      items.push({ key: 'publish', icon: <SendOutlined />, label: '上架资源', onClick: () => confirmTogglePublish(resource) });
     }
     if (resource.publishStatus === 'published') {
-      items.push({ key: 'unpublish', icon: <SendOutlined />, label: '下架资源', onClick: () => { togglePublish(resource.id); message.success('资源已下架'); } });
+      items.push({ key: 'unpublish', icon: <SendOutlined />, label: '下架资源', onClick: () => confirmTogglePublish(resource) });
     }
     items.push(
       { key: 'pin', icon: <PushpinOutlined />, label: resource.isPinned ? '取消置顶' : '置顶资源', onClick: () => togglePinned(resource.id) },
@@ -265,7 +280,7 @@ export default function ResourceManagePage() {
                 mode="manage"
                 onCardClick={() => setDetail(resource)}
                 onStrategyClick={() => setPermissionTarget(resource)}
-                footer={<div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                footer={<div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
                   <Dropdown menu={{ items: menuItems(resource) }} trigger={['click']}><Button type="text" size="small" icon={<MoreOutlined />} style={{ borderRadius: 6, fontSize: 12 }} onClick={(e) => e.stopPropagation()} /></Dropdown>
                 </div>}
               />

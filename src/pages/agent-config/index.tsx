@@ -1,10 +1,10 @@
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Button, Input, Tag, Space, Typography, Switch, Select, InputNumber,
-  Divider, Drawer, message, Radio, Dropdown, MenuProps, Tooltip, Modal, Empty,
-  Badge, Segmented, DatePicker, Popover, List, Row, Col, Table,
+  Divider, message, Radio, Tooltip, Modal, Empty,
+  Badge, Segmented, DatePicker, Popover, Row, Col, Table,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -26,17 +26,13 @@ import {
   SafetyCertificateOutlined,
   StarOutlined,
   EditOutlined,
-  SaveOutlined,
   CheckCircleFilled,
   ThunderboltFilled,
   TeamOutlined,
   RocketOutlined,
   ExperimentOutlined,
   SyncOutlined,
-  BranchesOutlined,
-  EyeOutlined,
   CopyOutlined,
-  PaperClipOutlined,
   BulbOutlined,
   ExpandOutlined,
   CompressOutlined,
@@ -56,6 +52,8 @@ const { Text, Title, Paragraph } = Typography;
 import { mockAgentSessions, type SessionLog, type SessionMessage } from '@/mock/data';
 import { SessionDetailDrawer } from '@/components/SessionDetailDrawer';
 import { tablePagination } from '@/components/PaginationBar';
+import WorkflowEditor from './WorkflowEditor';
+import AgentConfigPanel from './AgentConfigPanel';
 
 // ════════════════════════════════════════════════
 // Design System
@@ -124,41 +122,12 @@ interface AgentInfo {
   avatar: string;
 }
 
-interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  debug?: {
-    prompt?: string;
-    request?: string;
-    response?: string;
-    knowledgeHits?: { snippet: string; source: string; score: number }[];
-    toolCalls?: { name: string; input: string; output: string; duration: number }[];
-  };
-  metrics?: {
-    firstTokenLatency?: number;
-    totalLatency?: number;
-    inputTokens?: number;
-    outputTokens?: number;
-    kbHits?: number;
-    toolCallCount?: number;
-    toolTotalDuration?: number;
-  };
-}
-
 const MOCK_AGENT: AgentInfo = {
   id: 'agent-001', name: '110接警警情分析助手',
   description: '自动提取警情要素，分类录入接处警系统，支持通话转写文本的结构化处理。',
   type: 'standard', subType: 'smart_extract', subTypeLabel: '智能抽取',
   status: 'draft', avatar: 'police',
 };
-
-const MOCK_VERSIONS = [
-  { version: 'v1.3.0', time: '2026-06-26 15:32', note: '优化警情分类模型参数', active: false, isDraft: true },
-  { version: 'v1.2.0', time: '2026-06-25 10:15', note: '首次正式发布版本', active: true, isDraft: false },
-  { version: 'v1.1.0', time: '2026-06-24 16:08', note: '完成内部测试，修复提示词约束', active: false, isDraft: false },
-  { version: 'v1.0.0', time: '2026-06-24 09:08', note: '初始版本', active: false, isDraft: false },
-];
 
 const navItems: { key: NavKey; label: string; icon: React.ReactNode }[] = [
   { key: 'config', label: '配置', icon: <SettingOutlined /> },
@@ -167,10 +136,8 @@ const navItems: { key: NavKey; label: string; icon: React.ReactNode }[] = [
   { key: 'stats', label: '统计', icon: <BarChartOutlined /> },
 ];
 
-const statusConfig: Record<string, { color: string; bg: string; label: string }> = {
-  draft: { color: 'rgba(0,0,0,0.52)', bg: 'rgba(0,0,0,0.04)', label: '草稿' },
-  published: { color: DS.green, bg: DS.greenLight, label: '已发布' },
-  offline: { color: 'rgba(0,0,0,0.34)', bg: 'rgba(0,0,0,0.04)', label: '已下架' },
+const navTitleMap: Record<NavKey, string> = {
+  config: '配置', publish: '发布', logs: '日志', stats: '统计',
 };
 
 const typeLabel: Record<AgentType, string> = {
@@ -2131,386 +2098,6 @@ const StandardConfigPanel: React.FC = () => {
 };
 
 // ════════════════════════════════════════════════
-// Test Panel
-// ════════════════════════════════════════════════
-
-interface TestPanelProps {
-  agent: AgentInfo;
-  visible: boolean;
-  onClose: () => void;
-}
-
-// Simple code block component
-const CodeBlock: React.FC<{ content: string; label: string }> = ({ content, label }) => (
-  <div style={{ marginBottom: 10 }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-      <Text style={{ fontSize: 11, color: DS.textSec, fontWeight: 500 }}>{label}</Text>
-      <Button type="text" size="small" icon={<CopyOutlined />} style={{ fontSize: 11, color: DS.textSec, height: 22, padding: '0 4px' }}
-        onClick={() => { navigator.clipboard.writeText(content); message.success('已复制'); }} />
-    </div>
-    <pre style={{
-      margin: 0, padding: '10px 12px', borderRadius: DS.radiusXs,
-      background: '#1a1b2e', border: '1px solid #2a2b3e',
-      color: '#a9b7c6', fontSize: 11, lineHeight: '17px',
-      fontFamily: "'SF Mono','Cascadia Code','Fira Code',monospace",
-      maxHeight: 160, overflow: 'auto', whiteSpace: 'pre-wrap',
-    }}>{content}</pre>
-  </div>
-);
-
-const TestPanel: React.FC<TestPanelProps> = ({ agent, visible, onClose }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [expandedDebug, setExpandedDebug] = useState<string | null>(null);
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  const avatarCfg = avatarPresets.find(a => a.key === agent.avatar) || avatarPresets[0];
-
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, loading]);
-
-  const handleSend = () => {
-    if (!input.trim() || loading) return;
-    const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: input.trim() };
-    setMessages(prev => [...prev, userMsg]);
-    setInput('');
-    setLoading(true);
-
-    setTimeout(() => {
-      const aiMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: '根据您提供的警情信息，已提取以下关键要素：\n\n• **案发时间**：2026-06-26 14:23:10\n• **精确地点**：XX市XX区建设路128号\n• **涉案人员**：报案人王某某（身份证号待补充）、嫌疑人黑头盔男子（175cm，骑黑色摩托）\n• **警情类别**：抢劫\n• **紧急程度**：⚠️ 高（正在实施违法犯罪行为）\n\n> **关键事实摘要**：报案人在建设路128号被一骑黑色摩托车的男子抢走手包，内有手机、银行卡及少量现金。',
-        debug: {
-          prompt: '系统提示词：你是一位110接警警情分析专家…\n用户输入：建设路128号，刚才有个骑摩托的男的把我包抢了…\n请提取标准化警情要素。',
-          request: '{\n  "model": "deepseek-chat",\n  "temperature": 0.7,\n  "max_tokens": 2048\n}',
-          response: '{\n  "choices": [{\n    "message": {\n      "content": "根据您提供的警情信息…"\n    }\n  }]\n}',
-          knowledgeHits: [
-            { snippet: '抢劫案件定性标准：以非法占有为目的，当场使用暴力、胁迫或其他方法…', source: '法律法规库', score: 0.93 },
-            { snippet: '110接处警工作规范：接警后应详细询问报案人基本情况…', source: '接处警规程库', score: 0.87 },
-          ],
-          toolCalls: [
-            { name: '文书智能解析', input: '{"text":"建设路128号…"}', output: '{"elements":["抢劫","摩托车"]}', duration: 142 },
-          ],
-        },
-        metrics: { firstTokenLatency: 320, totalLatency: 1240, inputTokens: 512, outputTokens: 248, kbHits: 2, toolCallCount: 1, toolTotalDuration: 142 },
-      };
-      setMessages(prev => [...prev, aiMsg]);
-      setLoading(false);
-    }, 1500);
-  };
-
-  const reset = () => { setMessages([]); setExpandedDebug(null); };
-  const lastMetrics = messages.filter(m => m.role === 'assistant').pop()?.metrics;
-
-  // Don't render if not visible
-  if (!visible) return null;
-
-  return (
-    <div style={{
-      width: 420, minWidth: 420,
-      borderLeft: `1px solid ${DS.border}`,
-      background: '#fafbfc',
-      display: 'flex', flexDirection: 'column',
-      animation: 'slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    }}>
-      <style>{`@keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`}</style>
-
-      {/* Header */}
-      <div style={{ padding: '16px 18px 14px', borderBottom: `1px solid ${DS.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: DS.white }}>
-        <Space size={10}>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: avatarCfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: avatarCfg.color, fontSize: 15, fontWeight: 700 }}>{avatarCfg.label}</div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 650, color: DS.text, lineHeight: '20px' }}>{agent.name}</div>
-            <Text type="secondary" style={{ fontSize: 11 }}>
-              <ExperimentOutlined style={{ marginRight: 4 }} />测试对话
-            </Text>
-          </div>
-        </Space>
-        <Space size={4}>
-          <Tooltip title="重置对话">
-            <Button type="text" size="small" icon={<SyncOutlined />} onClick={reset} style={{ color: DS.textSec }} />
-          </Tooltip>
-          <Tooltip title="关闭测试面板">
-            <Button type="text" size="small" onClick={onClose} style={{ color: DS.textSec }}>✕</Button>
-          </Tooltip>
-        </Space>
-      </div>
-
-      {/* Messages */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '18px 16px' }}>
-        {messages.length === 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 12, opacity: 0.6 }}>
-            <MessageOutlined style={{ fontSize: 32, color: DS.textTer }} />
-            <Text type="secondary" style={{ fontSize: 13 }}>发送消息开始测试</Text>
-            <Text type="secondary" style={{ fontSize: 11, textAlign: 'center', lineHeight: '18px' }}>
-              以当前配置模拟对话<br />配置改动即时生效
-            </Text>
-          </div>
-        )}
-
-        {messages.map(msg => (
-          <div key={msg.id} style={{ marginBottom: 16 }}>
-            {/* Bubble */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-              <div style={{
-                maxWidth: '88%',
-                padding: msg.role === 'user' ? '10px 14px' : '12px 16px',
-                borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                background: msg.role === 'user'
-                  ? 'linear-gradient(135deg, #1677ff 0%, #4096ff 100%)'
-                  : 'rgba(0,0,0,0.04)',
-                color: msg.role === 'user' ? '#fff' : DS.text,
-                fontSize: 13, lineHeight: '21px',
-                boxShadow: msg.role === 'user' ? '0 2px 8px rgba(22,119,255,0.2)' : 'none',
-              }}>
-                <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
-              </div>
-            </div>
-
-            {/* Debug for assistant */}
-            {msg.role === 'assistant' && msg.debug && (
-              <div style={{ marginTop: 8 }}>
-                <Button type="link" size="small"
-                  style={{ fontSize: 11, padding: 0, height: 'auto', color: DS.textSec, fontWeight: 500 }}
-                  onClick={() => setExpandedDebug(expandedDebug === msg.id ? null : msg.id)}>
-                  {expandedDebug === msg.id ? '▾ 收起调试详情' : '▸ 调试详情'}
-                </Button>
-                {expandedDebug === msg.id && (
-                  <div style={{
-                    marginTop: 8, padding: '12px 14px',
-                    background: DS.white, borderRadius: DS.radiusSm,
-                    border: `1px solid ${DS.border}`,
-                  }}>
-                    <CodeBlock content={msg.debug.prompt!} label="拼装的提示词" />
-                    <CodeBlock content={msg.debug.request!} label="模型请求参数" />
-                    {msg.debug.knowledgeHits && msg.debug.knowledgeHits.length > 0 && (
-                      <div style={{ marginBottom: 10 }}>
-                        <Text style={{ fontSize: 11, color: DS.textSec, fontWeight: 500, display: 'block', marginBottom: 6 }}>知识库检索命中</Text>
-                        {msg.debug.knowledgeHits.map((hit, i) => (
-                          <div key={i} style={{ padding: '8px 10px', borderRadius: DS.radiusXs, background: DS.bg, marginBottom: 4 }}>
-                            <div style={{ fontSize: 11, lineHeight: '17px', color: DS.text }}>{hit.snippet}</div>
-                            <div style={{ marginTop: 4, display: 'flex', gap: 8 }}>
-                              <Text type="secondary" style={{ fontSize: 10 }}>{hit.source}</Text>
-                              <span style={{ fontSize: 10, color: DS.blue, fontWeight: 600 }}>{(hit.score * 100).toFixed(0)}% 匹配</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {msg.debug.toolCalls && msg.debug.toolCalls.length > 0 && (
-                      <div>
-                        <Text style={{ fontSize: 11, color: DS.textSec, fontWeight: 500, display: 'block', marginBottom: 6 }}>工具调用详情</Text>
-                        {msg.debug.toolCalls.map((tc, i) => (
-                          <div key={i} style={{ padding: '8px 10px', borderRadius: DS.radiusXs, background: '#f9f0ff', marginBottom: 4 }}>
-                            <Space size={8} style={{ marginBottom: 4 }}><Tag color="purple" style={{ margin: 0, fontSize: 10 }}>{tc.name}</Tag><Text type="secondary" style={{ fontSize: 10 }}>{tc.duration}ms</Text></Space>
-                            <div style={{ fontSize: 10, color: DS.textSec, fontFamily: 'monospace', lineHeight: '16px' }}>入参：{tc.input}</div>
-                            <div style={{ fontSize: 10, color: DS.textSec, fontFamily: 'monospace', lineHeight: '16px' }}>出参：{tc.output}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-
-        {loading && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: DS.blue, animation: 'pulse 1.5s ease-in-out infinite' }} />
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: DS.blue, animation: 'pulse 1.5s ease-in-out 0.2s infinite' }} />
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: DS.blue, animation: 'pulse 1.5s ease-in-out 0.4s infinite' }} />
-          </div>
-        )}
-        <div ref={chatEndRef} />
-      </div>
-      <style>{`@keyframes pulse { 0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }`}</style>
-
-      {/* Metrics */}
-      {lastMetrics && (
-        <div style={{ padding: '8px 16px', borderTop: `1px solid ${DS.divider}`, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {[
-            `首Token ${lastMetrics.firstTokenLatency}ms`,
-            `总耗时 ${lastMetrics.totalLatency}ms`,
-            `输入 ${lastMetrics.inputTokens} tokens`,
-            `输出 ${lastMetrics.outputTokens} tokens`,
-            `知识库命中 ${lastMetrics.kbHits} 条`,
-          ].map((item, i) => (
-            <span key={i} style={{ fontSize: 10, color: DS.textSec, background: 'rgba(0,0,0,0.03)', padding: '2px 6px', borderRadius: 3, whiteSpace: 'nowrap' }}>{item}</span>
-          ))}
-        </div>
-      )}
-
-      {/* Input */}
-      <div style={{ padding: '12px 16px 16px', borderTop: `1px solid ${DS.divider}`, background: DS.white }}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-          <Tooltip title="上传测试文件"><Button type="text" icon={<PaperClipOutlined />} style={{ color: DS.textTer }} /></Tooltip>
-          <Input.TextArea
-            value={input} onChange={e => setInput(e.target.value)}
-            placeholder="输入消息测试 (Enter 发送)"
-            autoSize={{ minRows: 1, maxRows: 4 }}
-            style={{ flex: 1, borderRadius: DS.radiusXs, borderColor: DS.border, resize: 'none' }}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-          />
-          <Button type="primary" icon={<SendOutlined />} onClick={handleSend} loading={loading}
-            disabled={!input.trim()} style={{ borderRadius: DS.radiusXs, minWidth: 64 }}>发送</Button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ════════════════════════════════════════════════
-// Config Toolbar (sticky, inside config area)
-// ════════════════════════════════════════════════
-
-interface ConfigToolbarProps {
-  agent: AgentInfo;
-  hasUnsaved: boolean;
-  onSave: () => void;
-  onSaveAsNewVersion: (note: string) => void;
-  onPublish: () => void;
-  lastSaveTime: string;
-  autoSave: boolean;
-  onToggleAutoSave: () => void;
-  currentVersion: string;
-  testPanelOpen: boolean;
-  onToggleTestPanel: () => void;
-}
-
-const ConfigToolbar: React.FC<ConfigToolbarProps> = ({
-  agent, hasUnsaved, onSave, onSaveAsNewVersion, onPublish,
-  lastSaveTime, autoSave, onToggleAutoSave, currentVersion,
-  testPanelOpen, onToggleTestPanel,
-}) => {
-  const [saveAsModal, setSaveAsModal] = useState(false);
-  const [versionNote, setVersionNote] = useState('');
-
-  const versionMenuItems: MenuProps['items'] = MOCK_VERSIONS.map(v => ({
-    key: v.version,
-    label: (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 420, padding: '6px 0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: v.active ? DS.green : DS.textTer, flexShrink: 0 }} />
-          <span style={{ fontWeight: 600, fontSize: 13 }}>{v.version}</span>
-          {v.isDraft && <Tag color="orange" style={{ margin: 0, fontSize: 10, borderRadius: 3, lineHeight: '16px', padding: '0 4px' }}>草稿</Tag>}
-          {v.active && !v.isDraft && <Tag color="green" style={{ margin: 0, fontSize: 10, borderRadius: 3, lineHeight: '16px', padding: '0 4px' }}>生效中</Tag>}
-        </div>
-        <Text type="secondary" style={{ fontSize: 11, minWidth: 110 }}>{v.time}</Text>
-        <Text type="secondary" style={{ fontSize: 11, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>{v.note}</Text>
-        <span style={{ display: 'flex', gap: 0, marginLeft: 4 }}>
-          <Button type="link" size="small" icon={<EyeOutlined />} onClick={e => { e.stopPropagation(); message.info('查看版本快照'); }} />
-          {!v.active && <Button type="link" size="small" onClick={e => { e.stopPropagation(); message.info('恢复为草稿'); }}>恢复</Button>}
-        </span>
-      </div>
-    ),
-  }));
-
-  const handleSaveAs = () => {
-    if (!versionNote.trim()) { message.warning('请输入版本说明'); return; }
-    onSaveAsNewVersion(versionNote);
-    setVersionNote(''); setSaveAsModal(false);
-    message.success('已另存为新版本');
-  };
-
-  const st = statusConfig[agent.status];
-
-  return (
-    <div style={{
-      padding: '10px 24px',
-      borderBottom: `1px solid ${DS.divider}`,
-      display: 'flex', alignItems: 'center', gap: 10,
-      background: 'rgba(255,255,255,0.85)',
-      backdropFilter: 'blur(12px)',
-      WebkitBackdropFilter: 'blur(12px)',
-      position: 'sticky', top: 0, zIndex: 10,
-    }}>
-      {/* Left: actions */}
-      <Space size={8}>
-        <Button type="primary" icon={<SaveOutlined />}
-          onClick={onSave}
-          style={{
-            borderRadius: DS.radiusXs, fontWeight: 600,
-            boxShadow: hasUnsaved ? '0 2px 8px rgba(22,119,255,0.25)' : 'none',
-            transition: 'box-shadow 0.3s',
-          }}>保存</Button>
-        <Button icon={<BranchesOutlined />} onClick={() => setSaveAsModal(true)} style={{ borderRadius: DS.radiusXs }}>另存为新版本</Button>
-        <Dropdown menu={{ items: versionMenuItems }} trigger={['click']} placement="bottomLeft">
-          <Button style={{ borderRadius: DS.radiusXs }}>版本 <span style={{ fontSize: 10, marginLeft: 4, color: DS.textTer }}>▾</span></Button>
-        </Dropdown>
-      </Space>
-
-      {/* Spacer */}
-      <div style={{ flex: 1 }} />
-
-      {/* Right: status info */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12 }}>
-        <span style={{ color: DS.textSec }}>版本 <b style={{ color: DS.text, fontWeight: 600 }}>{currentVersion}</b></span>
-        <span style={{ color: DS.textSec, fontFeatureSettings: '"tnum"' }}>上次保存 {lastSaveTime}</span>
-        <span
-          onClick={onToggleAutoSave}
-          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: autoSave ? DS.green : DS.textTer, fontWeight: 500, userSelect: 'none' }}
-        >
-          <span style={{ width: 5, height: 5, borderRadius: '50%', background: autoSave ? DS.green : DS.textTer, display: 'inline-block' }} />
-          自动保存{autoSave ? '：开' : '：关'}
-        </span>
-      </div>
-
-      <Divider type="vertical" style={{ margin: '0 4px', borderColor: DS.divider }} />
-
-      {/* Right: publish & test toggle */}
-      <Space size={8}>
-        <Tag color={st.color} style={{ borderRadius: 4, margin: 0, fontWeight: 500, fontSize: 12 }}>{st.label}</Tag>
-        <Button type="primary" ghost icon={<RocketOutlined />} onClick={onPublish}
-          style={{ borderRadius: DS.radiusXs, fontWeight: 600 }}>发布</Button>
-        <Button
-          icon={testPanelOpen ? <CompressOutlined /> : <ExpandOutlined />}
-          onClick={onToggleTestPanel}
-          type={testPanelOpen ? 'default' : 'text'}
-          style={{
-            borderRadius: DS.radiusXs,
-            color: testPanelOpen ? DS.blue : DS.textSec,
-            fontWeight: 500, fontSize: 13,
-            borderColor: testPanelOpen ? DS.blue : 'transparent',
-          }}
-        >
-          {testPanelOpen ? '收起测试' : '测试'}
-        </Button>
-      </Space>
-
-      {/* SaveAs Modal */}
-      <Modal title="另存为新版本" open={saveAsModal} onOk={handleSaveAs} onCancel={() => setSaveAsModal(false)}
-        okText="确认保存" cancelText="取消" width={420}>
-        <div style={{ marginTop: 8 }}>
-          <div style={{ ...DS.label, marginBottom: 6 }}>版本说明</div>
-          <Input.TextArea rows={3} maxLength={200} showCount value={versionNote}
-            onChange={e => setVersionNote(e.target.value)} placeholder="简述本次版本的变更内容…" style={{ borderRadius: DS.radiusXs }} />
-        </div>
-      </Modal>
-    </div>
-  );
-};
-
-// ════════════════════════════════════════════════
-// Dify Placeholder
-// ════════════════════════════════════════════════
-
-const DifyPlaceholder: React.FC<{ agentType: AgentType }> = ({ agentType }) => (
-  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
-    <div style={{ width: 72, height: 72, borderRadius: 18, background: DS.blueLight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <SettingOutlined style={{ fontSize: 32, color: DS.blue }} />
-    </div>
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: 16, fontWeight: 650, color: DS.text, marginBottom: 4 }}>
-        {agentType === 'workflow' ? 'Dify 工作流编排' : 'Dify 自主智能体配置'}
-      </div>
-      <Text type="secondary" style={{ fontSize: 13 }}>通过 iframe 嵌入 Dify 平台</Text>
-    </div>
-  </div>
-);
-
-// ════════════════════════════════════════════════
 // External Agent Config Panel
 // ════════════════════════════════════════════════
 
@@ -2548,213 +2135,161 @@ export default function AgentConfigPage() {
   const nav = useNavigate();
   const [searchParams] = useSearchParams();
   const isExternal = searchParams.get('external') === 'true';
+  const typeParam = searchParams.get('type') as AgentType | null;
   const [activeNav, setActiveNav] = useState<NavKey>('config');
-  const [agent, setAgent] = useState<AgentInfo>(MOCK_AGENT);
-  const [hasUnsaved, setHasUnsaved] = useState(false);
-  const [lastSaveTime] = useState('2026-06-26 14:30');
-  const [autoSave, setAutoSave] = useState(true);
+  const [agent, setAgent] = useState<AgentInfo>(() => {
+    if (typeParam && ['standard', 'workflow', 'autonomous'].includes(typeParam)) {
+      return {
+        ...MOCK_AGENT, type: typeParam,
+        subType: typeParam === 'workflow' ? 'workflow' : 'smart_extract',
+        subTypeLabel: typeParam === 'workflow' ? '工作流' : '智能抽取',
+      };
+    }
+    return MOCK_AGENT;
+  });
   const [currentVersion] = useState('v1.3.0');
-  const [testPanelOpen, setTestPanelOpen] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editDesc, setEditDesc] = useState('');
-  const [editAvatar, setEditAvatar] = useState('');
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
-  const st = statusConfig[agent.status];
   const activeAv = avatarPresets.find(a => a.key === agent.avatar) || avatarPresets[0];
 
-  const openEdit = () => {
-    setEditName(agent.name); setEditDesc(agent.description); setEditAvatar(agent.avatar);
-    setDrawerOpen(true);
-  };
-
-  const saveEdit = () => {
-    if (!editName.trim()) { message.warning('名称不能为空'); return; }
-    setAgent(prev => ({ ...prev, name: editName, description: editDesc, avatar: editAvatar }));
-    setDrawerOpen(false);
-    message.success('信息已更新');
-  };
-
-  const handleSave = () => {
-    setHasUnsaved(false);
-    message.success('配置已保存');
-  };
-
-  const handleSaveAsNewVersion = (_note: string) => {
-    setHasUnsaved(false);
-  };
-
-  const handlePublish = () => {
-    // Navigate to publish tab
-    if (hasUnsaved) { message.warning('请先保存配置'); return; }
-    setActiveNav('publish');
+  const renderConfigPanel = () => {
+    if (isExternal) return <ExternalConfigPanel />;
+    if (agent.type === 'standard') return <StandardConfigPanel />;
+    if (agent.type === 'workflow') return <WorkflowEditor />;
+    return <AgentConfigPanel />;
   };
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: DS.bg }}>
-      {/* ═══ Header Bar ═══ */}
+    <div style={{ flex: 1, display: 'flex', overflow: 'hidden', background: DS.bg }}>
+      {/* ═══ Left Sidebar ═══ */}
       <div style={{
-        height: 52, padding: '0 24px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: DS.white, borderBottom: `1px solid ${DS.divider}`,
-        flexShrink: 0,
+        width: 240, minWidth: 240,
+        borderRight: `1px solid ${DS.divider}`,
+        display: 'flex', flexDirection: 'column',
+        padding: '16px 12px', background: DS.white,
       }}>
-        <Space size={12}>
-          <Button type="text" icon={<ArrowLeftOutlined />}
-            onClick={() => nav('/dev/agent-manage')}
-            style={{ color: DS.textSec, fontWeight: 500, fontSize: 13 }}>
-            返回
-          </Button>
-          <Divider type="vertical" style={{ margin: 0, borderColor: DS.divider }} />
+        {/* 返回 */}
+        <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => nav('/dev/agent-manage')}
+          style={{ color: DS.textSec, fontWeight: 500, fontSize: 13, alignSelf: 'flex-start', padding: '4px 8px' }}>
+          返回
+        </Button>
+
+        {/* 名称 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, padding: '0 6px' }}>
           <div style={{
-            width: 30, height: 30, borderRadius: 8, background: activeAv.bg,
+            width: 34, height: 34, borderRadius: 8, background: activeAv.bg,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: activeAv.color, fontSize: 13, fontWeight: 700,
+            color: activeAv.color, fontSize: 15, fontWeight: 700, flexShrink: 0,
           }}>{activeAv.label}</div>
-          <span style={{ fontSize: 14, fontWeight: 650, color: DS.text }}>{agent.name}</span>
-          <Tag style={{
-            border: 'none', borderRadius: 4,
-            background: st.bg, color: st.color,
-            fontWeight: 500, fontSize: 12, padding: '0 10px', lineHeight: '22px',
-          }}>{st.label}</Tag>
-          {isExternal && <Tag color="orange" style={{ borderRadius: 4, fontWeight: 500, fontSize: 12 }}>外部智能体</Tag>}
-        </Space>
-        <Button type="text" size="small" icon={<EditOutlined />} onClick={openEdit}
-          style={{ color: DS.textSec, fontSize: 12 }}>编辑信息</Button>
-      </div>
+          <span style={{
+            fontSize: 15, fontWeight: 700, color: DS.text, flex: 1, minWidth: 0,
+            lineHeight: '20px', wordBreak: 'break-all',
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          }}>{agent.name}</span>
+        </div>
 
-      {/* ═══ Body ═══ */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        {/* ──── Sidebar ──── */}
-        <div style={{
-          width: DS.navWidth, minWidth: DS.navWidth,
-          borderRight: `1px solid ${DS.divider}`,
-          display: 'flex', flexDirection: 'column',
-          padding: '16px 10px', background: DS.white,
+        {/* 描述 */}
+        <Text type="secondary" style={{
+          fontSize: 12, lineHeight: '18px', marginTop: 10, padding: '0 6px',
+          display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
         }}>
-          {/* Agent info card */}
-          <div style={{ padding: '0 6px 16px', borderBottom: `1px solid ${DS.divider}`, marginBottom: 8 }}>
-            <Text type="secondary" style={{ fontSize: 11, display: 'block', lineHeight: '18px' }}>
-              {agent.description}
-            </Text>
-            <div style={{ marginTop: 10 }}>
-              <Tag style={{ margin: 0, borderRadius: 4, fontSize: 11 }}>{isExternal ? '外部智能体' : typeLabel[agent.type]}</Tag>
-              {!isExternal && agent.subTypeLabel && <Tag style={{ margin: '0 0 0 4px', borderRadius: 4, fontSize: 11 }} color="blue">{agent.subTypeLabel}</Tag>}
-            </div>
-          </div>
+          {agent.description}
+        </Text>
 
-          {/* Navigation */}
-          {navItems.map(item => {
-            const active = activeNav === item.key;
-            return (
-              <div key={item.key} onClick={() => setActiveNav(item.key)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  margin: '0 0 2px', padding: '9px 12px', borderRadius: DS.radiusXs,
-                  cursor: 'pointer', userSelect: 'none',
-                  transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: active ? DS.blueLight : 'transparent',
-                  color: active ? DS.blue : DS.textSec,
-                  fontWeight: active ? 600 : 400,
-                  fontSize: 13,
-                }}
-                onMouseEnter={e => { if (!active) { e.currentTarget.style.background = DS.bg; e.currentTarget.style.color = DS.text; } }}
-                onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = DS.textSec; } }}
-              >
-                <span style={{ fontSize: 15, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
-                {item.label}
-              </div>
-            );
-          })}
+        {/* 类型标签 */}
+        <div style={{ marginTop: 10, padding: '0 6px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+          <Tag style={{ margin: 0, borderRadius: 4, fontSize: 11 }}>{isExternal ? '外部智能体' : typeLabel[agent.type]}</Tag>
+          {!isExternal && agent.subTypeLabel && <Tag style={{ margin: 0, borderRadius: 4, fontSize: 11 }} color="blue">{agent.subTypeLabel}</Tag>}
         </div>
 
-        {/* ──── Content Area ──── */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
-          {/* Toolbar — only in config tab, not for external */}
-          {activeNav === 'config' && !isExternal && (
-            <ConfigToolbar
-              agent={agent}
-              hasUnsaved={hasUnsaved}
-              onSave={handleSave}
-              onSaveAsNewVersion={handleSaveAsNewVersion}
-              onPublish={handlePublish}
-              lastSaveTime={lastSaveTime}
-              autoSave={autoSave}
-              onToggleAutoSave={() => setAutoSave(!autoSave)}
-              currentVersion={currentVersion}
-              testPanelOpen={testPanelOpen}
-              onToggleTestPanel={() => setTestPanelOpen(!testPanelOpen)}
-            />
-          )}
+        {/* 分割线 */}
+        <div style={{ height: 1, background: DS.divider, margin: '16px 6px 12px' }} />
 
-          {/* Main content: config panel + optional test panel */}
-          <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-            <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-              {activeNav === 'config' ? (
-                isExternal
-                  ? <ExternalConfigPanel />
-                  : agent.type === 'standard'
-                    ? <StandardConfigPanel />
-                    : <DifyPlaceholder agentType={agent.type} />
-              ) : activeNav === 'publish' ? (
-                <div style={{ flex: 1, overflow: 'auto' }}><PublishPanel agent={agent} currentVersion={currentVersion} onPublishSuccess={(note: string) => { setAgent(prev => ({ ...prev, status: 'published' })); if (note) message.success('发布成功！'); }} /></div>
-              ) : activeNav === 'logs' ? (
-                isExternal
-                  ? <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Text type="secondary">外部智能体不产生平台内运行数据</Text></div>
-                  : <AgentLogsPanel agentId={agent.id} />
-              ) : (
-                isExternal
-                  ? <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Text type="secondary">外部智能体不产生平台内运行数据</Text></div>
-                  : <div style={{ flex: 1, overflow: 'auto' }}><StatsPanel /></div>
-              )}
+        {/* 菜单项 */}
+        {navItems.map(item => {
+          const active = activeNav === item.key;
+          return (
+            <div key={item.key} onClick={() => setActiveNav(item.key)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                margin: '0 0 2px', padding: '9px 12px', borderRadius: DS.radiusXs,
+                cursor: 'pointer', userSelect: 'none',
+                transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+                background: active ? DS.blueLight : 'transparent',
+                color: active ? DS.blue : DS.textSec,
+                fontWeight: active ? 600 : 400,
+                fontSize: 13,
+              }}
+              onMouseEnter={e => { if (!active) { e.currentTarget.style.background = DS.bg; e.currentTarget.style.color = DS.text; } }}
+              onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = DS.textSec; } }}
+            >
+              <span style={{ fontSize: 15, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
+              {item.label}
             </div>
+          );
+        })}
+      </div>
 
-            {/* Test Panel */}
-            <TestPanel agent={agent} visible={testPanelOpen && activeNav === 'config' && !isExternal}
-              onClose={() => setTestPanelOpen(false)} />
+      {/* ──── Right Content Area ──── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+        {/* 子页面 title 栏 */}
+        <div style={{
+          height: 44, padding: '0 24px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: DS.white, borderBottom: `1px solid ${DS.divider}`,
+          flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 16, fontWeight: 650, color: DS.text }}>{navTitleMap[activeNav]}</span>
+          {activeNav === 'config' && (
+            agent.type === 'workflow' ? (
+              <Button type="text" size="small" icon={<ExpandOutlined />} onClick={() => setFullscreenOpen(true)}
+                style={{ color: DS.textSec, fontSize: 12 }}>全屏使用</Button>
+            ) : (
+              <Button type="primary" icon={<RocketOutlined />} onClick={() => setActiveNav('publish')}
+                style={{ borderRadius: DS.radiusXs, fontWeight: 600 }}>发布</Button>
+            )
+          )}
+        </div>
+
+        {/* Main content */}
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            {activeNav === 'config' ? (
+              renderConfigPanel()
+            ) : activeNav === 'publish' ? (
+              <div style={{ flex: 1, overflow: 'auto' }}><PublishPanel agent={agent} currentVersion={currentVersion} onPublishSuccess={(note: string) => { setAgent(prev => ({ ...prev, status: 'published' })); if (note) message.success('发布成功！'); }} /></div>
+            ) : activeNav === 'logs' ? (
+              isExternal
+                ? <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Text type="secondary">外部智能体不产生平台内运行数据</Text></div>
+                : <AgentLogsPanel agentId={agent.id} />
+            ) : (
+              isExternal
+                ? <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Text type="secondary">外部智能体不产生平台内运行数据</Text></div>
+                : <div style={{ flex: 1, overflow: 'auto' }}><StatsPanel /></div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ═══ Edit Drawer ═══ */}
-      <Drawer title="编辑智能体信息" open={drawerOpen} onClose={() => setDrawerOpen(false)} size={400}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div>
-            <div style={{ ...DS.label, marginBottom: 6 }}>智能体名称</div>
-            <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder="请输入名称" style={{ borderRadius: DS.radiusXs }} />
+      {/* ═══ Fullscreen Config ═══ */}
+      {fullscreenOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 2000, background: '#f5f8fc',
+          display: 'flex', flexDirection: 'column',
+        }}>
+          <div style={{
+            height: 44, padding: '0 24px', background: DS.white, borderBottom: `1px solid ${DS.divider}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+          }}>
+            <span style={{ fontSize: 16, fontWeight: 650, color: DS.text }}>{navTitleMap[activeNav]}</span>
+            <Button type="text" size="small" icon={<CompressOutlined />} onClick={() => setFullscreenOpen(false)}
+              style={{ color: DS.textSec, fontSize: 12 }}>退出全屏</Button>
           </div>
-          <div>
-            <div style={{ ...DS.label, marginBottom: 6 }}>类型</div>
-            <Input value={isExternal ? '外部智能体' : typeLabel[agent.type]} disabled style={{ borderRadius: DS.radiusXs }} />
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+            {renderConfigPanel()}
           </div>
-          {isExternal && (
-            <div>
-              <div style={{ ...DS.label, marginBottom: 6 }}>外部链接</div>
-              <Input value="https://xinghuo.xfyun.cn/chat/police" disabled style={{ borderRadius: DS.radiusXs }} />
-            </div>
-          )}
-          <div>
-            <div style={{ ...DS.label, marginBottom: 6 }}>描述</div>
-            <Input.TextArea rows={3} value={editDesc} onChange={e => setEditDesc(e.target.value)} style={{ borderRadius: DS.radiusXs }} />
-          </div>
-          <div>
-            <div style={{ ...DS.label, marginBottom: 8 }}>头像</div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {avatarPresets.map(a => (
-                <div key={a.key} onClick={() => setEditAvatar(a.key)}
-                  style={{
-                    width: 40, height: 40, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: a.bg, color: a.color, fontSize: 15, fontWeight: 700, cursor: 'pointer',
-                    border: editAvatar === a.key ? `2px solid ${a.color}` : '2px solid transparent',
-                    transition: 'all 0.2s',
-                    boxShadow: editAvatar === a.key ? `0 0 0 3px ${a.bg}` : 'none',
-                  }}>{a.label}</div>
-              ))}
-            </div>
-          </div>
-          <Button type="primary" onClick={saveEdit} style={{ borderRadius: DS.radiusXs, marginTop: 4 }}>保存</Button>
         </div>
-      </Drawer>
+      )}
     </div>
   );
 }

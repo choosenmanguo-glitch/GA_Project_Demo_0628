@@ -72,8 +72,13 @@ export const TabsProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTabs((prev) => {
       const exists = prev.find((t) => t.path === path);
       if (exists) {
-        // 已存在则仅切换
+        // 已存在则切换，并同步最新标题
         setActivePath(path);
+        if (exists.label !== label) {
+          const next = prev.map((t) => (t.path === path ? { ...t, label } : t));
+          saveTabs(next);
+          return next;
+        }
         return prev;
       }
       const next = [...prev, { path, label }];

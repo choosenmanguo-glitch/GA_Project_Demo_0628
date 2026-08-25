@@ -11,6 +11,8 @@ import type { FilterField } from '@/components/FilterBar';
 import IconPicker, { type IconPickerValue } from '@/components/IconPicker';
 import { mockAgents, type AgentItem, type AgentType, type PublishType } from '@/mock/data';
 import { getChatLimitConfig } from '@/pages/system-config';
+import AgentChatPanel from './AgentChatPanel';
+import WorkflowRunPanel from './WorkflowRunPanel';
 
 const { TextArea } = Input;
 const { Text, Title } = Typography;
@@ -128,6 +130,7 @@ export default function AgentManagePage() {
   const externalName = Form.useWatch('name', externalForm);
   const [chatAgent, setChatAgent] = useState<AgentItem | null>(null);
   const [chatTipModalOpen, setChatTipModalOpen] = useState(false);
+  const [settingsSignal, setSettingsSignal] = useState(0);
   const [todayRemaining, setTodayRemaining] = useState(10);
 
   // ──── 复制抽屉状态 ────
@@ -166,6 +169,8 @@ export default function AgentManagePage() {
     setChatAgent(agent);
     if (chatConfig.enabled && localStorage.getItem('chat_dev_tip_dismissed') !== '1') {
       setChatTipModalOpen(true);
+    } else {
+      setSettingsSignal(s => s + 1);
     }
   };
 
@@ -234,7 +239,7 @@ export default function AgentManagePage() {
       return (
         <Space size={0}>
           <Button type="link" size="small" icon={<EditOutlined />} onClick={() => setViewingAgent(r)}>编辑</Button>
-          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => navigate(`/dev/agent-config${r.type === '外部智能体' ? '?external=true' : ''}`)}>配置</Button>
+          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => navigate(`/dev/agent-config${r.type === '外部智能体' ? '?external=true' : typeFromChinese[r.type] && typeFromChinese[r.type] !== 'standard' ? `?type=${typeFromChinese[r.type]}` : ''}`)}>配置</Button>
           {r.type !== '外部智能体' && <Button type="link" size="small" icon={<CopyOutlined />} onClick={() => handleCopyAgent(r)}>复制</Button>}
           <Dropdown menu={{
             items: moreItems.map(item => ({
@@ -358,47 +363,25 @@ export default function AgentManagePage() {
   return (
     <div style={{ flex: 1, padding: '16px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {chatAgent ? (
-        /* 对话二级页面 */
-        <>
-          <div style={{ padding: '12px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <ArrowLeftOutlined
-                style={{ fontSize: 16, color: 'rgba(0,0,0,0.45)', cursor: 'pointer' }}
-                onClick={() => setChatAgent(null)}
-              />
-              <span style={{ fontSize: 18, fontWeight: 600, color: 'rgba(0,0,0,0.88)' }}>
-                {chatAgent.name}
-              </span>
-              <Popover content="在此与智能体进行对话交互" title="功能说明" trigger="hover" placement="right">
-                <QuestionCircleOutlined style={{ fontSize: 15, color: 'rgba(0,0,0,0.25)', cursor: 'pointer' }} />
-              </Popover>
-            </div>
-            {chatConfig.enabled && (
-              <Text type="secondary" style={{ fontSize: 13 }}>今日剩余使用次数：{todayRemaining}/{chatConfig.dailyLimit}</Text>
-            )}
-          </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ flex: 1, padding: 24, background: '#f5f5f5', overflow: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Text type="secondary" style={{ fontSize: 14 }}>嵌入助手对话页面</Text>
-            </div>
-            <div style={{
-              padding: '12px 16px', borderTop: '1px solid #f0f0f0', background: '#fff',
-              display: 'flex', alignItems: 'center', gap: 12, borderRadius: '0 0 8px 8px',
-            }}>
-              <Input placeholder="输入消息..." style={{ flex: 1 }} disabled={chatConfig.enabled && todayRemaining <= 0} />
-              <Tooltip title={chatConfig.enabled && todayRemaining <= 0 ? '今日使用次数已用完' : ''}>
-                <Button
-                  type="primary"
-                  icon={<SendOutlined />}
-                  disabled={chatConfig.enabled && todayRemaining <= 0}
-                  onClick={handleChatSend}
-                >
-                  发送
-                </Button>
-              </Tooltip>
-            </div>
-          </div>
-        </>
+        chatAgent.type === '流程智能体' && chatAgent.subType === '工作流' ? (
+          <WorkflowRunPanel
+            agent={chatAgent}
+            onBack={() => setChatAgent(null)}
+            chatEnabled={chatConfig.enabled}
+            remaining={todayRemaining}
+            dailyLimit={chatConfig.dailyLimit}
+          />
+        ) : (
+          <AgentChatPanel
+            agent={chatAgent}
+            onBack={() => setChatAgent(null)}
+            chatEnabled={chatConfig.enabled}
+            remaining={todayRemaining}
+            dailyLimit={chatConfig.dailyLimit}
+            onSend={handleChatSend}
+            openSettingsSignal={settingsSignal}
+          />
+        )
       ) : (
         <>
         <PageHeader title="智能体管理" hint="管理已创建的智能体，支持列表和卡片两种视图，可按类型和发布状态筛选" />
@@ -471,7 +454,7 @@ export default function AgentManagePage() {
                     <AgentCard
                       key={item.id}
                       agent={item}
-                      onConfig={() => navigate(`/dev/agent-config${item.type === '外部智能体' ? '?external=true' : ''}`)}
+                      onConfig={() => navigate(`/dev/agent-config${item.type === '外部智能体' ? '?external=true' : typeFromChinese[item.type] && typeFromChinese[item.type] !== 'standard' ? `?type=${typeFromChinese[item.type]}` : ''}`)}
                       onView={() => setViewingAgent(item)}
                     />
                   ))}
@@ -835,8 +818,12 @@ export default function AgentManagePage() {
         onOk={() => {
           localStorage.setItem('chat_dev_tip_dismissed', '1');
           setChatTipModalOpen(false);
+          setSettingsSignal(s => s + 1);
         }}
-        onCancel={() => setChatTipModalOpen(false)}
+        onCancel={() => {
+          setChatTipModalOpen(false);
+          setSettingsSignal(s => s + 1);
+        }}
         okText="知道了"
         cancelText="关闭"
         width={480}
