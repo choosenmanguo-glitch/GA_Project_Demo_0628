@@ -203,6 +203,29 @@ export default function WorkflowEditor() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginRight: 4 }}>
+            {[
+              { icon: <PlayCircleOutlined />, label: '测试', primary: true },
+              { icon: <FileTextOutlined />, label: '运行历史', primary: false },
+            ].map(b => (
+              <button key={b.label} title={b.label} style={{
+                width: 32, height: 32, border: 0, borderRadius: 5,
+                color: b.primary ? '#155fe7' : '#667388', background: b.primary ? '#eef4ff' : 'transparent',
+                display: 'grid', placeItems: 'center', cursor: 'pointer',
+              }}>{b.icon}</button>
+            ))}
+            <button title="检查清单" style={{
+              position: 'relative', width: 32, height: 32, border: 0, borderRadius: 5,
+              background: 'transparent', color: '#667388', display: 'grid', placeItems: 'center', cursor: 'pointer',
+            }}>
+              <CheckSquareOutlined />
+              <span style={{
+                position: 'absolute', right: 0, top: -1, minWidth: 16, height: 16, borderRadius: 8,
+                padding: '0 4px', background: '#f79009', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 9,
+              }}>2</span>
+            </button>
+          </div>
+          <span style={{ width: 1, height: 24, background: '#e4e8ee' }} />
           <button style={{
             height: 32, padding: '0 14px', border: 0, borderRadius: 5, color: '#fff', background: '#1764f2',
             boxShadow: '0 4px 10px rgba(23,100,242,.18)', display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer',
@@ -312,35 +335,6 @@ export default function WorkflowEditor() {
             </div>
           </div>
 
-          {/* 测试 dock */}
-          <div style={{
-            height: 52, borderTop: '1px solid #e4e8ee', padding: '0 12px 0 16px',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', flexShrink: 0,
-          }}>
-            <span style={{ color: '#4e5b70', fontSize: 12, fontWeight: 600 }}>测试与检查</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              {[
-                { icon: <PlayCircleOutlined />, label: '测试', primary: true },
-                { icon: <FileTextOutlined />, label: '运行历史', primary: false },
-              ].map(b => (
-                <button key={b.label} title={b.label} style={{
-                  width: 32, height: 32, border: 0, borderRadius: 5,
-                  color: b.primary ? '#155fe7' : '#667388', background: b.primary ? '#eef4ff' : 'transparent',
-                  display: 'grid', placeItems: 'center', cursor: 'pointer',
-                }}>{b.icon}</button>
-              ))}
-              <button title="检查清单" style={{
-                position: 'relative', width: 32, height: 32, border: 0, borderRadius: 5,
-                background: 'transparent', color: '#667388', display: 'grid', placeItems: 'center', cursor: 'pointer',
-              }}>
-                <CheckSquareOutlined />
-                <span style={{
-                  position: 'absolute', right: 0, top: -1, minWidth: 16, height: 16, borderRadius: 8,
-                  padding: '0 4px', background: '#f79009', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 9,
-                }}>2</span>
-              </button>
-            </div>
-          </div>
         </aside>
 
         {/* 画布 */}
