@@ -41,6 +41,8 @@ import {
   CloudUploadOutlined,
   CloseOutlined,
   FileOutlined,
+  FilePdfOutlined,
+  FileWordOutlined,
 } from '@ant-design/icons';
 
 // ════════════════════════════════════════════════
@@ -122,14 +124,23 @@ interface Attachment {
   source: 'local' | 'url';
 }
 
+/** 助手回复引用的知识库文件（自主智能体：底部文件芯片列表） */
+interface RefFile {
+  name: string;
+  /** 文件类型，决定图标；默认取文件名后缀 */
+  ext?: string;
+}
+
 interface Msg {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   blocks?: Block[];
   thinking?: boolean;
+  streaming?: boolean;
   time?: string;
   attachments?: Attachment[];
+  refFiles?: RefFile[];
 }
 
 /** 对话页上传配置：仅支持图片格式 */
@@ -146,6 +157,14 @@ const formatFileSize = (bytes?: number) => {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+};
+
+/** 根据文件名后缀返回类型图标与主题色 */
+const getRefFileIcon = (name: string) => {
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  if (ext === 'pdf') return { Icon: FilePdfOutlined, color: '#f5222d' };
+  if (ext === 'doc' || ext === 'docx') return { Icon: FileWordOutlined, color: '#1677ff' };
+  return { Icon: FileOutlined, color: DS.textTer };
 };
 
 interface Conversation {
@@ -200,6 +219,13 @@ const FOLLOWUP_SUGGESTIONS = [
 
 const FINAL_REPORT = '协查通报\n\n兹通报一起人员走失警情，请各单位协助查找：\n\n走失人员：王某，男，68岁\n体貌特征：身高约170cm，体型偏瘦，头发花白，患有轻度阿尔茨海默症，可能无法准确表述个人信息\n衣着特征：蓝色外套、黑色长裤、黑色布鞋\n走失时间：2026年6月24日 上午9时许\n走失地点：XX小区东门附近\n\n如有发现，请及时联系家属（张女士 138****2046）或拨打110。';
 
+/** 助手回复引用的知识库文件（底部文件芯片列表） */
+const DEMO_REF_FILES: RefFile[] = [
+  { name: '公安机关协查通报文书制作规范.pdf' },
+  { name: '走失人员查找与通报工作规程.docx' },
+  { name: '协查通报信息发布管理办法.pdf' },
+];
+
 /** 最终回复的内容块（文本与工具调用交替） */
 const DEMO_BLOCKS: Block[] = [
   { type: 'text', text: '收到，我先解析走失人员关键信息，并查询当前时间以确定通报时间基准。' },
@@ -238,7 +264,19 @@ const DEMO_BLOCKS: Block[] = [
       },
     ],
   },
-  { type: 'text', text: '关键信息已核实。现在为你生成标准格式的协查通报。' },
+  { type: 'text', text: '关键信息已核实。我先检索协查通报的制式规范，再按标准格式生成通报。' },
+  {
+    type: 'tool',
+    label: 'knowledge_retrieve',
+    tools: [
+      {
+        name: 'knowledge_retrieve',
+        request: '{"query": "走失人员协查通报 制式规范 发布流程", "knowledge_bases": ["基层警务文书规范库", "人员协查工作规程库"], "top_k": 3}',
+        response: '{"results": [{"doc": "公安机关协查通报文书制作规范.pdf#page=18", "score": 0.93}, {"doc": "走失人员查找与通报工作规程.docx#page=7", "score": 0.89}, {"doc": "协查通报信息发布管理办法.pdf#page=3", "score": 0.85}]}',
+      },
+    ],
+  },
+  { type: 'text', text: '已检索到协查通报制式规范相关材料，正在据此生成标准格式通报。' },
   {
     type: 'tool',
     label: 'report_builder',
@@ -548,6 +586,54 @@ const UserMessage: React.FC<{ msg: Msg }> = ({ msg }) => (
   </div>
 );
 
+/** 助手消息底部：引用文件列表（自主智能体风格，区别于标准智能体的行内引号 + 引用材料抽屉） */
+const ReferenceFiles: React.FC<{ files: RefFile[] }> = ({ files }) => {
+  // 超过 2 个时默认收起，仅展示前 2 个；点击展开/收起
+  const [expanded, setExpanded] = useState(false);
+  if (!files || files.length === 0) return null;
+  const collapsible = files.length > 2;
+  const visible = expanded || !collapsible ? files : files.slice(0, 2);
+
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <span style={{ fontSize: 13, color: DS.textTer, flexShrink: 0 }}>引用</span>
+        <span style={{ flex: 1, height: 1, background: DS.divider }} />
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {visible.map((f, i) => {
+          const { Icon, color } = getRefFileIcon(f.name);
+          return (
+            <span key={i}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                maxWidth: 260, padding: '5px 10px', borderRadius: 8,
+                fontSize: 13, color: DS.textSec, background: DS.bg,
+                border: `1px solid ${DS.border}`,
+              }}>
+              <Icon style={{ color, fontSize: 15, flexShrink: 0 }} />
+              <span style={{ ...ellipsis }}>{f.name}</span>
+            </span>
+          );
+        })}
+        {collapsible && (
+          <span onClick={() => setExpanded(e => !e)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 32, height: 30, borderRadius: 8, cursor: 'pointer',
+              color: DS.textTer, background: DS.bg, border: `1px solid ${DS.border}`,
+              transition: 'all .15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = DS.text; e.currentTarget.style.borderColor = DS.primaryBorder; }}
+            onMouseLeave={e => { e.currentTarget.style.color = DS.textTer; e.currentTarget.style.borderColor = DS.border; }}>
+            <DownOutlined style={{ fontSize: 11, transition: 'transform .2s', transform: expanded ? 'rotate(180deg)' : 'none' }} />
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
 /** 助手消息：无边框内容 + 悬浮操作栏（点赞/点踩/复制/重新生成）+ 最新回复追问 */
 const AssistantMessage: React.FC<{
   msg: Msg;
@@ -625,7 +711,8 @@ const AssistantMessage: React.FC<{
             <div style={{ fontSize: 14, color: DS.text, lineHeight: '24px', whiteSpace: 'pre-wrap' }}>{msg.content}</div>
           )}
 
-          {/* 悬浮操作栏 */}
+          {/* 悬浮操作栏（流式输出结束后才出现） */}
+          {!msg.streaming && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 2, marginTop: 6,
             opacity: hovered ? 1 : 0, transition: 'opacity .2s',
@@ -639,6 +726,12 @@ const AssistantMessage: React.FC<{
               <span style={{ fontSize: 11, color: DS.textTer, marginLeft: 8 }}>{msg.time}</span>
             )}
           </div>
+          )}
+
+          {/* 引用文件列表（流式输出结束后才出现） */}
+          {!msg.streaming && msg.refFiles && msg.refFiles.length > 0 && (
+            <ReferenceFiles files={msg.refFiles} />
+          )}
 
           {/* 最新回复：追问建议 */}
           {isLatest && (
@@ -799,7 +892,7 @@ export default function AgentChatPanel({
         acc = [...acc, block];
         setMessages(prev => {
           const updated = prev.map(m => m.id === assistantId
-            ? { ...m, thinking: false, blocks: acc, content: '', time: nowTime() }
+            ? { ...m, thinking: false, streaming: true, blocks: acc, content: '', time: nowTime() }
             : m);
           if (targetConvId !== 'new') {
             setConversations(cprev => cprev.map(c => c.id === targetConvId ? { ...c, messages: updated } : c));
@@ -810,9 +903,11 @@ export default function AgentChatPanel({
     });
     // 收尾：标记完成并设置 content（用于复制与无 blocks 兜底）
     setTimeout(() => {
+      // 若本次回复中包含知识库检索工具调用，则挂载引用文件列表
+      const usedKb = acc.some(b => b.type === 'tool' && b.tools?.some(t => t.name === 'knowledge_retrieve'));
       setMessages(prev => {
         const updated = prev.map(m => m.id === assistantId
-          ? { ...m, thinking: false, blocks: acc, content: finalContent, time: nowTime() }
+          ? { ...m, thinking: false, streaming: false, blocks: acc, content: finalContent, time: nowTime(), refFiles: usedKb ? DEMO_REF_FILES : undefined }
           : m);
         if (targetConvId !== 'new') {
           setConversations(cprev => cprev.map(c => c.id === targetConvId ? { ...c, messages: updated } : c));
@@ -831,18 +926,25 @@ export default function AgentChatPanel({
   };
 
   const beforeLocalUpload = (file: File) => {
+    acceptLocalFile(file, attachments.length);
+    return false; // 阻止自动上传
+  };
+
+  /** 校验并接收本地文件（上传 / 粘贴共用） */
+  const acceptLocalFile = (file: File, currentCount: number): boolean => {
     const ext = file.name.split('.').pop()?.toLowerCase() || '';
-    if (!UPLOAD_CONFIG.acceptTypes.includes(ext)) {
+    const mimeOk = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'].includes(file.type);
+    if (!UPLOAD_CONFIG.acceptTypes.includes(ext) && !mimeOk) {
       antMessage.error(`仅支持 ${UPLOAD_CONFIG.acceptTypes.join('、').toUpperCase()} 图片格式`);
-      return Upload.LIST_IGNORE;
+      return false;
     }
     if (file.size > UPLOAD_CONFIG.maxSizeMB * 1024 * 1024) {
       antMessage.error(`文件大小不能超过 ${UPLOAD_CONFIG.maxSizeMB}MB`);
-      return Upload.LIST_IGNORE;
+      return false;
     }
-    if (attachments.length >= UPLOAD_CONFIG.maxCount) {
+    if (currentCount >= UPLOAD_CONFIG.maxCount) {
       antMessage.error(`最多上传 ${UPLOAD_CONFIG.maxCount} 个文件`);
-      return Upload.LIST_IGNORE;
+      return false;
     }
     const att: Attachment = {
       uid: 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
@@ -856,7 +958,18 @@ export default function AgentChatPanel({
     } else {
       addAttachment(att);
     }
-    return false; // 阻止自动上传
+    return true;
+  };
+
+  /** 输入框粘贴文件 */
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const files = Array.from(e.clipboardData.files || []);
+    if (files.length === 0) return;
+    e.preventDefault();
+    let count = attachments.length;
+    files.forEach(file => {
+      if (acceptLocalFile(file, count)) count += 1;
+    });
   };
 
   const handleAddLink = () => {
@@ -888,7 +1001,7 @@ export default function AgentChatPanel({
       attachments: attachments.length ? attachments : undefined,
     };
     const assistantId = (Date.now() + 1).toString();
-    const thinking: Msg = { id: assistantId, role: 'assistant', content: '', thinking: true };
+    const thinking: Msg = { id: assistantId, role: 'assistant', content: '', thinking: true, streaming: true };
 
     // 首次提问：以用户首条消息作为对话名称，创建新对话
     let targetId = activeId;
@@ -921,7 +1034,7 @@ export default function AgentChatPanel({
   // 重新生成某条助手回复
   const regenerateAnswer = (assistantId: string) => {
     setMessages(prev => prev.map(m => m.id === assistantId
-      ? { ...m, thinking: true, content: '', blocks: undefined }
+      ? { ...m, thinking: true, streaming: true, content: '', blocks: undefined, refFiles: undefined }
       : m));
     streamAssistantAnswer(assistantId, activeId);
   };
@@ -1221,7 +1334,7 @@ export default function AgentChatPanel({
                   <AssistantMessage
                     key={m.id}
                     msg={m}
-                    isLatest={!m.thinking && idx === messages.length - 1}
+                    isLatest={!m.thinking && !m.streaming && idx === messages.length - 1}
                     onFollowup={handleSend}
                     onRegenerate={() => regenerateAnswer(m.id)}
                     agentType={agent.type}
@@ -1263,6 +1376,7 @@ export default function AgentChatPanel({
                 variant="borderless"
                 style={{ resize: 'none', fontSize: 14, lineHeight: '22px' }}
                 onPressEnter={e => { if (!e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                onPaste={handlePaste}
               />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>

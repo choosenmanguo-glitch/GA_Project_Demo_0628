@@ -12,6 +12,7 @@ import IconPicker, { type IconPickerValue } from '@/components/IconPicker';
 import { mockAgents, type AgentItem, type AgentType, type PublishType } from '@/mock/data';
 import { getChatLimitConfig } from '@/pages/system-config';
 import AgentChatPanel from './AgentChatPanel';
+import StandardChatPanel from './StandardChatPanel';
 import WorkflowRunPanel from './WorkflowRunPanel';
 
 const { TextArea } = Input;
@@ -370,6 +371,15 @@ export default function AgentManagePage() {
             chatEnabled={chatConfig.enabled}
             remaining={todayRemaining}
             dailyLimit={chatConfig.dailyLimit}
+          />
+        ) : chatAgent.type === '标准智能体' ? (
+          <StandardChatPanel
+            agent={chatAgent}
+            onBack={() => setChatAgent(null)}
+            chatEnabled={chatConfig.enabled}
+            remaining={todayRemaining}
+            dailyLimit={chatConfig.dailyLimit}
+            onSend={handleChatSend}
           />
         ) : (
           <AgentChatPanel
