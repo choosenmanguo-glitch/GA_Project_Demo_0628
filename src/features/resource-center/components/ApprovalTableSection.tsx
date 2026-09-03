@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Avatar, Badge, Button, Empty, Input, Popconfirm, Space, Table, Tabs, Tag } from 'antd';
+import { Avatar, Badge, Button, Empty, Space, Table, Tabs, Tag } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import type { ApplicationStatus, ResourceApplication, ResourceItem, ResourceType } from '../types';
 import { typeConfig } from '../ui';
@@ -29,8 +29,7 @@ export interface ApprovalTableSectionProps {
   historyData: ResourceApplication[];
   getResource: (id: string) => ResourceItem | undefined;
   getSpaceName: (id: string) => string;
-  onApprove: (app: ResourceApplication, opinion: string) => void;
-  onReject: (app: ResourceApplication, opinion: string) => void;
+  /** 点击「审批」按钮或表格行：打开审批详情抽屉，通过/驳回在详情抽屉内完成 */
   onRowClick?: (app: ResourceApplication) => void;
   /** 展示模式：'tabs'=带内部Tabs（默认），'pending'=仅待审批表格，'history'=仅审批记录表格 */
   mode?: 'tabs' | 'pending' | 'history';
@@ -40,9 +39,8 @@ export interface ApprovalTableSectionProps {
 
 const ApprovalTableSection: React.FC<ApprovalTableSectionProps> = ({
   pendingData, historyData, getResource, getSpaceName,
-  onApprove, onReject, onRowClick, mode = 'tabs', compact = false, pendingCount,
+  onRowClick, mode = 'tabs', compact = false, pendingCount,
 }) => {
-  const [rejectReasons, setRejectReasons] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<string>('pending');
 
   // ---- 待审批表格列 ----
@@ -95,46 +93,13 @@ const ApprovalTableSection: React.FC<ApprovalTableSectionProps> = ({
       render: (text: string) => <span style={{ color: '#595959', fontSize: 12 }}>{text || '未填写理由'}</span>,
     },
     {
-      title: '操作', key: 'action', width: 220,
+      title: '操作', key: 'action', width: 100,
       render: (_: unknown, rec: ResourceApplication) => (
         <Space size={8} onClick={e => e.stopPropagation()}>
-          {onRowClick && !compact && (
-            <Button type="link" size="small" style={{ fontWeight: 600, padding: 0 }}
-              onClick={() => onRowClick(rec)}>
-              详情
-            </Button>
-          )}
-          <Button type="link" size="small" style={{ color: '#52c41a', fontWeight: 600, padding: 0 }}
-            onClick={() => onApprove(rec, '同意直接开通调用权限')}>
-            通过
+          <Button type="link" size="small" style={{ fontWeight: 600, padding: 0 }}
+            onClick={() => onRowClick?.(rec)}>
+            审批
           </Button>
-          <Popconfirm
-            title="驳回该使用申请"
-            description={
-              <div style={{ marginTop: 8 }}>
-                <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>请填写驳回理由:</div>
-                <Input.TextArea
-                  id={compact ? `usage-reject-${rec.id}` : `reject-opinion-${rec.id}`}
-                  placeholder="请输入驳回具体理由..."
-                  rows={2}
-                  style={{ width: 220 }}
-                  value={rejectReasons[rec.id] || ''}
-                  onChange={e => setRejectReasons(prev => ({ ...prev, [rec.id]: e.target.value }))}
-                />
-              </div>
-            }
-            onConfirm={() => {
-              const reason = rejectReasons[rec.id] || '不具备业务访问权限';
-              onReject(rec, reason);
-              setRejectReasons(prev => { const n = { ...prev }; delete n[rec.id]; return n; });
-            }}
-            onCancel={() => setRejectReasons(prev => { const n = { ...prev }; delete n[rec.id]; return n; })}
-            okText="确认驳回"
-            cancelText="取消"
-            okButtonProps={{ danger: true }}
-          >
-            <Button type="link" danger size="small" style={{ fontWeight: 600, padding: 0 }}>驳回</Button>
-          </Popconfirm>
         </Space>
       ),
     },

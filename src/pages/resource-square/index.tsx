@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { App as AntdApp, Avatar, Badge, Button, Card, Descriptions, Drawer, Dropdown, Empty, Input, List, Modal, Popconfirm, Space, Table, Tabs, Tag } from 'antd';
+import { App as AntdApp, Avatar, Badge, Button, Card, Descriptions, Drawer, Dropdown, Empty, Input, List, Modal, Space, Table, Tabs, Tag } from 'antd';
 import {
   AppstoreOutlined, PlusOutlined, SearchOutlined, StarOutlined,
   EditOutlined, SendOutlined, EyeOutlined, UserOutlined, DeleteOutlined,
@@ -77,7 +77,8 @@ export default function ResourceSquarePage() {
   const [cardPage, setCardPage] = useState(1);
   const [cardPageSize, setCardPageSize] = useState(12);
   const [detailResource, setDetailResource] = useState<ResourceItem | null>(null);
-  const [detailFromMyPublish, setDetailFromMyPublish] = useState(false);
+  // 「我的发布」详情：复用资源管理的只读表单抽屉，内容与管理中心/资源管理一致
+  const [myPublishDetail, setMyPublishDetail] = useState<ResourceItem | null>(null);
   const [applyResource, setApplyResource] = useState<ResourceItem | null>(null);
 
   // --- 我的发布 ---
@@ -152,7 +153,7 @@ export default function ResourceSquarePage() {
     };
   }, [currentSpace.id, getAccess, publishedResources]);
 
-  const detailAccess = detailFromMyPublish ? null : (detailResource ? getAccess(detailResource.id, currentSpace.id) : null);
+  const detailAccess = detailResource ? getAccess(detailResource.id, currentSpace.id) : null;
 
   const handleAcquire = () => {
     if (!detailResource) return;
@@ -352,7 +353,7 @@ export default function ResourceSquarePage() {
                     resource={resource}
                     access={getAccess(resource.id, currentSpace.id)}
                     mode="square"
-                    onCardClick={() => { setDetailFromMyPublish(false); setDetailResource(resource); }}
+                    onCardClick={() => setDetailResource(resource)}
                   />
                 ))}
               </div>
@@ -401,7 +402,7 @@ export default function ResourceSquarePage() {
                 {filteredMyPublish.slice((publishPage - 1) * publishPageSize, publishPage * publishPageSize).map(resource => {
                   const isReviewing = resource.publishStatus === 'reviewing' || resource.publishStatus === 'unpublishing';
                   const cardMenuItems: MenuProps['items'] = [
-                    { key: 'view', icon: <EyeOutlined />, label: '查看详情', onClick: () => { setDetailFromMyPublish(true); setDetailResource(resource); } },
+                    { key: 'view', icon: <EyeOutlined />, label: '查看详情', onClick: () => setMyPublishDetail(resource) },
                   ];
                   if (resource.publishStatus === 'pending') {
                     cardMenuItems.push(
@@ -425,7 +426,7 @@ export default function ResourceSquarePage() {
                       key={resource.id}
                       resource={resource}
                       mode="square"
-                      onCardClick={() => { setDetailFromMyPublish(true); setDetailResource(resource); }}
+                      onCardClick={() => setMyPublishDetail(resource)}
                       footer={
                         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                           <Dropdown menu={{ items: cardMenuItems }} trigger={['click']}>
@@ -481,6 +482,15 @@ export default function ResourceSquarePage() {
         resource={publishEditing}
         onClose={() => { setPublishFormOpen(false); setPublishEditing(null); }}
         onSubmit={handleSubmitMyPublish}
+      />
+
+      {/* 「我的发布」资源详情：只读，与管理中心/资源管理的详情抽屉一致 */}
+      <ResourceFormDrawer
+        open={!!myPublishDetail}
+        resource={myPublishDetail}
+        readOnly
+        onClose={() => setMyPublishDetail(null)}
+        onSubmit={() => undefined}
       />
 
       {/* 删除确认 Modal */}
@@ -558,16 +568,6 @@ export default function ResourceSquarePage() {
             } else {
               setHistoryDetailApp(app); setHistoryDetailOpen(true);
             }
-          }}
-          onApprove={(app, opinion) => {
-            approveApplication(app.id, opinion || '同意使用');
-            message.success('已通过使用申请');
-            setPendingDetailOpen(false); setPendingDetailApp(null); setPendingOpinion('');
-          }}
-          onReject={(app, opinion) => {
-            rejectApplication(app.id, opinion || '暂不符合使用条件');
-            message.info('已驳回使用申请');
-            setPendingDetailOpen(false); setPendingDetailApp(null); setPendingOpinion('');
           }}
         />
 

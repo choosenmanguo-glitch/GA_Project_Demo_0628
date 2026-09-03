@@ -204,16 +204,18 @@ export default function WorkflowEditor() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginRight: 4 }}>
-            {[
-              { icon: <PlayCircleOutlined />, label: '测试', primary: true },
-              { icon: <FileTextOutlined />, label: '运行历史', primary: false },
-            ].map(b => (
-              <button key={b.label} title={b.label} style={{
-                width: 32, height: 32, border: 0, borderRadius: 5,
-                color: b.primary ? '#155fe7' : '#667388', background: b.primary ? '#eef4ff' : 'transparent',
-                display: 'grid', placeItems: 'center', cursor: 'pointer',
-              }}>{b.icon}</button>
-            ))}
+            <button title="测试" style={{
+              height: 32, padding: '0 12px', border: 0, borderRadius: 5,
+              color: '#155fe7', background: '#eef4ff', fontSize: 14,
+              display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+            }}>
+              <PlayCircleOutlined />测试
+            </button>
+            <button title="运行历史" style={{
+              width: 32, height: 32, border: 0, borderRadius: 5,
+              color: '#667388', background: 'transparent',
+              display: 'grid', placeItems: 'center', cursor: 'pointer',
+            }}><FileTextOutlined /></button>
             <button title="检查清单" style={{
               position: 'relative', width: 32, height: 32, border: 0, borderRadius: 5,
               background: 'transparent', color: '#667388', display: 'grid', placeItems: 'center', cursor: 'pointer',

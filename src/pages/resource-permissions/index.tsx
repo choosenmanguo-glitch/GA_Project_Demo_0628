@@ -187,14 +187,6 @@ export default function ResourcePermissionsPage() {
           historyData={[]}
           getResource={getResource}
           getSpaceName={getSpaceName}
-          onApprove={(app, opinion) => {
-            approveApplication(app.id, opinion);
-            message.success(`已审核通过 [${app.applicant}] 的申请`);
-          }}
-          onReject={(app, opinion) => {
-            rejectApplication(app.id, opinion);
-            message.info(`已成功驳回用户 [${app.applicant}] 的使用申请。`);
-          }}
           onRowClick={(app) => { setPendingDetailApp(app); setPendingDetailOpen(true); }}
         />
       </div>
@@ -403,8 +395,6 @@ export default function ResourcePermissionsPage() {
         historyData={filteredHistory}
         getResource={getResource}
         getSpaceName={getSpaceName}
-        onApprove={() => {}}
-        onReject={() => {}}
         onRowClick={(app) => { setHistoryDetailApp(app); setHistoryDetailOpen(true); }}
       />
       </div>

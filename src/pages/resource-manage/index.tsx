@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { App as AntdApp, Badge, Button, Card, Descriptions, Drawer, Dropdown, Empty, Input, List, Popconfirm, Space, Table, Tabs, Tag, Typography } from 'antd';
+import { App as AntdApp, Badge, Button, Card, Descriptions, Drawer, Dropdown, Empty, Input, List, Space, Table, Tabs, Tag, Typography } from 'antd';
 import {
   DeleteOutlined, EditOutlined, EyeOutlined,
   PushpinOutlined, SafetyCertificateOutlined, SendOutlined,
@@ -348,42 +348,13 @@ export default function ResourceManagePage() {
               },
             },
             {
-              title: '操作', key: 'action', width: 160,
+              title: '操作', key: 'action', width: 100,
               render: (_: unknown, rec: PublishApproval) => (
                 <Space size={8} onClick={e => e.stopPropagation()}>
                   <Button type="link" size="small" style={{ fontWeight: 600, padding: 0 }}
                     onClick={() => { setApprovalDetail(rec); setApprovalDetailOpen(true); }}>
-                    详情
+                    审批
                   </Button>
-                  <Button type="link" size="small" style={{ color: '#52c41a', fontWeight: 600, padding: 0 }}
-                    onClick={() => {
-                      const fn = rec.applyType === 'publish' ? approvePublish : approveOffline;
-                      fn(rec.id, '同意');
-                      message.success(`已审批通过${rec.applyType === 'publish' ? '发布' : '下架'}申请`);
-                    }}>
-                    通过
-                  </Button>
-                  <Popconfirm
-                    title={rec.applyType === 'publish' ? '驳回发布申请' : '驳回下架申请'}
-                    description={
-                      <div style={{ marginTop: 8 }}>
-                        <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>请填写驳回理由:</div>
-                        <Input.TextArea id={`reject-opinion-${rec.id}`} placeholder="请输入驳回具体理由..." rows={2} style={{ width: 220 }} />
-                      </div>
-                    }
-                    onConfirm={() => {
-                      const el = document.getElementById(`reject-opinion-${rec.id}`) as HTMLTextAreaElement;
-                      const reasonText = el?.value || '不符合发布规范';
-                      const fn = rec.applyType === 'publish' ? rejectPublish : rejectOffline;
-                      fn(rec.id, reasonText);
-                      message.info(`已驳回${rec.applyType === 'publish' ? '发布' : '下架'}申请`);
-                    }}
-                    okText="确认驳回"
-                    cancelText="取消"
-                    okButtonProps={{ danger: true }}
-                  >
-                    <Button type="link" danger size="small" style={{ fontWeight: 600, padding: 0 }}>驳回</Button>
-                  </Popconfirm>
                 </Space>
               ),
             },

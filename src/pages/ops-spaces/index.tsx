@@ -400,6 +400,17 @@ export default function OpsSpacesPage() {
     {
       title: '申请时间', dataIndex: 'applyTime', width: 170,
     },
+    {
+      title: '操作', key: 'action', width: 100,
+      render: (_: unknown, r: SpaceApproval) => (
+        <Space size={8} onClick={e => e.stopPropagation()}>
+          <Button type="link" size="small" style={{ fontWeight: 600, padding: 0 }}
+            onClick={() => { setPendingDetailSpace(r); setRejectionReason(''); setPendingDetailOpen(true); }}>
+            审批
+          </Button>
+        </Space>
+      ),
+    },
   ], []);
 
   // ── Tab 3 审批记录表格列 ──
